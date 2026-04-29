@@ -1,0 +1,705 @@
+﻿version: 1
+source_of_truth:
+  allowed_sources:
+    - hegemony_base_rules
+    - hegemony_crisis_and_control_expansion
+  external_sources_allowed: false
+
+unknown_marker: UNKNOWN
+
+game_modes:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: setup_player_modes_and_counts
+  source_status: explicit_from_rules
+  human_players_only:
+    supported_player_counts: [2, 3, 4]
+  with_automa:
+    supported_player_counts: [2, 3, 4]
+    modes: [simple, complex]
+
+player_count_config:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: setup_active_classes_by_player_count
+  source_status: explicit_from_rules
+  2:
+    active_player_classes: [worker, capitalist]
+    state_player_active: false
+    board_state_note: state_sector_treasury_and_public_services_exist
+  3:
+    active_player_classes: [worker, middle_class, capitalist]
+    state_player_active: false
+    board_state_note: state_sector_treasury_and_public_services_exist
+  4:
+    active_player_classes: [worker, middle_class, capitalist, state]
+    state_player_active: true
+
+initial_policy_courses:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: setup_initial_policy_courses
+  source_status: explicit_from_rules
+  policy_1_fiscal: C
+  policy_2_labor_market: B
+  policy_3_taxation: A
+  policy_4_healthcare_and_benefits: B
+  policy_5_education: C
+  policy_6_foreign_trade: B
+  policy_7_immigration: B
+
+enterprise_registry:
+  capitalist_enterprises:
+    - id: supermarket
+      name: "Супермаркет"
+      category: food
+      cost: 16
+      is_starting: true
+      production:
+        output: food
+        amount: 4
+        per_workers: 1
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 15
+        medium: 20
+        high: 25
+
+    - id: college
+      name: "Колледж"
+      category: education
+      cost: 19
+      is_starting: true
+      production:
+        output: education
+        amount: 6
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: orange
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 20
+        high: 30
+
+    - id: polyclinic
+      name: "Поликлиника"
+      category: healthcare
+      cost: 19
+      is_starting: true
+      production:
+        output: healthcare
+        amount: 6
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: red
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 20
+        high: 30
+
+    - id: mall
+      name: "Торговый центр"
+      category: luxury
+      cost: 16
+      is_starting: true
+      production:
+        output: luxury
+        amount: 6
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: blue
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 15
+        medium: 20
+        high: 25
+
+    - id: automobile_factory
+      name: "Завод автомобилей"
+      category: luxury
+      cost: 45
+      is_starting: false
+      production:
+        output: luxury
+        amount: 5
+      workers:
+        slots: []
+      automation:
+        automated: true
+      wages: null
+
+    - id: fish_farm
+      name: "Рыбная ферма"
+      category: food
+      cost: 20
+      is_starting: false
+      production:
+        output: food
+        amount: 6
+        per_workers: 1
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: green
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 25
+        medium: 30
+        high: 35
+
+    - id: vegetable_farm
+      name: "Овощная ферма"
+      category: food
+      cost: 15
+      is_starting: false
+      production:
+        output: food
+        amount: 5
+        per_workers: 1
+      workers:
+        slots:
+          - kind: worker
+            count: 3
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 25
+        high: 30
+
+    - id: hospital
+      name: "Медицинский комплекс"
+      category: healthcare
+      cost: 24
+      is_starting: false
+      production:
+        output: healthcare
+        amount: 9
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: red
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 30
+        high: 40
+
+    - id: telecom_company
+      name: "Телекомпания"
+      category: media
+      cost: 24
+      is_starting: false
+      production:
+        output: influence
+        amount: 4
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: skilled
+            color: purple
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 30
+        high: 40
+
+    - id: publishing_house
+      name: "Издательство"
+      category: media
+      cost: 12
+      is_starting: false
+      production:
+        output: influence
+        amount: 3
+        per_workers: 1
+      workers:
+        slots:
+          - kind: worker
+            count: 3
+            qualification: skilled
+            color: purple
+      wages:
+        low: 20
+        medium: 25
+        high: 30
+
+    - id: shopping_center
+      name: "Торговый центр"
+      category: luxury
+      cost: 24
+      is_starting: false
+      production:
+        output: luxury
+        amount: 6
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: skilled
+            color: blue
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 25
+        high: 30
+
+    - id: university
+      name: "Университет"
+      category: education
+      cost: 16
+      is_starting: true
+      production:
+        output: education
+        amount: 6
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: skilled
+            color: orange
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 15
+        medium: 20
+        high: 25
+
+initial_board_state:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: setup_board_initialization
+  source_status: explicit_from_rules
+  capitalist_starting_enterprises:
+    supermarket:
+      salary_level: 2
+    mall:
+      salary_level: 2
+    college:
+      salary_level: 2
+    polyclinic:
+      salary_level: 2
+
+  capitalist_starting_layout_by_player_count:
+    2: [supermarket, mall, college, polyclinic]
+    3: [supermarket, mall, college, polyclinic]
+    4: [supermarket, mall, college, polyclinic]
+
+  state_enterprises_setup:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_state_enterprises_first_row_and_public_services_mapping
+    source_status: explicit_from_rules
+    source_derivation_logic: >
+      first_row_contains_3_state_enterprises_under_3_public_service_cells;
+      startup arrangement is explicitly fixed for this project slice.
+    remove_cards_not_matching_player_count_diamond_cost: true
+    first_row_starting_state_enterprises_under_public_service_cells:
+      healthcare_service:
+        for_2_players: state_hospital
+        for_3_or_4_players: university_hospital
+        source_status: derived_from_rules
+      education_service:
+        for_2_players: state_university
+        for_3_or_4_players: technical_university
+        source_status: explicit_from_rules
+      media_influence_service:
+        for_2_players: state_media
+        for_3_or_4_players: state_media
+        source_status: explicit_from_rules
+    first_row_starting_state_enterprises_salary_level: 2
+    second_row_state_enterprises_by_type_face_down: true
+    third_row_remaining_state_enterprises_face_down_count: 3
+
+  middle_class_starting_enterprises_for_3_or_4_players:
+    minimarket:
+      salary_level: 2
+    private_clinic:
+      salary_level: 2
+
+  deal_deck:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_deal_deck_reveal_and_place
+    source_status: explicit_from_rules
+    shuffle: true
+    reveal_top_card: true
+    place_on_corresponding_board_cell: true
+    revealed_top_card_id: UNKNOWN
+
+  export_deck:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_export_deck_reveal_and_import_marker
+    source_status: explicit_from_rules
+    shuffle: true
+    reveal_top_card: true
+    place_on_export_cell: true
+    revealed_top_card_id: UNKNOWN
+    import_marker_position: U2
+
+  migrant_deck:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_migrant_deck
+    source_status: explicit_from_rules
+    shuffle: true
+    place_deck_on_board_cell: true
+
+  state_treasury_source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  state_treasury_source_section: setup_state_treasury
+  state_treasury_source_status: explicit_from_rules
+  state_treasury: 120
+
+  starting_public_services_by_player_count:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_public_services_by_player_count
+    source_status: explicit_from_rules
+    2:
+      healthcare: 5
+      education: 5
+      media_influence: 3
+    3_or_4:
+      healthcare: 6
+      education: 6
+      media_influence: 4
+
+  round_marker: 1
+  tax_multiplier: 5
+  vp_marker_each_player: 0
+
+  components_near_board:
+    - all_resources
+    - money_tokens
+    - equipment_tokens
+    - storage_tokens
+    - strike_tokens
+    - demonstration_token
+    - legitimacy_tokens_only_for_4_players
+    - loan_cards
+    - transparent_markers
+
+  workers_figures_pool:
+    worker_and_middle_class_figures_next_to_board_sorted_by_type_and_color: true
+    return_unused_middle_class_figures_to_box_in_2_player_game: true
+
+initial_public_resources:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: setup_components_near_board
+  source_status: explicit_from_rules
+  resources_supply_available: all_resources
+  money_tokens_available: true
+  equipment_tokens_available: true
+  storage_tokens_available: true
+  strike_tokens_available: true
+  demonstration_token_available: true
+  legitimacy_tokens_available_only_for_4_players: true
+  loan_cards_available: true
+  transparent_markers_available: true
+
+initial_voting_bag:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: setup_initial_voting_bag
+  source_status: explicit_from_rules
+  cubes_all_three_colors_near_board: true
+  cubes_added_to_bag_at_start:
+    worker: 8
+    middle_class: 8
+    capitalist: 8
+  applies_even_in_2_player_game: true
+
+initial_player_state:
+  worker:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_worker_player_board_and_starting_workers
+    source_status: explicit_from_rules
+    population_marker_workers: 10
+    welfare: 0
+    money: 30
+    personal_influence: 1
+    proposal_tokens:
+      color: red
+      count: 3
+    voting_token: 1
+    hand_size: 7
+    initial_hand_cards: UNKNOWN
+
+    near_player_board:
+      - worker_class_reference_card
+      - cooperative_farm_cards_out_of_game_count_2
+
+    starting_worker_placement:
+      for_2_players:
+        supermarket:
+          green_skilled: 1
+          gray_unskilled: 1
+        mall:
+          blue_skilled: 1
+          gray_unskilled: 1
+        state_hospital:
+          white_skilled: 1
+          gray_unskilled: 1
+        state_university:
+          orange_skilled: 1
+          gray_unskilled: 1
+      for_3_or_4_players:
+        supermarket:
+          green_skilled: 1
+          gray_unskilled: 1
+        college:
+          orange_skilled: 1
+          gray_unskilled: 1
+        university_hospital:
+          white_skilled: 1
+          gray_unskilled: 2
+      all_starting_placed_workers_vertical: true
+
+    unemployment_setup:
+      first_add:
+        gray_worker: 1
+      then:
+        for_2_players:
+          reveal_migrant_cards: 1
+          add_worker_figures_shown_on_cards: true
+        for_3_or_4_players:
+          reveal_migrant_cards: 2
+          add_worker_figures_shown_on_cards: true
+      revealed_migrant_cards_return_to_bottom_of_deck: true
+      revealed_migrant_card_ids: UNKNOWN
+
+  capitalist:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_capitalist_player_board_resources_prices_and_market
+    source_status: explicit_from_rules
+    revenue: 120
+    wealth_marker_position: near_wealth_track
+
+    starting_resources:
+      food: 1
+      luxury: 2
+      education: 2
+
+    starting_prices:
+      food_price: 12
+      luxury_price: 8
+      education_price: 8
+      healthcare_price: 8
+
+    free_trade_zone_token: 1
+    proposal_tokens:
+      color: blue
+      count: 3
+    voting_token: 1
+    hand_size: 7
+    initial_hand_cards: UNKNOWN
+
+    near_player_board:
+      - capitalist_class_reference_card
+
+    capitalist_enterprise_deck_setup:
+      shuffle: true
+      reveal_top_cards_for_market: 4
+      revealed_market_card_ids: UNKNOWN
+
+  middle_class:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_middle_class_player_board_resources_prices_and_market
+    source_status: explicit_from_rules
+    active_only_for_player_count: [3, 4]
+
+    population_marker_workers: 10
+    welfare: 0
+    money: 40
+    personal_influence: 1
+
+    starting_resources:
+      food: 1
+      healthcare: 1
+
+    starting_prices:
+      food_price: 12
+      luxury_price: 8
+      healthcare_price: 8
+      education_price: 8
+
+    proposal_tokens:
+      color: yellow
+      count: 3
+    voting_token: 1
+    hand_size: 7
+    initial_hand_cards: UNKNOWN
+
+    near_player_board:
+      - middle_class_reference_card
+
+    middle_class_market_setup:
+      shuffle_enterprise_deck: true
+      reveal_top_cards: 3
+      revealed_market_card_ids: UNKNOWN
+
+    starting_worker_placement:
+      technical_university:
+        orange_skilled: 1
+        gray_unskilled: 2
+      mall:
+        blue_skilled: 1
+        gray_unskilled: 1
+      minimarket:
+        green_skilled: 1
+      private_clinic:
+        white_skilled: 1
+      all_starting_placed_workers_vertical: true
+
+    unemployment_setup:
+      first_add:
+        any_middle_class_skilled_worker: 1
+      then:
+        reveal_migrant_cards: 2
+        add_middle_class_figures_shown_on_cards: true
+      revealed_migrant_cards_return_to_bottom_of_deck: true
+      revealed_migrant_card_ids: UNKNOWN
+
+  state:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: setup_state_player_legitimacy_events_and_agenda
+    source_status: explicit_from_rules
+    active_only_for_player_count: [4]
+
+    legitimacy_worker: 2
+    legitimacy_middle_class: 2
+    legitimacy_capitalist: 2
+
+    personal_influence: 1
+    proposal_tokens:
+      color: gray
+      count: 3
+    voting_token: 1
+    hand_size: 7
+    initial_hand_cards: UNKNOWN
+
+    near_player_board:
+      - state_reference_card
+
+    events_setup:
+      shuffle_event_deck: true
+      reveal_top_cards: 2
+      if_revealed_card_rounds_text_is_2_to_5:
+        reshuffle_that_card_back: true
+        reveal_another_card: true
+      revealed_event_card_ids: UNKNOWN
+
+    political_agenda_setup:
+      shuffle_political_agenda_deck: true
+      reveal_top_card: 1
+      place_next_to_player_board: true
+      revealed_agenda_card_id: UNKNOWN
+
+    social_security_tokens_setup:
+      healthcare_social_security_token:
+        place_under_public_services_medical_cell: true
+        side_matches_policy_4_healthcare_and_benefits: B
+      education_social_security_token:
+        place_next_to_player_board: true
+
+initial_automa_state:
+  worker:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: automa_general_setup_worker
+    source_status: explicit_from_rules
+    automa_class: worker_automa
+    cards_for_replaced_human_class_left_in_box: true
+    uses_dedicated_automa_cards: true
+    simple_mode:
+      automa_action_cards_count: 30
+      remove_instruction_cards_with_check_in_title: true
+    complex_mode:
+      priority_row_tokens_count: 8
+      action_priority_cards_count: 6
+      policy_priority_cards_count: 7
+
+unknowns_classification:
+  runtime_randomized:
+    - deal_deck.revealed_top_card_id
+    - export_deck.revealed_top_card_id
+    - worker.unemployment_setup.revealed_migrant_card_ids
+    - middle_class.unemployment_setup.revealed_migrant_card_ids
+    - capitalist.capitalist_enterprise_deck_setup.revealed_market_card_ids
+    - middle_class.middle_class_market_setup.revealed_market_card_ids
+    - state.events_setup.revealed_event_card_ids
+    - state.political_agenda_setup.revealed_agenda_card_id
+    - initial_hand_cards_for_all_classes
+  not_required_for_rules_engine_v1: []
+  still_needs_source_extraction: []
+
+  capitalist:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: automa_general_setup_capitalist
+    source_status: explicit_from_rules
+    automa_class: capitalist_automa
+    cards_for_replaced_human_class_left_in_box: true
+    uses_dedicated_automa_cards: true
+    simple_mode:
+      automa_action_cards_count: 30
+      remove_instruction_cards_with_check_in_title: true
+    complex_mode:
+      priority_row_tokens_count: 8
+      action_priority_cards_count: 6
+      policy_priority_cards_count: 7
+
+  middle_class:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: automa_general_setup_middle_class
+    source_status: explicit_from_rules
+    automa_class: middle_class_automa
+    cards_for_replaced_human_class_left_in_box: true
+    uses_dedicated_automa_cards: true
+    simple_mode:
+      automa_action_cards_count: 30
+      remove_instruction_cards_with_check_in_title: true
+    complex_mode:
+      priority_row_tokens_count: 8
+      action_priority_cards_count: 6
+      policy_priority_cards_count: 7

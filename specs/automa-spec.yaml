@@ -1,0 +1,130 @@
+﻿version: 1
+source_of_truth:
+  allowed_sources:
+    - hegemony_base_rules
+    - hegemony_crisis_and_control_expansion
+  external_sources_allowed: false
+
+unknown_marker: UNKNOWN
+
+general_setup_rules:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: automa_general_party_setup
+  source_status: explicit_from_rules
+  automas_available:
+    - worker_automa
+    - middle_class_automa
+    - capitalist_automa
+
+  setup_game_as_full_player_composition_when_using_automa: true
+  leave_human_action_cards_of_replaced_class_in_box: true
+  automa_uses_dedicated_automa_cards: true
+
+  two_player_recommendation:
+    keep_unused_voting_cubes_sorted_by_color_near_bag_for_visibility: true
+
+simple_mode:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: automa_simple_mode_setup
+  source_status: explicit_from_rules
+  automa_action_cards_count: 30
+  instruction_cards_with_check_in_title_removed_to_box: true
+  remaining_instruction_cards_placed_next_to_class_reference: true
+  shuffle_automa_deck_and_place_next_to_class_board: true
+
+complex_mode:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: automa_complex_mode_checks_and_priorities
+  source_status: explicit_from_rules
+  shuffle_automa_deck_and_place_next_to_class_board: true
+  instruction_cards_placed_next_to_class_board: true
+
+  priority_layout:
+    priority_row_tokens_column_count: 8
+    action_priority_cards_left_of_column_count: 6
+    action_priority_cards_layout: two_rows_of_three
+    policy_priority_cards_right_of_column_count: 7
+
+  checks_and_priority_movement_system_used: true
+  detailed_check_resolution:
+    top_4_symbols_on_automa_card_are_checks_not_actions: true
+    checks_execution_order: left_to_right_strict
+    first_check_condition_evaluation_includes_automa_card_bonus: true
+    check_success_effect:
+      move_corresponding_action_priority_card_up_by_rows_from_instruction: true
+      if_target_row_is_occupied_insert_action_card_to_left_of_existing_cards: true
+      when_action_card_removed_from_row_shift_remaining_cards_right_toward_row_token: true
+    policy_priority_movement:
+      movement_model: analogous_to_action_priority
+      insertion_side_when_target_row_occupied: right
+      when_policy_card_removed_from_row_shift_remaining_cards_left: true
+      if_policy_priority_card_is_set_aside_do_not_move_it: true
+    after_all_checks_collapse_empty_rows_top_to_bottom_independently:
+      action_priority_rows: true
+      policy_priority_rows: true
+
+  detailed_priority_movement_resolution:
+    execute_highest_priority_action: true
+    tie_breaker_within_same_priority_level: closest_to_row_token
+    if_selected_action_cannot_be_performed_take_next_priority_action: true
+    if_next_priority_action_also_cannot_be_performed_execute: APPLY_POLITICAL_PRESSURE
+    after_executing_selected_action_move_its_priority_card_down_rows: 2
+    if_executed_action_was_not_topmost_only_executed_action_card_moves_down: true
+
+worker_automa:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: worker_automa_complex_mode_initial_priorities
+  source_status: explicit_from_rules
+  complex_mode_initial_priorities:
+    action_priorities:
+      row_1: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS]
+      row_2: [DEMONSTRATION, STRIKE, SPECIAL_ACTION]
+    policy_priorities:
+      row_1: [POLICY_1_FISCAL, POLICY_5_EDUCATION]
+      row_2: [POLICY_2_LABOR_MARKET, POLICY_4_HEALTHCARE_AND_BENEFITS, POLICY_6_FOREIGN_TRADE]
+      row_3: [POLICY_3_TAXATION, POLICY_7_IMMIGRATION]
+
+capitalist_automa:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: capitalist_automa_complex_mode_initial_priorities
+  source_status: explicit_from_rules
+  complex_mode_initial_priorities:
+    action_priorities:
+      row_1: [PROPOSE_BILL, SELL_TO_FOREIGN_MARKET, BUILD_COMPANY]
+      row_2: [SELL_COMPANY, LOBBY, SPECIAL_ACTION]
+    policy_priorities:
+      row_1: [POLICY_3_TAXATION]
+      row_2: [POLICY_2_LABOR_MARKET, POLICY_4_HEALTHCARE_AND_BENEFITS, POLICY_6_FOREIGN_TRADE, POLICY_7_IMMIGRATION]
+      row_3: [POLICY_1_FISCAL, POLICY_5_EDUCATION]
+
+middle_class_automa:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: middle_class_automa_complex_mode_initial_priorities
+  source_status: explicit_from_rules
+  complex_mode_initial_priorities:
+    action_priorities:
+      row_1: [ASSIGN_WORKERS, BUILD_COMPANY, BUY_GOODS_AND_SERVICES]
+      row_2: [PROPOSE_BILL, SELL_TO_FOREIGN_MARKET, SPECIAL_ACTION]
+    policy_priorities:
+      row_1: [POLICY_1_FISCAL, POLICY_3_TAXATION, POLICY_5_EDUCATION, POLICY_7_IMMIGRATION]
+      row_2: [POLICY_2_LABOR_MARKET, POLICY_4_HEALTHCARE_AND_BENEFITS, POLICY_6_FOREIGN_TRADE]
+
+last_round_rules:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: automa_round_5_special_rules
+  source_status: explicit_from_rules
+  automa_does_not_propose_bills_for_policy_7: true
+
+  complex_mode_round_5_start:
+    remove_migration_policy_priority_card_from_game: true
+
+  policy_6_bill_proposal_condition:
+    automa_proposes_bill_only_if_can_call_extraordinary_vote: true
+
+  final_round_voting_phase:
+    all_automas_spend_all_influence: true
+
+unknowns_classification:
+  runtime_randomized: []
+  not_required_for_rules_engine_v1: []
+  still_needs_source_extraction: []

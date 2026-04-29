@@ -1,0 +1,29 @@
+{
+  "cards": [
+    { "cardId": "migration-card-01", "sequence": 1, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "RED" } },
+    { "cardId": "migration-card-02", "sequence": 2, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "ORANGE" } },
+    { "cardId": "migration-card-03", "sequence": 3, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "BLUE" } },
+    { "cardId": "migration-card-04", "sequence": 4, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "GREEN" } },
+    { "cardId": "migration-card-05", "sequence": 5, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "PURPLE" } },
+    { "cardId": "migration-card-06", "sequence": 6, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "RED" } },
+    { "cardId": "migration-card-07", "sequence": 7, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "ORANGE" } },
+    { "cardId": "migration-card-08", "sequence": 8, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "BLUE" } },
+    { "cardId": "migration-card-09", "sequence": 9, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "GREEN" } },
+    { "cardId": "migration-card-10", "sequence": 10, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "PURPLE" } },
+    { "cardId": "migration-card-11", "sequence": 11, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "RED" } },
+    { "cardId": "migration-card-12", "sequence": 12, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "ORANGE" } },
+    { "cardId": "migration-card-13", "sequence": 13, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "BLUE" } },
+    { "cardId": "migration-card-14", "sequence": 14, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "GREEN" } },
+    { "cardId": "migration-card-15", "sequence": 15, "workerEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" }, "middleClassEntry": { "qualificationType": "SKILLED", "sector": "PURPLE" } },
+    { "cardId": "migration-card-16", "sequence": 16, "workerEntry": { "qualificationType": "SKILLED", "sector": "RED" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-17", "sequence": 17, "workerEntry": { "qualificationType": "SKILLED", "sector": "ORANGE" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-18", "sequence": 18, "workerEntry": { "qualificationType": "SKILLED", "sector": "BLUE" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-19", "sequence": 19, "workerEntry": { "qualificationType": "SKILLED", "sector": "GREEN" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-20", "sequence": 20, "workerEntry": { "qualificationType": "SKILLED", "sector": "PURPLE" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-21", "sequence": 21, "workerEntry": { "qualificationType": "SKILLED", "sector": "RED" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-22", "sequence": 22, "workerEntry": { "qualificationType": "SKILLED", "sector": "ORANGE" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-23", "sequence": 23, "workerEntry": { "qualificationType": "SKILLED", "sector": "BLUE" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-24", "sequence": 24, "workerEntry": { "qualificationType": "SKILLED", "sector": "GREEN" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } },
+    { "cardId": "migration-card-25", "sequence": 25, "workerEntry": { "qualificationType": "SKILLED", "sector": "PURPLE" }, "middleClassEntry": { "qualificationType": "UNSKILLED", "sector": "GENERAL" } }
+  ]
+}

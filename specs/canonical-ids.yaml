@@ -1,0 +1,71 @@
+version: 1.2
+source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+source_section: canonical_machine_ids_and_enums
+source_status: derived_from_rules
+source_derivation_logic: >
+  ids_and_enums_are_normalized_from_current_v1_2_specs_to_support_validation,
+  schema_generation_and_test_cases_without_changing_rule_semantics.
+
+policy_course_values: [A, B, C]
+
+player_class_ids:
+  - worker
+  - middle_class
+  - capitalist
+  - state
+
+policy_ids:
+  - policy_1_fiscal
+  - policy_2_labor_market
+  - policy_3_taxation
+  - policy_4_healthcare_and_benefits
+  - policy_5_education
+  - policy_6_foreign_trade
+  - policy_7_immigration
+
+action_ids_validation_layer:
+  - propose_bill
+  - assign_workers
+  - build_enterprise
+  - sell_enterprise
+  - buy_goods_and_services
+  - strike
+  - demonstration
+  - refill_voting_bag
+  - resolve_vote
+
+action_ids_automa_priority:
+  - PROPOSE_BILL
+  - BUY_GOODS_AND_SERVICES
+  - ASSIGN_WORKERS
+  - DEMONSTRATION
+  - STRIKE
+  - SPECIAL_ACTION
+  - SELL_TO_FOREIGN_MARKET
+  - BUILD_COMPANY
+  - SELL_COMPANY
+  - LOBBY
+
+failure_reason_codes:
+  - BILL_TARGET_POLICY_NOT_FOUND
+  - BILL_TARGET_COURSE_NOT_ADJACENT
+  - BILL_TARGET_POLICY_ALREADY_HAS_PROPOSAL_TOKEN
+  - ENTERPRISE_NOT_FOUND
+  - ENTERPRISE_PARTIAL_FILL_NOT_ALLOWED
+  - ENTERPRISE_SKILLED_SLOT_MISMATCH
+  - WORKER_TIED_CONTRACT_REASSIGNMENT_FORBIDDEN
+  - ENTERPRISE_HAS_TIED_CONTRACT_WORKERS_CANNOT_SELL
+  - UNION_THRESHOLD_NOT_MET
+  - UNION_CLOSED_WORKER_TO_UNEMPLOYMENT
+  - PURCHASE_RESOURCE_TYPE_REQUIRED
+  - PURCHASE_MAX_TWO_SUPPLIERS_EXCEEDED
+  - PURCHASE_PER_SUPPLIER_POPULATION_LIMIT_EXCEEDED
+  - VOTING_BAG_REFILL_REQUIRED
+  - VOTING_CUBE_DRAW_FAILED
+  - ACTION_NOT_LEGAL_IN_CURRENT_PHASE
+  - ACTION_NOT_AVAILABLE_FALLBACK_APPLY_POLITICAL_PRESSURE
+
+unknown_classification_ids:
+  - runtime_randomized
+  - not_required_for_rules_engine_v1
+  - still_needs_source_extraction

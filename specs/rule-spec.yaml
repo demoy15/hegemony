@@ -1,0 +1,231 @@
+﻿version: 1
+source_of_truth:
+  allowed_sources:
+    - hegemony_base_rules
+    - hegemony_crisis_and_control_expansion
+  external_sources_allowed: false
+
+unknown_marker: UNKNOWN
+
+round_structure:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: round_structure_and_phases
+  source_status: explicit_from_rules
+  total_rounds: 5
+  phases_in_order:
+    - preparation
+    - actions
+    - production
+    - voting
+    - scoring
+  preparation_phase_skipped_in_round: 1
+
+turn_order:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: actions_phase_turn_order_and_turn_count
+  source_status: explicit_from_rules
+  actions_phase_order:
+    - worker
+    - middle_class
+    - capitalist
+    - state
+  actions_phase_order_applies_to_active_players_only: true
+  turns_per_player_in_actions_phase: 5
+  cards_remaining_in_hand_after_actions_phase: 2
+
+production_order:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: production_phase_order_and_stages
+  source_status: explicit_from_rules
+  order:
+    - state
+    - capitalist
+    - middle_class
+    - worker
+  order_applies_to_active_players_only: true
+  stages:
+    - produce_goods_and_services
+    - satisfy_needs
+    - check_imf_intervention
+    - pay_taxes
+
+taxation:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: production_phase_pay_taxes_worker_income_matrix
+  source_status: explicit_from_rules_slice
+  worker_income_tax_matrix:
+    description: >
+      Rows = policy_2_labor_market current course, columns = policy_3_taxation current course.
+      Values are worker income tax rate per population unit in the current MVP slice.
+    policy_2_labor_market_to_policy_3_taxation:
+      A:
+        A: 0
+        B: 1
+        C: 2
+      B:
+        A: 1
+        B: 2
+        C: 3
+      C:
+        A: 2
+        B: 3
+        C: 4
+
+voting_rules:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: voting_phase_refill_draw_and_skip_rules
+  source_status: explicit_from_rules
+  voting_phase_steps:
+    - refill_bag
+    - resolve_votes
+  skip_voting_phase_if_no_bills_proposed_in_actions_phase: true
+
+  refill_bag_formulas:
+    worker: ceil(population / 2)
+    capitalist: ceil(functioning_enterprises / 2)
+    middle_class: ceil(max(population / 2, functioning_enterprises / 2))
+
+  functioning_enterprises_definition:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: enterprise_binary_functioning_state_and_post_assignment_check
+    source_status: derived_from_rules
+    source_derivation_logic: >
+      existing canonical constraints already define binary enterprise state and
+      post-assign-workers recalculation timing; voting formulas consume that state.
+    definition: >
+      count_of_enterprises_with_fully_functioning_state_true_after_post_assignment_check
+
+  two_player_additional_middle_class_cubes_added_to_bag: 5
+
+  state_voting_mechanics:
+    state_adds_cubes_to_bag: 0
+    state_gains_influence_formula: min(legitimacy_worker, legitimacy_middle_class, legitimacy_capitalist)
+
+  cubes_drawn_per_vote: 5
+  draw_and_discard_cubes_even_if_all_players_vote_identically: true
+
+  empty_bag_resolution:
+    refill_bag_step_repetitions_before_drawing: 2
+    then_draw_cubes: true
+
+action_specs:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: action_restrictions_and_assign_workers_constraints
+  source_status: explicit_from_rules
+  propose_bill:
+    policy_course_step_distance_allowed: adjacent_only
+    target_policy_with_existing_bill_token_allowed: false
+
+  assign_workers:
+    enterprise_partial_fill_allowed: false
+    enterprise_state_model: binary_fully_functioning_or_not
+    enterprise_functioning_status_check_timing: after_assign_workers_action_resolves
+    skilled_slots_require_matching_skilled_worker_by_industry: true
+    tied_contract_worker_reassignment_allowed: false
+
+  enterprise_transfer:
+    selling_enterprise_with_any_tied_contract_workers_allowed: false
+
+  union_rules:
+    create_union_requires_workers_in_industry_at_least: 4
+    if_workers_in_industry_drop_below_threshold_union_worker_goes_to_unemployment_immediately: true
+
+  buy_goods_and_services:
+    choose_exactly_one_resource_or_service_type: true
+    max_suppliers_per_purchase_action: 2
+    max_units_from_each_supplier_per_purchase_action: population
+
+constraints:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: mandatory_rule_constraints
+  source_status: explicit_from_rules
+  rules:
+    - id: bill_adjacent_course_only
+      rule: law_bill_can_be_proposed_only_to_adjacent_course
+    - id: one_bill_token_per_policy
+      rule: cannot_propose_bill_on_policy_with_existing_bill_token
+    - id: enterprise_binary_functioning_state
+      rule: enterprise_is_either_fully_functioning_or_fully_not_functioning
+    - id: no_partial_enterprise_fill
+      rule: partial_staffing_of_enterprise_is_not_allowed
+    - id: enterprise_status_check_after_assignment
+      rule: fully_or_not_fully_functioning_check_occurs_after_assign_workers_action
+    - id: skilled_slot_matching
+      rule: skilled_slots_require_matching_industry_skilled_workers
+    - id: tied_contract_worker_lock
+      rule: worker_under_tied_contract_cannot_be_reassigned
+    - id: tied_contract_sale_block
+      rule: enterprise_with_tied_contract_workers_cannot_be_sold
+    - id: union_creation_threshold
+      rule: union_can_be_created_only_if_industry_has_at_least_4_occupied_workers
+    - id: union_immediate_loss_below_threshold
+      rule: if_industry_workers_drop_below_4_union_worker_immediately_moves_to_unemployment
+    - id: purchase_single_type
+      rule: purchase_action_selects_exactly_one_resource_or_service_type
+    - id: purchase_max_two_suppliers
+      rule: purchase_action_can_use_at_most_two_suppliers
+    - id: purchase_cap_per_supplier
+      rule: from_each_supplier_buy_at_most_current_population_units
+
+edge_cases:
+  source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+  source_section: phase_skips_special_conditions_and_imf_resolution
+  source_status: explicit_from_rules
+  preparation_phase_round_1:
+    rule: skip_preparation_phase_in_round_1
+
+  voting_phase_no_bills:
+    condition: no_bills_proposed_in_actions_phase
+    result: skip_entire_voting_phase
+
+  voting_unanimous_choice:
+    rule: still_draw_and_discard_5_cubes
+
+  voting_empty_bag:
+    rule: execute_refill_step_twice_then_draw_cubes
+
+  state_without_player_slot:
+    rule: state_sector_treasury_and_public_services_still_exist_on_board
+
+  imf_intervention_standard_flow:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: production_stage_check_imf_intervention
+    source_status: explicit_from_rules
+    steps:
+      - check_state_loans_against_current_fiscal_policy_threshold
+      - if_exceeded_attempt_repay_55_per_loan
+      - if_state_still_exceeds_allowed_loans_after_repayment_imf_intervention_occurs
+
+  anti_crisis_measures_mini_expansion_override:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: anti_crisis_measures_imf_override
+    source_status: explicit_from_rules
+    applies_when_enabled: true
+    replaces_standard_imf_flow: true
+    steps:
+      - discard_specified_proposal_tokens
+      - change_specified_policy_courses
+      - resolve_additional_effects_in_order
+      - repay_loans
+      - reduce_legitimacy
+
+  anti_crisis_measures_lock_tokens:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: anti_crisis_measures_policy_lock_tokens
+    source_status: explicit_from_rules
+    rules:
+      - if_anti_crisis_card_sets_policy_change_prohibition_place_lock_token_on_policy
+      - while_lock_token_present_players_cannot_propose_bills_for_that_policy
+      - at_next_imf_check_remove_all_lock_tokens
+
+  unknowns:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: unresolved_terms_not_explicitly_defined_in_task_text
+    source_status: unknown
+    full_action_catalog_beyond_explicit_constraints: UNKNOWN
+
+unknowns_classification:
+  runtime_randomized: []
+  not_required_for_rules_engine_v1:
+    - full_action_catalog_beyond_explicit_constraints
+  still_needs_source_extraction: []

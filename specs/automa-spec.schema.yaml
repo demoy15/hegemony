@@ -1,0 +1,68 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://hegemony.local/specs/automa-spec.schema.yaml"
+title: "Hegemony Automa Spec Schema v1.2"
+type: object
+required:
+  - version
+  - source_of_truth
+  - unknown_marker
+  - general_setup_rules
+  - simple_mode
+  - complex_mode
+  - worker_automa
+  - capitalist_automa
+  - middle_class_automa
+  - last_round_rules
+properties:
+  version:
+    type: [number, string]
+  source_of_truth:
+    type: object
+    required: [allowed_sources, external_sources_allowed]
+  unknown_marker:
+    type: string
+    enum: [UNKNOWN]
+
+  general_setup_rules:
+    type: object
+    required:
+      - automas_available
+      - setup_game_as_full_player_composition_when_using_automa
+      - automa_uses_dedicated_automa_cards
+  simple_mode:
+    type: object
+    required: [automa_action_cards_count]
+  complex_mode:
+    type: object
+    required:
+      - priority_layout
+      - checks_and_priority_movement_system_used
+      - detailed_check_resolution
+      - detailed_priority_movement_resolution
+  worker_automa:
+    type: object
+    required: [complex_mode_initial_priorities]
+  capitalist_automa:
+    type: object
+    required: [complex_mode_initial_priorities]
+  middle_class_automa:
+    type: object
+    required: [complex_mode_initial_priorities]
+  last_round_rules:
+    type: object
+    required:
+      - automa_does_not_propose_bills_for_policy_7
+      - policy_6_bill_proposal_condition
+      - final_round_voting_phase
+
+  unknowns_classification:
+    type: object
+    additionalProperties:
+      type: array
+      items:
+        type: string
+
+$defs:
+  sourceStatus:
+    type: string
+    enum: [explicit_from_rules, derived_from_rules, unknown]

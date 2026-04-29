@@ -1,0 +1,72 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://hegemony.local/specs/rule-spec.schema.yaml"
+title: "Hegemony Rule Spec Schema v1.2"
+type: object
+required:
+  - version
+  - source_of_truth
+  - unknown_marker
+  - round_structure
+  - turn_order
+  - production_order
+  - voting_rules
+  - action_specs
+  - constraints
+  - edge_cases
+properties:
+  version:
+    type: [number, string]
+  source_of_truth:
+    type: object
+    required: [allowed_sources, external_sources_allowed]
+  unknown_marker:
+    type: string
+    enum: [UNKNOWN]
+
+  round_structure:
+    type: object
+    required: [total_rounds, phases_in_order]
+  turn_order:
+    type: object
+    required: [actions_phase_order, turns_per_player_in_actions_phase]
+  production_order:
+    type: object
+    required: [order, stages]
+  voting_rules:
+    type: object
+    required: [voting_phase_steps, refill_bag_formulas, cubes_drawn_per_vote]
+  action_specs:
+    type: object
+    required:
+      - propose_bill
+      - assign_workers
+      - buy_goods_and_services
+  constraints:
+    type: object
+    required: [rules]
+    properties:
+      rules:
+        type: array
+        items:
+          type: object
+          required: [id, rule]
+          properties:
+            id: { type: string }
+            rule: { type: string }
+  edge_cases:
+    type: object
+
+  unknowns_classification:
+    type: object
+    additionalProperties:
+      type: array
+      items:
+        type: string
+
+$defs:
+  policyCourse:
+    type: string
+    enum: [A, B, C]
+  sourceStatus:
+    type: string
+    enum: [explicit_from_rules, derived_from_rules, unknown]

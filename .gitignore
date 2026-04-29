@@ -1,0 +1,7 @@
+backend/.gradle/
+backend/build/
+backend/data/saves/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+data/saves/

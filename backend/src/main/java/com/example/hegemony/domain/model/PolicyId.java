@@ -1,0 +1,11 @@
+package com.example.hegemony.domain.model;
+
+public enum PolicyId {
+    POLICY_1_FISCAL,
+    POLICY_2_LABOR_MARKET,
+    POLICY_3_TAXATION,
+    POLICY_4_HEALTHCARE_AND_BENEFITS,
+    POLICY_5_EDUCATION,
+    POLICY_6_FOREIGN_TRADE,
+    POLICY_7_IMMIGRATION
+}

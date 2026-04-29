@@ -1,0 +1,246 @@
+version: 1.2
+source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+source_section: validation_layer_design_for_rules_engine_v1
+source_status: derived_from_rules
+source_derivation_logic: >
+  validation contract is derived from v1_2 canonical setup/rule/automa specs
+  and is intended as executable engine interface, not new rule extraction.
+
+unknown_marker: UNKNOWN
+
+canonical_action_ids:
+  - propose_bill
+  - assign_workers
+  - build_enterprise
+  - sell_enterprise
+  - buy_goods_and_services
+  - strike
+  - demonstration
+  - refill_voting_bag
+  - resolve_vote
+
+failure_reason_codes:
+  - BILL_TARGET_POLICY_NOT_FOUND
+  - BILL_TARGET_COURSE_NOT_ADJACENT
+  - BILL_TARGET_POLICY_ALREADY_HAS_PROPOSAL_TOKEN
+  - ENTERPRISE_NOT_FOUND
+  - ENTERPRISE_PARTIAL_FILL_NOT_ALLOWED
+  - ENTERPRISE_SKILLED_SLOT_MISMATCH
+  - WORKER_TIED_CONTRACT_REASSIGNMENT_FORBIDDEN
+  - ENTERPRISE_HAS_TIED_CONTRACT_WORKERS_CANNOT_SELL
+  - BUILD_ENTERPRISE_PREREQUISITE_NOT_MET
+  - SELL_ENTERPRISE_NOT_OWNED
+  - PURCHASE_RESOURCE_TYPE_REQUIRED
+  - PURCHASE_MAX_TWO_SUPPLIERS_EXCEEDED
+  - PURCHASE_PER_SUPPLIER_POPULATION_LIMIT_EXCEEDED
+  - STRIKE_PREREQUISITE_NOT_MET
+  - DEMONSTRATION_PREREQUISITE_NOT_MET
+  - VOTING_REFILL_NOT_ALLOWED
+  - VOTING_DRAW_COUNT_MISMATCH
+  - VOTING_BAG_EMPTY_AFTER_REFILL
+
+actions:
+  propose_bill:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: propose_bill_constraints
+    source_status: explicit_from_rules
+    input_state_requirements:
+      - current_phase_is_actions
+      - actor_has_proposal_token
+      - target_policy_id_in_policy_ids
+      - current_policy_course_in_A_B_C
+      - target_policy_course_in_A_B_C
+    legality_checks:
+      - target_policy_exists
+      - target_course_is_adjacent_to_current_course
+      - target_policy_has_no_existing_proposal_token
+      - if_policy_lock_token_present_then_illegal
+    failure_reason_codes:
+      - BILL_TARGET_POLICY_NOT_FOUND
+      - BILL_TARGET_COURSE_NOT_ADJACENT
+      - BILL_TARGET_POLICY_ALREADY_HAS_PROPOSAL_TOKEN
+    expected_state_transitions:
+      - consume_actor_proposal_token
+      - place_proposal_token_on_target_policy
+      - append_event_log_entry
+
+  assign_workers:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: assign_workers_constraints
+    source_status: explicit_from_rules
+    input_state_requirements:
+      - current_phase_is_actions
+      - enterprises_defined_in_state
+      - worker_assignment_payload_present
+    legality_checks:
+      - no_partial_enterprise_fill
+      - skilled_slots_use_matching_skilled_workers
+      - tied_contract_workers_not_reassigned
+    failure_reason_codes:
+      - ENTERPRISE_NOT_FOUND
+      - ENTERPRISE_PARTIAL_FILL_NOT_ALLOWED
+      - ENTERPRISE_SKILLED_SLOT_MISMATCH
+      - WORKER_TIED_CONTRACT_REASSIGNMENT_FORBIDDEN
+    expected_state_transitions:
+      - move_workers_between_locations
+      - recalculate_enterprise_functioning_status_after_action
+      - if_industry_workers_drop_below_4_then_union_worker_to_unemployment
+      - append_event_log_entry
+
+  build_enterprise:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: build_company_action_family
+    source_status: derived_from_rules
+    source_derivation_logic: >
+      action is present in automa priorities and test layer requirements;
+      full numeric cost/payment subrules are not fixed in current v1_2 literals.
+    input_state_requirements:
+      - current_phase_is_actions
+      - actor_has_access_to_relevant_enterprise_market
+      - target_enterprise_card_selected
+    legality_checks:
+      - target_enterprise_card_available_in_market
+      - build_prerequisites_defined_for_selected_card_are_satisfied
+    failure_reason_codes:
+      - ENTERPRISE_NOT_FOUND
+      - BUILD_ENTERPRISE_PREREQUISITE_NOT_MET
+    expected_state_transitions:
+      - add_enterprise_to_actor_board_or_market_slot
+      - update_actor_assets_according_to_card_rules
+      - append_event_log_entry
+    unresolved_details:
+      - concrete_resource_or_money_cost_formula: UNKNOWN
+
+  sell_enterprise:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: sell_enterprise_constraints
+    source_status: explicit_from_rules
+    input_state_requirements:
+      - current_phase_is_actions
+      - target_enterprise_selected
+    legality_checks:
+      - actor_owns_target_enterprise
+      - target_enterprise_has_no_workers_under_tied_contract
+    failure_reason_codes:
+      - SELL_ENTERPRISE_NOT_OWNED
+      - ENTERPRISE_HAS_TIED_CONTRACT_WORKERS_CANNOT_SELL
+    expected_state_transitions:
+      - remove_enterprise_from_actor_ownership
+      - apply_sale_effects_per_card_or_market_rules
+      - append_event_log_entry
+    unresolved_details:
+      - concrete_sale_value_formula: UNKNOWN
+
+  buy_goods_and_services:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: buy_goods_and_services_constraints
+    source_status: explicit_from_rules
+    input_state_requirements:
+      - current_phase_is_actions
+      - selected_resource_or_service_type_present
+      - suppliers_selected
+    legality_checks:
+      - exactly_one_resource_or_service_type_selected
+      - suppliers_count_at_most_2
+      - each_supplier_quantity_at_most_current_population
+    failure_reason_codes:
+      - PURCHASE_RESOURCE_TYPE_REQUIRED
+      - PURCHASE_MAX_TWO_SUPPLIERS_EXCEEDED
+      - PURCHASE_PER_SUPPLIER_POPULATION_LIMIT_EXCEEDED
+    expected_state_transitions:
+      - transfer_selected_goods_or_services
+      - update_money_and_inventory_according_to_prices
+      - append_event_log_entry
+
+  strike:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: strike_action_family
+    source_status: derived_from_rules
+    source_derivation_logic: >
+      strike exists as canonical action id in automa priority sets;
+      v1_2 constraints include union thresholds and workforce effects.
+    input_state_requirements:
+      - current_phase_is_actions
+      - target_industry_or_enterprise_selected
+    legality_checks:
+      - strike_prerequisites_for_target_are_satisfied
+    failure_reason_codes:
+      - STRIKE_PREREQUISITE_NOT_MET
+    expected_state_transitions:
+      - place_or_update_strike_state_marker
+      - recalculate_enterprise_functioning_status_if_required
+      - append_event_log_entry
+    unresolved_details:
+      - strike_trigger_threshold_formula: UNKNOWN
+
+  demonstration:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: demonstration_action_family
+    source_status: derived_from_rules
+    source_derivation_logic: >
+      demonstration is a canonical action id in automa priorities and
+      demonstration token is canonical setup component.
+    input_state_requirements:
+      - current_phase_is_actions
+      - demonstration_target_or_scope_selected
+    legality_checks:
+      - demonstration_prerequisites_satisfied
+    failure_reason_codes:
+      - DEMONSTRATION_PREREQUISITE_NOT_MET
+    expected_state_transitions:
+      - place_or_move_demonstration_token
+      - apply_demonstration_effects_in_defined_order
+      - append_event_log_entry
+    unresolved_details:
+      - exact_demonstration_trigger_threshold: UNKNOWN
+
+  refill_voting_bag:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: voting_refill_step
+    source_status: explicit_from_rules
+    input_state_requirements:
+      - current_phase_is_voting
+      - class_population_and_enterprise_counts_available
+    legality_checks:
+      - compute_worker_addition_as_ceil_population_div_2
+      - compute_capitalist_addition_as_ceil_functioning_enterprises_div_2
+      - compute_middle_class_addition_as_ceil_max_population_div_2_or_functioning_enterprises_div_2
+      - in_2_player_game_add_5_middle_class_cubes
+      - state_does_not_add_cubes_and_gains_influence_equal_min_legitimacy
+    failure_reason_codes:
+      - VOTING_REFILL_NOT_ALLOWED
+    expected_state_transitions:
+      - add_computed_cubes_to_bag
+      - add_state_influence_if_state_class_active
+      - append_event_log_entry
+
+  resolve_vote:
+    source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+    source_section: voting_resolve_step
+    source_status: explicit_from_rules
+    input_state_requirements:
+      - current_phase_is_voting
+      - pending_vote_exists
+    legality_checks:
+      - draw_exactly_5_cubes_per_vote
+      - if_all_players_vote_same_side_still_draw_and_discard_5_cubes
+      - if_bag_empty_execute_refill_twice_then_draw
+    failure_reason_codes:
+      - VOTING_DRAW_COUNT_MISMATCH
+      - VOTING_BAG_EMPTY_AFTER_REFILL
+    expected_state_transitions:
+      - draw_and_discard_5_cubes
+      - resolve_vote_outcome
+      - apply_policy_or_effect_changes_if_vote_passes
+      - append_event_log_entry
+
+unknowns_classification:
+  runtime_randomized:
+    - vote_cube_draw_order
+  not_required_for_rules_engine_v1:
+    - concrete_animation_or_ui_side_effects
+  still_needs_source_extraction:
+    - concrete_numeric_cost_formulas_for_build_enterprise
+    - concrete_numeric_sale_formula_for_sell_enterprise
+    - exact_strike_trigger_threshold
+    - exact_demonstration_trigger_threshold

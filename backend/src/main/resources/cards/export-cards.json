@@ -1,0 +1,244 @@
+{
+  "cards": [
+    {
+      "cardId": "export-card-01",
+      "title": "Export Card 01",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 1,
+      "sourceImageRef": "provided-image-01",
+      "offers": [
+        { "resourceId": "food", "quantity": 4, "revenue": 45 },
+        { "resourceId": "food", "quantity": 8, "revenue": 85 },
+        { "resourceId": "luxury", "quantity": 2, "revenue": 15 },
+        { "resourceId": "luxury", "quantity": 6, "revenue": 40 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 15 },
+        { "resourceId": "healthcare", "quantity": 5, "revenue": 25 },
+        { "resourceId": "education", "quantity": 3, "revenue": 15 },
+        { "resourceId": "education", "quantity": 7, "revenue": 35 }
+      ]
+    },
+    {
+      "cardId": "export-card-02",
+      "title": "Export Card 02",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 2,
+      "sourceImageRef": "provided-image-02",
+      "offers": [
+        { "resourceId": "food", "quantity": 3, "revenue": 35 },
+        { "resourceId": "food", "quantity": 7, "revenue": 80 },
+        { "resourceId": "luxury", "quantity": 3, "revenue": 15 },
+        { "resourceId": "luxury", "quantity": 5, "revenue": 25 },
+        { "resourceId": "healthcare", "quantity": 4, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 8, "revenue": 40 },
+        { "resourceId": "education", "quantity": 2, "revenue": 15 },
+        { "resourceId": "education", "quantity": 6, "revenue": 45 }
+      ]
+    },
+    {
+      "cardId": "export-card-03",
+      "title": "Export Card 03",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 3,
+      "sourceImageRef": "provided-image-03",
+      "offers": [
+        { "resourceId": "food", "quantity": 3, "revenue": 25 },
+        { "resourceId": "food", "quantity": 7, "revenue": 55 },
+        { "resourceId": "luxury", "quantity": 4, "revenue": 25 },
+        { "resourceId": "luxury", "quantity": 8, "revenue": 45 },
+        { "resourceId": "healthcare", "quantity": 2, "revenue": 10 },
+        { "resourceId": "healthcare", "quantity": 6, "revenue": 35 },
+        { "resourceId": "education", "quantity": 3, "revenue": 20 },
+        { "resourceId": "education", "quantity": 5, "revenue": 35 }
+      ]
+    },
+    {
+      "cardId": "export-card-04",
+      "title": "Export Card 04",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 4,
+      "sourceImageRef": "provided-image-04",
+      "offers": [
+        { "resourceId": "food", "quantity": 3, "revenue": 25 },
+        { "resourceId": "food", "quantity": 6, "revenue": 50 },
+        { "resourceId": "luxury", "quantity": 3, "revenue": 20 },
+        { "resourceId": "luxury", "quantity": 7, "revenue": 50 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 7, "revenue": 40 },
+        { "resourceId": "education", "quantity": 2, "revenue": 15 },
+        { "resourceId": "education", "quantity": 7, "revenue": 55 }
+      ]
+    },
+    {
+      "cardId": "export-card-05",
+      "title": "Export Card 05",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 5,
+      "sourceImageRef": "provided-image-05",
+      "offers": [
+        { "resourceId": "food", "quantity": 4, "revenue": 45 },
+        { "resourceId": "food", "quantity": 7, "revenue": 80 },
+        { "resourceId": "luxury", "quantity": 3, "revenue": 20 },
+        { "resourceId": "luxury", "quantity": 5, "revenue": 30 },
+        { "resourceId": "healthcare", "quantity": 2, "revenue": 15 },
+        { "resourceId": "healthcare", "quantity": 6, "revenue": 40 },
+        { "resourceId": "education", "quantity": 3, "revenue": 20 },
+        { "resourceId": "education", "quantity": 7, "revenue": 50 }
+      ]
+    },
+    {
+      "cardId": "export-card-06",
+      "title": "Export Card 06",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 6,
+      "sourceImageRef": "provided-image-06",
+      "offers": [
+        { "resourceId": "food", "quantity": 2, "revenue": 15 },
+        { "resourceId": "food", "quantity": 6, "revenue": 45 },
+        { "resourceId": "luxury", "quantity": 3, "revenue": 20 },
+        { "resourceId": "luxury", "quantity": 7, "revenue": 50 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 5, "revenue": 30 },
+        { "resourceId": "education", "quantity": 4, "revenue": 25 },
+        { "resourceId": "education", "quantity": 8, "revenue": 45 }
+      ]
+    },
+    {
+      "cardId": "export-card-07",
+      "title": "Export Card 07",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 7,
+      "sourceImageRef": "provided-image-07",
+      "offers": [
+        { "resourceId": "food", "quantity": 3, "revenue": 30 },
+        { "resourceId": "food", "quantity": 7, "revenue": 70 },
+        { "resourceId": "luxury", "quantity": 4, "revenue": 30 },
+        { "resourceId": "luxury", "quantity": 6, "revenue": 40 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 5, "revenue": 35 },
+        { "resourceId": "education", "quantity": 2, "revenue": 15 },
+        { "resourceId": "education", "quantity": 6, "revenue": 35 }
+      ]
+    },
+    {
+      "cardId": "export-card-08",
+      "title": "Export Card 08",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 8,
+      "sourceImageRef": "provided-image-08",
+      "offers": [
+        { "resourceId": "food", "quantity": 2, "revenue": 25 },
+        { "resourceId": "food", "quantity": 6, "revenue": 65 },
+        { "resourceId": "luxury", "quantity": 4, "revenue": 20 },
+        { "resourceId": "luxury", "quantity": 7, "revenue": 35 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 7, "revenue": 40 },
+        { "resourceId": "education", "quantity": 3, "revenue": 25 },
+        { "resourceId": "education", "quantity": 6, "revenue": 45 }
+      ]
+    },
+    {
+      "cardId": "export-card-09",
+      "title": "Export Card 09",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 9,
+      "sourceImageRef": "provided-image-09",
+      "offers": [
+        { "resourceId": "food", "quantity": 4, "revenue": 50 },
+        { "resourceId": "food", "quantity": 8, "revenue": 95 },
+        { "resourceId": "luxury", "quantity": 3, "revenue": 20 },
+        { "resourceId": "luxury", "quantity": 5, "revenue": 30 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 15 },
+        { "resourceId": "healthcare", "quantity": 7, "revenue": 35 },
+        { "resourceId": "education", "quantity": 2, "revenue": 15 },
+        { "resourceId": "education", "quantity": 6, "revenue": 40 }
+      ]
+    },
+    {
+      "cardId": "export-card-10",
+      "title": "Export Card 10",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 10,
+      "sourceImageRef": "provided-image-10",
+      "offers": [
+        { "resourceId": "food", "quantity": 2, "revenue": 20 },
+        { "resourceId": "food", "quantity": 6, "revenue": 55 },
+        { "resourceId": "luxury", "quantity": 4, "revenue": 30 },
+        { "resourceId": "luxury", "quantity": 8, "revenue": 55 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 25 },
+        { "resourceId": "healthcare", "quantity": 5, "revenue": 40 },
+        { "resourceId": "education", "quantity": 3, "revenue": 15 },
+        { "resourceId": "education", "quantity": 7, "revenue": 35 }
+      ]
+    },
+    {
+      "cardId": "export-card-11",
+      "title": "Export Card 11",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 11,
+      "sourceImageRef": "provided-image-11",
+      "offers": [
+        { "resourceId": "food", "quantity": 3, "revenue": 35 },
+        { "resourceId": "food", "quantity": 7, "revenue": 75 },
+        { "resourceId": "luxury", "quantity": 2, "revenue": 10 },
+        { "resourceId": "luxury", "quantity": 6, "revenue": 35 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 5, "revenue": 35 },
+        { "resourceId": "education", "quantity": 4, "revenue": 25 },
+        { "resourceId": "education", "quantity": 7, "revenue": 40 }
+      ]
+    },
+    {
+      "cardId": "export-card-12",
+      "title": "Export Card 12",
+      "description": "Food, luxury, healthcare and education export offers.",
+      "availableOperations": 8,
+      "activatedRound": 0,
+      "placeholder": false,
+      "sequence": 12,
+      "sourceImageRef": "provided-image-12",
+      "offers": [
+        { "resourceId": "food", "quantity": 3, "revenue": 30 },
+        { "resourceId": "food", "quantity": 5, "revenue": 50 },
+        { "resourceId": "luxury", "quantity": 3, "revenue": 25 },
+        { "resourceId": "luxury", "quantity": 7, "revenue": 55 },
+        { "resourceId": "healthcare", "quantity": 3, "revenue": 20 },
+        { "resourceId": "healthcare", "quantity": 6, "revenue": 50 },
+        { "resourceId": "education", "quantity": 3, "revenue": 20 },
+        { "resourceId": "education", "quantity": 7, "revenue": 50 }
+      ]
+    }
+  ]
+}

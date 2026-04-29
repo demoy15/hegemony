@@ -1,0 +1,40 @@
+{
+  "cards": [
+    {
+      "id": "SUBSIDY_PUSH",
+      "name": "Subsidy Push",
+      "description": "Receive a small one-time subsidy.",
+      "effects": [
+        {
+          "type": "GAIN_MONEY",
+          "amount": 2
+        }
+      ],
+      "customResolver": null
+    },
+    {
+      "id": "WORKER_COOP",
+      "name": "Worker Cooperative",
+      "description": "Gain one good from coordinated labor.",
+      "effects": [
+        {
+          "type": "GAIN_GOODS",
+          "amount": 1
+        }
+      ],
+      "customResolver": null
+    },
+    {
+      "id": "MARKET_STIMULUS",
+      "name": "Market Stimulus",
+      "description": "Temporary policy pressure lowers taxation by 1.",
+      "effects": [
+        {
+          "type": "ADJUST_TAXATION",
+          "amount": -1
+        }
+      ],
+      "customResolver": null
+    }
+  ]
+}

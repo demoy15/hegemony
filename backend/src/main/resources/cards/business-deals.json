@@ -1,0 +1,138 @@
+{
+  "cards": [
+    {
+      "id": "business-deal-01",
+      "sequence": 1,
+      "title": "Business Deal 01",
+      "requirements": [
+        { "resourceId": "food", "amount": 7 },
+        { "resourceId": "luxury", "amount": 5 }
+      ],
+      "payout": 70,
+      "thresholdAmount": 6,
+      "policyABonus": 24,
+      "policyBBonus": 12,
+      "sourceImageRef": "provided-image-01"
+    },
+    {
+      "id": "business-deal-02",
+      "sequence": 2,
+      "title": "Business Deal 02",
+      "requirements": [
+        { "resourceId": "food", "amount": 7 }
+      ],
+      "payout": 50,
+      "thresholdAmount": 6,
+      "policyABonus": 14,
+      "policyBBonus": 7,
+      "sourceImageRef": "provided-image-02"
+    },
+    {
+      "id": "business-deal-03",
+      "sequence": 3,
+      "title": "Business Deal 03",
+      "requirements": [
+        { "resourceId": "luxury", "amount": 12 }
+      ],
+      "payout": 50,
+      "thresholdAmount": 6,
+      "policyABonus": 24,
+      "policyBBonus": 12,
+      "sourceImageRef": "provided-image-03"
+    },
+    {
+      "id": "business-deal-04",
+      "sequence": 4,
+      "title": "Business Deal 04",
+      "requirements": [
+        { "resourceId": "luxury", "amount": 10 }
+      ],
+      "payout": 40,
+      "thresholdAmount": 6,
+      "policyABonus": 20,
+      "policyBBonus": 10,
+      "sourceImageRef": "provided-image-04"
+    },
+    {
+      "id": "business-deal-05",
+      "sequence": 5,
+      "title": "Business Deal 05",
+      "requirements": [
+        { "resourceId": "food", "amount": 5 },
+        { "resourceId": "luxury", "amount": 6 }
+      ],
+      "payout": 60,
+      "thresholdAmount": 6,
+      "policyABonus": 22,
+      "policyBBonus": 11,
+      "sourceImageRef": "provided-image-05"
+    },
+    {
+      "id": "business-deal-06",
+      "sequence": 6,
+      "title": "Business Deal 06",
+      "requirements": [
+        { "resourceId": "food", "amount": 8 },
+        { "resourceId": "luxury", "amount": 4 }
+      ],
+      "payout": 75,
+      "thresholdAmount": 6,
+      "policyABonus": 24,
+      "policyBBonus": 12,
+      "sourceImageRef": "provided-image-06"
+    },
+    {
+      "id": "business-deal-07",
+      "sequence": 7,
+      "title": "Business Deal 07",
+      "requirements": [
+        { "resourceId": "food", "amount": 6 }
+      ],
+      "payout": 40,
+      "thresholdAmount": 6,
+      "policyABonus": 12,
+      "policyBBonus": 6,
+      "sourceImageRef": "provided-image-07"
+    },
+    {
+      "id": "business-deal-08",
+      "sequence": 8,
+      "title": "Business Deal 08",
+      "requirements": [
+        { "resourceId": "food", "amount": 8 }
+      ],
+      "payout": 55,
+      "thresholdAmount": 6,
+      "policyABonus": 16,
+      "policyBBonus": 8,
+      "sourceImageRef": "provided-image-08"
+    },
+    {
+      "id": "business-deal-09",
+      "sequence": 9,
+      "title": "Business Deal 09",
+      "requirements": [
+        { "resourceId": "food", "amount": 4 },
+        { "resourceId": "luxury", "amount": 8 }
+      ],
+      "payout": 60,
+      "thresholdAmount": 6,
+      "policyABonus": 24,
+      "policyBBonus": 12,
+      "sourceImageRef": "provided-image-09"
+    },
+    {
+      "id": "business-deal-10",
+      "sequence": 10,
+      "title": "Business Deal 10",
+      "requirements": [
+        { "resourceId": "luxury", "amount": 8 }
+      ],
+      "payout": 30,
+      "thresholdAmount": 6,
+      "policyABonus": 16,
+      "policyBBonus": 8,
+      "sourceImageRef": "provided-image-10"
+    }
+  ]
+}

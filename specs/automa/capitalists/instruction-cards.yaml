@@ -1,0 +1,284 @@
+instruction_cards:
+  - id: capitalist_condition_build_enterprise
+    automa: CAPITALISTS
+    type: CONDITION_ACTION
+    applies_to: BUILD_ENTERPRISE
+    mode: BOTH
+    raw_text_ru: |
+      На рынке должно быть 1 доступное для постройки предприятие или больше,
+      а на поле — 1 пустая клетка или больше.
+
+      Простой режим: чтобы сделать его функционирующим, также нужны доступные работники
+      либо предприятие должно быть автоматизированным.
+      Если вы не можете построить предприятие и у вас есть 1 нефункционирующее предприятие
+      или больше, которое вы можете продать за 20 ₩ или больше, выполните действие
+      «Продать предприятие».
+
+      Продать на внешнем рынке: вы должны быть в состоянии совершить 2 или больше
+      операций по текущей карте экспорта.
+    structured_rules:
+      - kind: precondition
+        all:
+          - market_has_buildable_enterprise: true
+          - empty_board_slot_at_least: 1
+      - kind: simple_mode_extra_precondition
+        any:
+          - enterprise_can_be_functioning_after_build: true
+          - enterprise_is_automated: true
+      - kind: fallback_if_cannot_build
+        if:
+          - cannot_perform: BUILD_ENTERPRISE
+          - owned_non_functioning_enterprise_sell_value_at_least: 20
+        then:
+          perform: SELL_ENTERPRISE
+      - kind: related_condition
+        applies_to: SELL_ON_EXTERNAL_MARKET
+        require:
+          export_operations_available_at_least: 2
+
+  - id: capitalist_condition_assign_workers
+    automa: CAPITALISTS
+    type: CONDITION_ACTION
+    applies_to: ASSIGN_WORKERS
+    mode: BOTH
+    raw_text_ru: |
+      Некоторые эффекты позволяют вам назначать работников на свои нефункционирующие
+      предприятия. В таких случаях выберите предприятие, куда вы их назначите, учитывая:
+      - у вас нет функционирующих предприятий в этой отрасли;
+      - не выполняются условия для создания профсоюза;
+      - СМИ;
+      - здравоохранение/образование (та из соответствующих услуг, которая не производится
+        государством, или та, которая дороже, или случайная из 2);
+      - сельское хозяйство;
+      - люкс-сегмент;
+      - случайное.
+    structured_rules:
+      - kind: target_selection
+        applies_to: ASSIGN_WORKERS
+        choose_one_by_priority:
+          - no_functioning_enterprise_in_same_industry
+          - does_not_enable_union_creation
+          - industry_media
+          - service_not_produced_by_state_or_more_expensive_or_random_between_two
+          - industry_food
+          - industry_luxury
+          - random
+
+  - id: capitalist_condition_propose_bill
+    automa: CAPITALISTS
+    type: CONDITION_ACTION
+    applies_to: PROPOSE_BILL
+    mode: BOTH
+    raw_text_ru: |
+      Внести законопроект.
+      Простой режим: у вас должна быть доступная фишка законопроекта,
+      и на карте автомы должен быть указан политический курс не являющийся
+      предпочтительным.
+      Сложный режим: у вас должна быть доступная фишка законопроекта, и карта
+      приоритета политики должна находиться в ряду приоритета больше чем все
+      остальные.
+      Лоббировать свои интересы.
+      Простой режим: ваше влияние меньше влияния всех соперников.
+      Особое действие: 1-е условие для получения бонуса на карте автомы выполнено.
+    structured_rules:
+      - kind: simple_mode_precondition
+        require:
+          available_bill_token: true
+          card_targets_non_preferred_policy_course: true
+      - kind: complex_mode_precondition
+        require:
+          available_bill_token: true
+          top_priority_policy_card_selected: true
+      - kind: related_condition
+        applies_to: LOBBY_INTERESTS
+        require:
+          own_influence_less_than_all_opponents: true
+      - kind: special_action_gate
+        require:
+          first_bonus_condition_on_action_card_fulfilled: true
+
+  - id: capitalist_check_external_market
+    automa: CAPITALISTS
+    type: CHECK
+    applies_to: SELL_ON_EXTERNAL_MARKET
+    mode: COMPLEX
+    raw_text_ru: |
+      Проверьте текущую карту экспорта, чтобы узнать, сможете ли вы продать
+      на внешнем рынке:
+      - вы можете совершить 2 или больше операций: ПВР +1 / операция, ОД +1;
+      - иначе: ОД +1.
+    structured_rules:
+      - kind: priority_shift
+        if:
+          export_operations_available_at_least: 2
+        then:
+          - increase_priority:
+              code: BUILD_ENTERPRISE_PRIORITY
+              disabled: true
+          - increase_priority:
+              code: SELL_ON_EXTERNAL_MARKET_PRIORITY
+              per_export_operation: 1
+          - increase_priority:
+              code: SPECIAL_ACTION_PRIORITY
+              amount: 1
+      - kind: else_priority_shift
+        then:
+          - increase_priority:
+              code: SPECIAL_ACTION_PRIORITY
+              amount: 1
+    notes:
+      - "Для ПВР использовать код SELL_ON_EXTERNAL_MARKET_PRIORITY."
+
+  - id: capitalist_check_enterprise
+    automa: CAPITALISTS
+    type: CHECK
+    applies_to: BUILD_ENTERPRISE
+    mode: COMPLEX
+    raw_text_ru: |
+      Для каждого предприятия на рынке, для которого вы можете оплатить постройку:
+      - автоматизированное либо есть безработные, которые могут занять все рабочие места: ПП +1
+        / ост. 2 фазы пр-ва;
+      - также производит ресурс, который в текущий момент не можете произвести: ПП +1;
+      - затем проверьте следующее: сейчас идёт демонстрация: ПП +3, ОД +1;
+      - если после ответов на предыдущие вопросы карта приоритета переместилась на 1 ряд или меньше:
+        для каждого своего нефункционирующего предприятия проверьте следующее:
+        если вы продадите его, получите 20 ₩ или больше: ПП +1 / 10 ₩.
+    structured_rules:
+      - kind: per_market_enterprise
+        for_each_buildable_enterprise: true
+        if_any:
+          - enterprise_is_automated: true
+          - enough_unemployed_to_fill_all_slots: true
+        then:
+          - increase_priority:
+              code: BUILD_ENTERPRISE_PRIORITY
+              amount: 1
+              note: "bonus if <= 2 phases of production remain"
+      - kind: per_market_enterprise
+        if:
+          produces_resource_currently_unavailable_to_automa: true
+        then:
+          - increase_priority:
+              code: BUILD_ENTERPRISE_PRIORITY
+              amount: 1
+      - kind: global_check
+        if:
+          demonstration_is_active: true
+        then:
+          - increase_priority:
+              code: BUILD_ENTERPRISE_PRIORITY
+              amount: 3
+          - increase_priority:
+              code: SPECIAL_ACTION_PRIORITY
+              amount: 1
+      - kind: fallback_enterprise_sale_probe
+        if:
+          resulting_priority_shift_for_build_enterprise_at_most_rows: 1
+        then:
+          for_each_owned_non_functioning_enterprise: true
+          if:
+            sell_value_at_least: 20
+          then:
+            - increase_priority:
+                code: BUILD_ENTERPRISE_PRIORITY
+                per_10_money: 1
+
+  - id: capitalist_react_to_strike
+    automa: CAPITALISTS
+    type: REACTION
+    applies_to: REACT_TO_STRIKE
+    mode: BOTH
+    raw_text_ru: |
+      Для каждого предприятия с жетоном забастовки проверьте:
+      - предприятие с единственной функционирующей в этой отрасли: откройте 2 карты;
+      - иначе: откройте 1 карту.
+      Если на любой из открытых карт есть символ речи, установите зарплаты
+      на предприятии на 3-й уровень.
+      В начале следующего раунда снова измените зарплаты на всех своих предприятиях,
+      чтобы они были равны МРОТ.
+    structured_rules:
+      - kind: per_struck_enterprise
+        if:
+          is_only_functioning_enterprise_in_industry: true
+        then:
+          reveal_cards: 2
+        else:
+          reveal_cards: 1
+      - kind: revealed_card_condition
+        if:
+          any_revealed_card_contains_symbol: SPEECH_BUBBLES
+        then:
+          set_wage_level: HIGH
+      - kind: next_round_reset
+        then:
+          reset_all_wages_to_current_minimum_wage: true
+
+  - id: capitalist_condition_reconfigure_equipment
+    automa: CAPITALISTS
+    type: CONDITION_ACTION
+    applies_to: RECONFIGURE_EQUIPMENT
+    mode: BOTH
+    raw_text_ru: |
+      Выбирая предприятие для размещения оборудования, учитывайте:
+      - ни на одном вашем предприятии в этой отрасли нет жетона оборудования;
+      - сельское хозяйство;
+      - здравоохранение/образование (гос. не производит соответствующую услугу,
+        либо она дороже, либо случайная из 2);
+      - наибольшая производительность;
+      - случайное.
+    structured_rules:
+      - kind: target_selection
+        applies_to: RECONFIGURE_EQUIPMENT
+        choose_one_by_priority:
+          - no_existing_equipment_in_same_industry
+          - industry_food
+          - service_not_produced_by_state_or_more_expensive_or_random_between_two
+          - highest_productivity
+          - random
+
+  - id: capitalist_condition_sell_enterprise
+    automa: CAPITALISTS
+    type: CONDITION_ACTION
+    applies_to: SELL_ENTERPRISE
+    mode: BOTH
+    raw_text_ru: |
+      Продавая предприятие, учитывайте:
+      - наибольшая стоимость;
+      - если бы функционировало с работниками рабочего класса, были бы выполнены
+        условия для создания профсоюза;
+      - доступно меньше всего подходящих безработных;
+      - случайное.
+      Примечание: нельзя строить нефункционирующее предприятие, если оно не будет
+      функционирующим. Иначе назначайте работников среднего класса, затем рабочего.
+    structured_rules:
+      - kind: target_selection
+        applies_to: SELL_ENTERPRISE
+        choose_one_by_priority:
+          - highest_sell_value
+          - would_enable_union_if_functioning_with_worker_class
+          - fewest_matching_unemployed_available
+          - random
+    notes:
+      - "Сохранить примечание как raw_text_ru и comment, не терять."
+
+  - id: capitalist_check_workers
+    automa: CAPITALISTS
+    type: CHECK
+    applies_to: ASSIGN_WORKERS
+    mode: COMPLEX
+    raw_text_ru: |
+      Некоторые эффекты позволяют вам назначать работников на свои нефункционирующие
+      предприятия. Учитывайте:
+      - наибольшая стоимость;
+      - если бы функционировало с работниками рабочего класса, были бы выполнены
+        условия для создания профсоюза;
+      - доступно меньше всего подходящих безработных;
+      - случайное.
+    structured_rules:
+      - kind: target_selection
+        applies_to: ASSIGN_WORKERS
+        choose_one_by_priority:
+          - highest_sell_value
+          - would_enable_union_if_functioning_with_worker_class
+          - fewest_matching_unemployed_available
+          - random

@@ -1,0 +1,209 @@
+version: 1.2
+source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]
+source_section: golden_test_case_registry
+source_status: derived_from_rules
+source_derivation_logic: >
+  test cases are executable checks derived from setup-spec, rule-spec,
+  automa-spec and validation-spec without introducing new rule values.
+
+unknown_marker: UNKNOWN
+
+test_cases:
+  - id: setup_2_players
+    kind: setup
+    source_status: explicit_from_rules
+    input:
+      player_count: 2
+      mode: human_players_only
+    expected:
+      active_player_classes: [worker, capitalist]
+      initial_policy_courses:
+        policy_1_fiscal: C
+        policy_2_labor_market: B
+        policy_3_taxation: A
+        policy_4_healthcare_and_benefits: B
+        policy_5_education: C
+        policy_6_foreign_trade: B
+        policy_7_immigration: B
+      state_treasury: 120
+      public_services:
+        healthcare: 5
+        education: 5
+        media_influence: 3
+      voting_bag:
+        worker: 8
+        middle_class: 8
+        capitalist: 8
+
+  - id: setup_3_players
+    kind: setup
+    source_status: explicit_from_rules
+    input:
+      player_count: 3
+      mode: human_players_only
+    expected:
+      active_player_classes: [worker, middle_class, capitalist]
+      middle_class_starting_enterprises_present: [minimarket, private_clinic]
+      public_services:
+        healthcare: 6
+        education: 6
+        media_influence: 4
+      voting_bag:
+        worker: 8
+        middle_class: 8
+        capitalist: 8
+
+  - id: setup_4_players
+    kind: setup
+    source_status: explicit_from_rules
+    input:
+      player_count: 4
+      mode: human_players_only
+    expected:
+      active_player_classes: [worker, middle_class, capitalist, state]
+      state_player:
+        legitimacy_worker: 2
+        legitimacy_middle_class: 2
+        legitimacy_capitalist: 2
+      public_services:
+        healthcare: 6
+        education: 6
+        media_influence: 4
+
+  - id: illegal_non_adjacent_policy_change
+    kind: legality_negative
+    source_status: explicit_from_rules
+    action: propose_bill
+    input:
+      current_course: A
+      requested_course: C
+      target_policy_has_proposal_token: false
+    expected:
+      legal: false
+      failure_reason_code: BILL_TARGET_COURSE_NOT_ADJACENT
+
+  - id: illegal_proposal_on_occupied_policy
+    kind: legality_negative
+    source_status: explicit_from_rules
+    action: propose_bill
+    input:
+      current_course: B
+      requested_course: C
+      target_policy_has_proposal_token: true
+    expected:
+      legal: false
+      failure_reason_code: BILL_TARGET_POLICY_ALREADY_HAS_PROPOSAL_TOKEN
+
+  - id: illegal_partial_enterprise_fill
+    kind: legality_negative
+    source_status: explicit_from_rules
+    action: assign_workers
+    input:
+      assignment_mode: partial_fill
+    expected:
+      legal: false
+      failure_reason_code: ENTERPRISE_PARTIAL_FILL_NOT_ALLOWED
+
+  - id: illegal_sell_enterprise_with_tied_contract_workers
+    kind: legality_negative
+    source_status: explicit_from_rules
+    action: sell_enterprise
+    input:
+      enterprise_has_tied_contract_workers: true
+    expected:
+      legal: false
+      failure_reason_code: ENTERPRISE_HAS_TIED_CONTRACT_WORKERS_CANNOT_SELL
+
+  - id: union_closes_when_workers_drop_below_4
+    kind: transition
+    source_status: explicit_from_rules
+    action: assign_workers
+    input:
+      industry_workers_before: 4
+      industry_workers_after: 3
+      union_exists_before: true
+    expected:
+      legal: true
+      state_transition:
+        union_exists_after: false
+        union_worker_moved_to_unemployment: true
+      event_log_contains: UNION_CLOSED_WORKER_TO_UNEMPLOYMENT
+
+  - id: demonstration_trigger_case
+    kind: transition
+    source_status: derived_from_rules
+    action: demonstration
+    input:
+      prerequisites_satisfied: true
+    expected:
+      legal: true
+      state_transition:
+        demonstration_token_changed: true
+    unknowns:
+      exact_trigger_threshold: UNKNOWN
+
+  - id: voting_all_same_side
+    kind: voting
+    source_status: explicit_from_rules
+    action: resolve_vote
+    input:
+      all_players_vote_same_side: true
+      voting_bag_count_before: at_least_5
+    expected:
+      legal: true
+      state_transition:
+        cubes_drawn: 5
+        cubes_discarded: 5
+
+  - id: voting_empty_bag_case
+    kind: voting
+    source_status: explicit_from_rules
+    action: resolve_vote
+    input:
+      voting_bag_empty_before_draw: true
+    expected:
+      legal: true
+      process:
+        refill_attempts_before_draw: 2
+        cubes_drawn_after_refill: 5
+
+  - id: automa_complex_priority_shift_case
+    kind: automa
+    source_status: explicit_from_rules
+    mode: complex
+    input:
+      checks_execute_order: left_to_right
+      first_check_uses_card_bonus: true
+      target_row_occupied_for_action_move: true
+      policy_priority_card_set_aside: false
+    expected:
+      priority_movements:
+        action_insert_side_when_target_occupied: left
+        action_row_shift_after_extraction: right_toward_row_token
+        policy_insert_side_when_target_occupied: right
+        policy_row_shift_after_extraction: left
+      post_check_row_collapse:
+        action_rows_collapsed_top_to_bottom: true
+        policy_rows_collapsed_top_to_bottom: true
+
+  - id: automa_last_round_policy_restriction_case
+    kind: automa
+    source_status: explicit_from_rules
+    mode: complex
+    input:
+      round: 5
+      candidate_policy: policy_7_immigration
+    expected:
+      policy_7_proposal_allowed: false
+      migration_policy_priority_card_removed_at_round_start: true
+      policy_6_requires_extraordinary_vote_capability: true
+      all_automa_influence_spent_in_final_voting: true
+
+unknowns_classification:
+  runtime_randomized:
+    - setup_revealed_deck_card_ids
+    - vote_cube_draw_order
+  not_required_for_rules_engine_v1:
+    - narrative_text_variants_for_explanations
+  still_needs_source_extraction:
+    - exact_demonstration_trigger_threshold

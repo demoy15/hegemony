@@ -1,0 +1,57 @@
+automa_action_cards_partial:
+  - card_no: 13
+    automa: CAPITALISTS
+    checks:
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_TAX
+      - POLICY_EDUCATION
+    bonus:
+      trigger: built_enterprise_this_turn
+      effect:
+        type: money_discount
+        amount: 10
+      raw_text_ru: "Если вы строите предприятие в этот ход, заплатите на 10 ₩ меньше."
+    special_action:
+      type: DRAW_AND_FILTER_CAPITALIST_VOTE_CUBES_FROM_BAG
+      params:
+        cubes_to_draw: 6
+        keep_capitalist_cubes_in_bag: true
+        discard_others: true
+      conditions: []
+      raw_text_ru: "Возьмите из мешочка 6 кубиков..."
+    source:
+      image_ref: ""
+      transcription_confidence: medium
+    raw_text_ru: |
+      Пример частично размеченной карты автомы капиталистов №13.
+      Проверки: строить предприятие, предложить законопроект, лоббировать интересы.
+
+  - card_no: 22
+    automa: CAPITALISTS
+    checks:
+      - SELL_ON_EXTERNAL_MARKET
+      - PROPOSE_BILL
+      - ASSIGN_WORKERS
+    policy_tags:
+      - POLICY_TAX
+      - POLICY_EDUCATION
+    bonus:
+      trigger: sold_on_external_market_this_turn
+      effect:
+        type: money_per_export_operation
+        amount: 5
+      raw_text_ru: "Если вы продаёте на внешнем рынке, дополнительно получите по 5 ₩ за операцию."
+    special_action:
+      type: HIRE_FROM_NON_FUNCTIONING_STATE_ENTERPRISE_IF_2B_OR_2V
+      params: {}
+      conditions: []
+      raw_text_ru: "2Б/2В: если на нефункционирующем госпредприятии..."
+    source:
+      image_ref: ""
+      transcription_confidence: low
+    raw_text_ru: |
+      Пример частично размеченной карты автомы капиталистов №22.
+      Проверки: продажа на внешнем рынке, законопроект, назначение работников.
