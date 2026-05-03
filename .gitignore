@@ -4,4 +4,27 @@ backend/data/saves/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/tsconfig.tsbuildinfo
 data/saves/
+
+# Local runtime and editor noise
+.idea/
+.vscode/
+*.iml
+*.log
+*.tmp
+*.local
+.env
+.env.*
+
+# Build outputs
+node_modules/
+dist/
+build/
+.gradle/
+out/
+target/
+
+# OS files
+.DS_Store
+Thumbs.db
