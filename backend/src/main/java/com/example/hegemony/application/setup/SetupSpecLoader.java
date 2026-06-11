@@ -451,7 +451,7 @@ public class SetupSpecLoader {
             return WorkerSector.PURPLE;
         }
         if (normalized.startsWith("red")) {
-            return WorkerSector.RED;
+            return WorkerSector.WHITE;
         }
         if (normalized.startsWith("white")) {
             return WorkerSector.WHITE;
@@ -486,7 +486,7 @@ public class SetupSpecLoader {
         return switch (category.toLowerCase(Locale.ROOT)) {
             case "food" -> WorkerSector.GREEN;
             case "luxury" -> WorkerSector.BLUE;
-            case "healthcare" -> WorkerSector.RED;
+            case "healthcare" -> WorkerSector.WHITE;
             case "education" -> WorkerSector.ORANGE;
             case "media", "influence" -> WorkerSector.PURPLE;
             default -> WorkerSector.GENERAL;

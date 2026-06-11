@@ -10,6 +10,7 @@ import com.example.hegemony.domain.model.PolicyState;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class BusinessDealDeckManager {
             OrderedCardDeckState initialized = new OrderedCardDeckState();
             initialized.setDeckId(DECK_ID);
             initialized.setVisibleWindowSize(DEFAULT_VISIBLE_WINDOW);
-            initialized.setOrderedCardIds(state.getBusinessDealCards().stream().map(BusinessDealCard::getId).toList());
+            initialized.setOrderedCardIds(shuffledCardIds(state.getBusinessDealCards().stream().map(BusinessDealCard::getId).toList()));
             initialized.setVisibleCardIds(List.of());
             initialized.setNextCardIndex(0);
             initialized.setRefreshCount(0);
@@ -126,6 +127,12 @@ public class BusinessDealDeckManager {
             case B -> 1;
             case C -> 2;
         };
+    }
+
+    private List<String> shuffledCardIds(List<String> cardIds) {
+        List<String> shuffled = new ArrayList<>(cardIds == null ? List.of() : cardIds);
+        Collections.shuffle(shuffled);
+        return shuffled;
     }
 
     public List<BusinessDealCard> currentVisibleDeals(GameState state) {

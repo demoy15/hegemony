@@ -18,9 +18,29 @@ class BusinessDealDeckLifecycleTest {
 
         assertThat(state.getBusinessDealCards()).hasSize(10);
         assertThat(state.getBusinessDealDeck().getVisibleCardIds())
-                .containsExactly("business-deal-01");
-        assertThat(state.getExportCards()).hasSize(12);
-        assertThat(state.getActiveExportCard().getCardId()).isEqualTo("export-card-01");
+                .hasSize(1);
+        assertThat(state.getBusinessDealCards())
+                .extracting(card -> card.getId())
+                .contains(state.getBusinessDealDeck().getVisibleCardIds().getFirst());
+        assertThat(state.getExportCards()).hasSize(16);
+        assertThat(state.getExportCards())
+                .extracting(card -> card.getCardId())
+                .contains(state.getActiveExportCard().getCardId(), "export-card-16");
+        assertThat(state.getExportCards().stream()
+                .filter(card -> "export-card-16".equals(card.getCardId()))
+                .findFirst()
+                .orElseThrow()
+                .getOffers())
+                .anySatisfy(offer -> {
+                    assertThat(offer.getResourceId()).isEqualTo("food");
+                    assertThat(offer.getQuantity()).isEqualTo(4);
+                    assertThat(offer.getRevenue()).isEqualTo(40);
+                })
+                .anySatisfy(offer -> {
+                    assertThat(offer.getResourceId()).isEqualTo("healthcare");
+                    assertThat(offer.getQuantity()).isEqualTo(7);
+                    assertThat(offer.getRevenue()).isEqualTo(50);
+                });
         assertThat(state.getActiveExportCard().getOffers()).hasSize(8);
     }
 
@@ -44,16 +64,19 @@ class BusinessDealDeckLifecycleTest {
         state.setCurrentPhase(RoundPhase.PREPARATION);
         state.getTurnOrder().setPhase(RoundPhase.PREPARATION);
         state.getTurnOrder().setCurrentPlayerIndex(0);
+        String initialVisibleDeal = state.getBusinessDealDeck().getVisibleCardIds().getFirst();
+        String initialExportCard = state.getActiveExportCard().getCardId();
 
         ApplyCommandResult refreshed = engine.apply(state, new ResolvePreparationPhaseCommand("worker"));
 
         assertThat(refreshed.validation().isValid()).isTrue();
         assertThat(refreshed.resultingState().getBusinessDealDeck().getVisibleCardIds())
-                .containsExactly("business-deal-02");
+                .hasSize(1)
+                .doesNotContain(initialVisibleDeal);
         assertThat(refreshed.resultingState().getLastPreparationSummary().getExecutedSubsteps())
                 .contains("business_deals_refreshed", "export_card_refreshed");
         assertThat(refreshed.resultingState().getActiveExportCard().getActivatedRound()).isEqualTo(2);
-        assertThat(refreshed.resultingState().getActiveExportCard().getCardId()).isEqualTo("export-card-02");
+        assertThat(refreshed.resultingState().getActiveExportCard().getCardId()).isNotEqualTo(initialExportCard);
     }
 
     @Test
@@ -71,6 +94,6 @@ class BusinessDealDeckLifecycleTest {
 
         assertThat(refreshed.validation().isValid()).isTrue();
         assertThat(refreshed.resultingState().getBusinessDealDeck().getVisibleCardIds())
-                .containsExactly("business-deal-02", "business-deal-03");
+                .hasSize(2);
     }
 }

@@ -23,14 +23,13 @@ class ProposeBillLegalityTest {
     }
 
     @Test
-    void cannotProposeNonAdjacentCourse() {
+    void canProposeNonAdjacentCourse() {
         GameState state = CoreTestSupport.state(4);
         GameRulesEngine engine = CoreTestSupport.engine();
 
         var result = engine.validate(state, new ProposeBillCommand("worker", PolicyId.POLICY_3_TAXATION, PolicyCourse.C));
 
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.getReasonCodes()).contains(ValidationReasonCode.TARGET_COURSE_NOT_ADJACENT);
+        assertThat(result.isValid()).isTrue();
     }
 
     @Test

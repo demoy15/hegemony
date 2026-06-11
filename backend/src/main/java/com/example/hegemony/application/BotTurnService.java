@@ -46,7 +46,7 @@ public class BotTurnService {
     private final GameRulesEngine engine;
     private final LegalMoveBot legalMoveBot;
     private final List<ClassBotPlanner> classPlanners;
-    private final BotCardPlanner botCardPlanner;
+    private final List<BotCardPlanner> botCardPlanners;
     private final EnterpriseCardCatalog enterpriseCardCatalog;
     private final BotActionCardCatalog botActionCardCatalog;
     private final MarketCandidateProvider marketCandidateProvider;
@@ -57,7 +57,7 @@ public class BotTurnService {
             GameRulesEngine engine,
             LegalMoveBot legalMoveBot,
             List<ClassBotPlanner> classPlanners,
-            BotCardPlanner botCardPlanner,
+            List<BotCardPlanner> botCardPlanners,
             EnterpriseCardCatalog enterpriseCardCatalog,
             BotActionCardCatalog botActionCardCatalog,
             MarketCandidateProvider marketCandidateProvider,
@@ -67,7 +67,7 @@ public class BotTurnService {
         this.engine = engine;
         this.legalMoveBot = legalMoveBot;
         this.classPlanners = classPlanners == null ? List.of() : classPlanners;
-        this.botCardPlanner = botCardPlanner;
+        this.botCardPlanners = botCardPlanners == null ? List.of() : botCardPlanners;
         this.enterpriseCardCatalog = enterpriseCardCatalog;
         this.botActionCardCatalog = botActionCardCatalog;
         this.marketCandidateProvider = marketCandidateProvider;
@@ -213,8 +213,13 @@ public class BotTurnService {
     private PlannedBotMove choosePlan(GameState state, PlayerState actor, List<GameCommand> legalCommands) {
         BotStrategyMode strategy = actor.getBotStrategyMode();
         if ((strategy == BotStrategyMode.CARD_DRIVEN_SIMPLE_AUTOMA || strategy == BotStrategyMode.CARD_DRIVEN_COMPLEX_AUTOMA)
-                && botCardPlanner.isReady(actor.getClassType())) {
-            Optional<PlannedBotMove> cardPlan = botCardPlanner.plan(state, actor.getClassType(), legalCommands);
+                && isCardPlannerReady(actor.getClassType())) {
+            Optional<PlannedBotMove> cardPlan = botCardPlanners.stream()
+                    .filter(planner -> planner.isReady(actor.getClassType()))
+                    .map(planner -> planner.plan(state, actor.getClassType(), legalCommands))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst();
             if (cardPlan.isPresent()) {
                 return cardPlan.get();
             }
@@ -235,7 +240,7 @@ public class BotTurnService {
                 "CARD_DATA_NOT_INSTALLED: legal move heuristic fallback was used.");
         String rationale = decision.explanation();
         if ((strategy == BotStrategyMode.CARD_DRIVEN_SIMPLE_AUTOMA || strategy == BotStrategyMode.CARD_DRIVEN_COMPLEX_AUTOMA)
-                && !botCardPlanner.isReady(actor.getClassType())) {
+                && !isCardPlannerReady(actor.getClassType())) {
             rationale = "Card-driven automa mode is unavailable for class " + actor.getClassType()
                     + "; fallback heuristic selected legal action. " + rationale;
         }
@@ -284,6 +289,7 @@ public class BotTurnService {
             case AssignWorkersCommand assign -> assign.actorPlayerId();
             case BuyGoodsAndServicesCommand buy -> buy.actorPlayerId();
             case DeclareVoteStanceCommand stance -> stance.actorPlayerId();
+            case com.example.hegemony.domain.command.DrawVotingCubesCommand draw -> draw.actorPlayerId();
             case CommitVoteInfluenceCommand commit -> commit.actorPlayerId();
             case CallExtraordinaryVoteCommand vote -> vote.actorPlayerId();
             case RefreshBusinessDealsCommand refresh -> refresh.actorPlayerId();
@@ -304,6 +310,10 @@ public class BotTurnService {
                     ADVANCE_ROUND -> true;
             default -> false;
         };
+    }
+
+    private boolean isCardPlannerReady(ClassType classType) {
+        return botCardPlanners.stream().anyMatch(planner -> planner.isReady(classType));
     }
 
     private boolean shouldAutoEndActionsTurn(PlayerState actor, GameCommand selected, GameState next) {

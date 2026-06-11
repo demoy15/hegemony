@@ -12,6 +12,8 @@ import com.example.hegemony.domain.engine.GameRulesEngine;
 import com.example.hegemony.domain.engine.LegalMove;
 import com.example.hegemony.domain.event.DomainEvent;
 import com.example.hegemony.domain.model.ActionType;
+import com.example.hegemony.domain.model.CurrentVoteState;
+import com.example.hegemony.domain.model.DrawnVotingCube;
 import com.example.hegemony.domain.model.GameMode;
 import com.example.hegemony.domain.model.GameState;
 import com.example.hegemony.domain.model.PlayerState;
@@ -33,6 +35,18 @@ public class GameService {
             ActionType.PROPOSE_BILL,
             ActionType.ADD_VOTING_CUBES,
             ActionType.CALL_EXTRAORDINARY_VOTE,
+            ActionType.DRAW_VOTING_CUBES,
+            ActionType.BUILD_ENTERPRISE,
+            ActionType.SELL_ENTERPRISE,
+            ActionType.SELL_ON_EXTERNAL_MARKET,
+            ActionType.MAKE_BUSINESS_DEAL,
+            ActionType.LOBBY_INTERESTS,
+            ActionType.CHANGE_PRICES,
+            ActionType.CHANGE_WAGES,
+            ActionType.PAY_BONUS,
+            ActionType.BUY_STORAGE,
+            ActionType.TAKE_STATE_BENEFITS,
+            ActionType.REPAY_LOAN,
             ActionType.ASSIGN_WORKERS,
             ActionType.BUY_GOODS_AND_SERVICES,
             ActionType.CONSUME_HEALTHCARE,
@@ -288,8 +302,7 @@ public class GameService {
         List<String> unavailable = List.of(
                 "START_STRIKE: unsupported in current rules-engine slice.",
                 "START_DEMONSTRATION: unsupported in current rules-engine slice.",
-                "BUILD_ENTERPRISE: card-ready hook exists, but build execution path is not installed yet.",
-                "SELL_ENTERPRISE: card-ready hook exists, but sell execution path is not installed yet."
+                "Capitalist enterprise cards, loan cards, and state-benefit tokens use MVP defaults until card JSON logic is installed."
         );
 
         PlayerState actor = state.currentPlayer();
@@ -326,6 +339,7 @@ public class GameService {
         businessDealDeckManager.ensureInitialized(state);
         exportCardManager.ensureInitialized(state);
         migrationCardManager.ensureInitialized(state);
+        engine.ensureStateEventDeck(state);
     }
 
     private void ensureOpeningWorkerMigration(GameState state) {
@@ -414,7 +428,33 @@ public class GameService {
         delta.setResourceDeltaByPlayer(resourceDelta);
         delta.setWorkerMovement(workerMovement);
         delta.setPolicyDelta(policyDelta);
+        addVotingPreviewNotes(delta, before, after);
         return delta;
+    }
+
+    private void addVotingPreviewNotes(ActionPreviewDelta delta, GameState before, GameState after) {
+        CurrentVoteState beforeVote = before.getCurrentVoteState();
+        CurrentVoteState afterVote = after.getCurrentVoteState();
+        if (afterVote == null || afterVote.getDrawnVotingCubes().isEmpty()) {
+            return;
+        }
+        int beforeDrawn = beforeVote == null ? 0 : beforeVote.getDrawnVotingCubes().size();
+        if (beforeVote != null
+                && beforeVote.getActiveProposalPolicyId() == afterVote.getActiveProposalPolicyId()
+                && beforeDrawn == afterVote.getDrawnVotingCubes().size()) {
+            return;
+        }
+        String drawn = afterVote.getDrawnVotingCubes().stream()
+                .map(this::describeDrawnCube)
+                .reduce((left, right) -> left + ", " + right)
+                .orElse("");
+        List<String> notes = new ArrayList<>(delta.getNotes());
+        notes.add("Достали кубики: " + drawn + ".");
+        delta.setNotes(notes);
+    }
+
+    private String describeDrawnCube(DrawnVotingCube cube) {
+        return cube.getOwnerClass().name() + " -> " + cube.getInterpretedVote().name();
     }
 
     private Map<String, PlayerState> indexPlayers(GameState state) {

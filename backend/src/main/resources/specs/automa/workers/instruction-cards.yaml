@@ -1,0 +1,119 @@
+instruction_cards:
+  - id: worker_simple_check_assign_workers
+    type: CHECK
+    applies_to: ASSIGN_WORKERS
+    mode: SIMPLE
+    raw_text_ru: |
+      Проверка работников. Замените квалифицированных работников, занимающих на предприятиях рабочие места неквалифицированных работников,
+      неквалифицированными безработными, если возможно. Затем проверьте: можно ли назначить работников так, чтобы 2 или больше безработных
+      стали заняты на предприятии; можно ли назначить работников так, чтобы был создан 1 профсоюз или больше; если предыдущие условия
+      не переместили карту приоритета, добавьте ОД +1; если безработных больше, чем рабочих мест без учёта квалификации, добавьте ВНД +X,
+      где X равен разнице.
+    structured_rules:
+      - { kind: simple_mode_worker_check, priority_code: HP, condition: employ_two_or_more_unemployed, amount: 1, per: worker }
+      - { kind: simple_mode_worker_check, priority_code: HP, condition: create_one_or_more_unions, amount: 2, per: union }
+      - { kind: simple_mode_worker_check, priority_code: OD, condition: no_priority_card_moved, amount: 1 }
+      - { kind: simple_mode_worker_check, priority_code: VND, condition: unemployed_more_than_available_jobs, amount: difference }
+    notes:
+      - "Используется только для простого режима рабочего класса."
+
+  - id: worker_simple_check_buy_goods_and_services
+    type: CHECK
+    applies_to: BUY_GOODS_AND_SERVICES
+    mode: SIMPLE
+    raw_text_ru: |
+      Проверка товаров и услуг. Проверьте, доступны ли 3 ресурса, повышающие благосостояние: медицинские услуги, образовательные услуги
+      и предметы роскоши, в количестве, равном численности вашего населения, и можете ли вы купить их. Если вы не можете купить никакие
+      из этих 3 ресурсов, добавьте ОД +1. Иначе для каждого подходящего ресурса: если можете получить бесплатно, КТУ +3; если стоимость
+      не более 6 ₩ за ресурс, но не бесплатно, КТУ +2; если стоимость более 6 ₩, КТУ +1.
+    structured_rules:
+      - { kind: simple_mode_goods_check, priority_code: OD, condition: cannot_buy_any_welfare_resource, amount: 1 }
+      - { kind: simple_mode_goods_check, priority_code: KTU, condition: resource_free, amount: 3 }
+      - { kind: simple_mode_goods_check, priority_code: KTU, condition: resource_cost_at_most_6, amount: 2 }
+      - { kind: simple_mode_goods_check, priority_code: KTU, condition: resource_cost_more_than_6, amount: 1 }
+    notes:
+      - "Условия покупки: бесплатные; образование при 3+ неквалифицированных безработных; самый дешёвый вариант; здравоохранение, образование, роскошь; госуслуги; внешний рынок; капиталисты; средний класс."
+
+  - id: worker_simple_check_propose_bill
+    type: CHECK
+    applies_to: PROPOSE_BILL
+    mode: SIMPLE
+    raw_text_ru: |
+      Проверка политик. Предпочтительные курсы рабочего класса: 1А, 2А, 3А, 4А, 5А, 6Б, 7Б. Для каждой из 2 указанных на карте автомы
+      политик, если карта приоритета политики не отложена в сторону и доступна хотя бы 1 фишка законопроекта, проверьте положение фишки:
+      действующий курс соседний с предпочтительным курсом — ВЗ +1; действующий курс в 2 курсах от предпочтительного — ВЗ +2;
+      указана политика на рынке труда — ВЗ +1. Затем переместите карту приоритета данной политики вверх на то же количество рядов.
+      Если невозможно внести законопроект ни по одной из 2 политик, ОД +1.
+    structured_rules:
+      - { kind: simple_mode_policy_check, preferred_courses: { POLICY_FISCAL: A, POLICY_LABOR_MARKET: A, POLICY_TAX: A, POLICY_HEALTHCARE: A, POLICY_EDUCATION: A, POLICY_FOREIGN_TRADE: B, POLICY_MIGRATION: B } }
+      - { kind: simple_mode_policy_check, priority_code: VZ, condition: current_course_adjacent_to_preferred, amount: 1 }
+      - { kind: simple_mode_policy_check, priority_code: VZ, condition: current_course_two_steps_from_preferred, amount: 2 }
+      - { kind: simple_mode_policy_check, priority_code: VZ, condition: policy_labor_market, amount: 1 }
+      - { kind: simple_mode_policy_check, priority_code: OD, condition: cannot_propose_any_listed_policy, amount: 1 }
+    notes:
+      - "Planner MVP использует эти политики как предпочтения при выборе legal PROPOSE_BILL."
+
+  - id: worker_simple_check_place_strikes
+    type: CHECK
+    applies_to: PLACE_STRIKES
+    mode: SIMPLE
+    raw_text_ru: |
+      Проверка забастовок. Учитывайте только предприятия, на которых установлен МРОТ согласно действующей политике на рынке труда
+      и на которых можно устроить забастовку. Если действует курс Б политики на рынке труда при 2 или больше профсоюзах: УЗ +1
+      за каждые 3 предприятия. Если действует курс В политики на рынке труда: УЗ +1 за каждые 2 предприятия и РЫНОК ТРУДА +1.
+    structured_rules:
+      - { kind: simple_mode_strike_check, priority_code: UZ, condition: labor_market_b_and_two_or_more_unions, amount: 1, per_enterprises: 3 }
+      - { kind: simple_mode_strike_check, priority_code: UZ, condition: labor_market_c, amount: 1, per_enterprises: 2 }
+      - { kind: simple_mode_strike_check, priority_code: LABOR_MARKET, condition: labor_market_c, amount: 1 }
+    notes:
+      - "Сложные приоритетные ряды пока сохранены как данные; исполнитель выбирает только legal PLACE_STRIKES."
+
+  - id: worker_simple_assignment_tiebreakers
+    type: TIEBREAKER
+    applies_to: ASSIGN_WORKERS
+    mode: SIMPLE
+    raw_text_ru: |
+      Условия назначения работников. Сужайте варианты, пока не останется один: будет создан профсоюз; назначается наибольшее число
+      безработных; будут выполнены условия для создания профсоюза; самый высокий уровень зарплат; госпредприятие; предприятие капиталистов;
+      предприятие здравоохранения или образования; сельское хозяйство, СМИ, люкс-сегмент; случайное.
+    structured_rules: []
+    notes:
+      - "Белая карта условий выбора предприятия для назначения работников."
+
+  - id: worker_simple_purchase_tiebreakers
+    type: TIEBREAKER
+    applies_to: BUY_GOODS_AND_SERVICES
+    mode: SIMPLE
+    raw_text_ru: |
+      Условия покупки товаров и услуг. При наличии вариантов учитывайте: бесплатные; если у вас 3 или больше неквалифицированных
+      безработных — образование; самый дешёвый вариант, исключая здравоохранение, если покупка увеличит население и есть другие варианты;
+      здравоохранение, образование, предметы роскоши; государственные услуги; внешний рынок; капиталисты; средний класс.
+    structured_rules: []
+    notes:
+      - "Белая карта условий выбора товаров, услуг и поставщиков."
+
+  - id: worker_simple_skilled_worker_tiebreakers
+    type: TIEBREAKER
+    applies_to: ASSIGN_WORKERS
+    mode: SIMPLE
+    raw_text_ru: |
+      Условия выбора квалифицированных работников. При выборе работника из запаса учитывайте: если назначен, будет создан профсоюз;
+      если вариантов несколько — меньше всего рабочих мест на предприятиях, затем случайно; если назначен, будут выполнены условия
+      для создания профсоюза; больше всего рабочих мест на предприятиях; больше всего рабочих мест на ещё не построенных предприятиях
+      на рынках соперников; здравоохранение или образование; сельское хозяйство, СМИ, люкс-сегмент.
+    structured_rules: []
+    notes:
+      - "Белая карта условий выбора квалифицированного работника."
+
+  - id: worker_simple_strike_tiebreakers
+    type: TIEBREAKER
+    applies_to: PLACE_STRIKES
+    mode: SIMPLE
+    raw_text_ru: |
+      Условия размещения жетона забастовки. Поместите жетоны забастовки на подходящие предприятия, кроме госпредприятий,
+      предоставляющих свои услуги бесплатно. При наличии вариантов учитывайте: предприятия с единственной функционирующей в своей
+      отрасли; наибольшая разница между уровнем зарплат на предприятии; СМИ, здравоохранение, образование, люкс-сегмент,
+      сельское хозяйство; наибольшая производительность; случайное.
+    structured_rules: []
+    notes:
+      - "Белая карта условий размещения забастовки; только простой режим."

@@ -17,6 +17,6 @@ public record PlaceStrikesCommand(String actorPlayerId, List<String> enterpriseI
 
     @Override
     public String summary() {
-        return "Place up to 2 strike tokens on eligible enterprises employing worker-class workers.";
+        return "Place strike tokens on eligible enterprises employing worker-class workers.";
     }
 }

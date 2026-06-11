@@ -7,7 +7,28 @@ Local-first monorepo with a rules-validating backend and modern web frontend.
 - `backend` - Java 21 + Spring Boot + Gradle
 - `frontend` - React + TypeScript + Vite + Tailwind + shadcn-style components
 
-## Docker Compose run (recommended)
+## Windows local run, no WSL
+
+From repo root, run:
+
+```bat
+start-local.bat
+```
+
+The launcher checks Java 21, Node.js LTS/npm, installs frontend packages when needed, creates `data/saves`, and opens:
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8080/api/game`
+
+If Java or Node.js is missing on a Windows 10/11 machine with `winget`, run:
+
+```bat
+start-local.bat -InstallMissing
+```
+
+Stop the app with `Ctrl+C` in the backend/frontend windows, or close those windows.
+
+## Docker Compose run
 
 Run everything with one command from repo root:
 

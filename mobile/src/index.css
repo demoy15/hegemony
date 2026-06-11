@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 144 13% 7%;
+  --foreground: 45 30% 94%;
+  --card: 150 11% 11%;
+  --card-foreground: 45 30% 94%;
+  --primary: 162 54% 48%;
+  --primary-foreground: 165 72% 8%;
+  --muted: 150 8% 16%;
+  --muted-foreground: 42 14% 70%;
+  --accent: 35 74% 57%;
+  --accent-foreground: 30 70% 8%;
+  --border: 148 10% 24%;
+  --input: 148 10% 24%;
+  --ring: 162 54% 48%;
+}
+
+* {
+  border-color: hsl(var(--border));
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #101412;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    linear-gradient(rgba(214, 170, 92, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(93, 193, 166, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, #101412 0%, #151a18 48%, #0c0f0e 100%);
+  background-size: 28px 28px, 28px 28px, auto;
+  color: hsl(var(--foreground));
+  font-family: Inter, Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

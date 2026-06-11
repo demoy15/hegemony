@@ -11,6 +11,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class VotingBagRules {
     public VotingCubeOwnerClass ownerForClass(ClassType classType) {
@@ -53,6 +54,25 @@ public class VotingBagRules {
         return drawn;
     }
 
+    public List<VotingCubeOwnerClass> drawRandomCubes(GameState state, int count) {
+        List<VotingCubeOwnerClass> drawn = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            if (state.getVotingBag().totalCubes() == 0) {
+                refill(state, 2, true);
+            }
+            if (state.getVotingBag().totalCubes() == 0) {
+                break;
+            }
+
+            VotingCubeOwnerClass ownerClass = drawRandomOne(state);
+            if (ownerClass == null) {
+                break;
+            }
+            drawn.add(ownerClass);
+        }
+        return drawn;
+    }
+
     public List<VotingCubeOwnerClass> drawExistingCubes(GameState state, int count) {
         List<VotingCubeOwnerClass> drawn = new ArrayList<>();
         for (int i = 0; i < count; i++) {
@@ -61,6 +81,22 @@ public class VotingBagRules {
             }
 
             VotingCubeOwnerClass ownerClass = drawOne(state);
+            if (ownerClass == null) {
+                break;
+            }
+            drawn.add(ownerClass);
+        }
+        return drawn;
+    }
+
+    public List<VotingCubeOwnerClass> drawRandomExistingCubes(GameState state, int count) {
+        List<VotingCubeOwnerClass> drawn = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            if (state.getVotingBag().totalCubes() == 0) {
+                break;
+            }
+
+            VotingCubeOwnerClass ownerClass = drawRandomOne(state);
             if (ownerClass == null) {
                 break;
             }
@@ -132,6 +168,24 @@ public class VotingBagRules {
 
         state.getVotingBag().removeOne(selected);
         return selected;
+    }
+
+    private VotingCubeOwnerClass drawRandomOne(GameState state) {
+        int total = state.getVotingBag().totalCubes();
+        if (total <= 0) {
+            return null;
+        }
+
+        int ticket = ThreadLocalRandom.current().nextInt(total);
+        for (VotingCubeOwnerClass owner : List.of(VotingCubeOwnerClass.WORKER, VotingCubeOwnerClass.MIDDLE_CLASS, VotingCubeOwnerClass.CAPITALIST)) {
+            int count = countForOwner(state, owner);
+            if (ticket < count) {
+                state.getVotingBag().removeOne(owner);
+                return owner;
+            }
+            ticket -= count;
+        }
+        return null;
     }
 
     private Optional<PlayerState> findPlayerByClass(GameState state, ClassType classType) {

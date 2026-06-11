@@ -17,11 +17,13 @@ import com.example.hegemony.domain.command.AssignWorkersCommand;
 import com.example.hegemony.domain.command.AssignmentTargetType;
 import com.example.hegemony.domain.command.BuyGoodsAndServicesCommand;
 import com.example.hegemony.domain.command.CallExtraordinaryVoteCommand;
+import com.example.hegemony.domain.command.CapitalistActionCommand;
 import com.example.hegemony.domain.command.CommitVoteInfluenceCommand;
 import com.example.hegemony.domain.command.ConsumeEducationCommand;
 import com.example.hegemony.domain.command.ConsumeHealthcareCommand;
 import com.example.hegemony.domain.command.ConsumeLuxuryCommand;
 import com.example.hegemony.domain.command.DeclareVoteStanceCommand;
+import com.example.hegemony.domain.command.DrawVotingCubesCommand;
 import com.example.hegemony.domain.command.EndTurnCommand;
 import com.example.hegemony.domain.command.GameCommand;
 import com.example.hegemony.domain.command.HireWorkerCommand;
@@ -40,6 +42,7 @@ import com.example.hegemony.domain.command.PurchaseItem;
 import com.example.hegemony.domain.command.WorkerAssignmentOperation;
 import com.example.hegemony.domain.event.BillProposedEvent;
 import com.example.hegemony.domain.event.BusinessDealsRefreshedEvent;
+import com.example.hegemony.domain.event.CapitalistActionAppliedEvent;
 import com.example.hegemony.domain.event.CardPlayedEvent;
 import com.example.hegemony.domain.event.DomainEvent;
 import com.example.hegemony.domain.event.ExportCardRefreshedEvent;
@@ -60,12 +63,16 @@ import com.example.hegemony.domain.economy.ConsumerEconomyService.PurchaseEvalua
 import com.example.hegemony.domain.economy.ConsumerEconomyService.SupplierOffer;
 import com.example.hegemony.domain.model.ActionType;
 import com.example.hegemony.domain.model.BotStrategyMode;
+import com.example.hegemony.domain.model.BusinessDealCard;
+import com.example.hegemony.domain.model.BusinessDealRequirement;
 import com.example.hegemony.domain.model.ClassType;
 import com.example.hegemony.domain.model.CurrentVoteState;
 import com.example.hegemony.domain.model.DrawnVotingCube;
 import com.example.hegemony.domain.model.Enterprise;
 import com.example.hegemony.domain.model.EnterpriseSlot;
 import com.example.hegemony.domain.model.EventLogEntry;
+import com.example.hegemony.domain.model.ExportCardOffer;
+import com.example.hegemony.domain.model.ExportCardState;
 import com.example.hegemony.domain.model.FinalResult;
 import com.example.hegemony.domain.model.FinalStanding;
 import com.example.hegemony.domain.model.GameState;
@@ -73,6 +80,7 @@ import com.example.hegemony.domain.model.GameStatus;
 import com.example.hegemony.domain.model.InterpretedVote;
 import com.example.hegemony.domain.model.MigrationCardEntry;
 import com.example.hegemony.domain.model.MigrationCardState;
+import com.example.hegemony.domain.model.OrderedCardDeckState;
 import com.example.hegemony.domain.model.OrderedCardDeckState;
 import com.example.hegemony.domain.model.PlayerState;
 import com.example.hegemony.domain.model.PlayerControlMode;
@@ -113,7 +121,9 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -132,9 +142,29 @@ public class GameRulesEngine {
     private final ProductionResolver productionResolver = new ProductionResolver();
     private final ConsumerEconomyService consumerEconomyService = new ConsumerEconomyService();
     private static final int ACTION_VOTING_CUBES_TO_ADD = 3;
+    private static final int CAPITALIST_BUILD_ENTERPRISE_COST = 20;
+    private static final int CAPITALIST_ENTERPRISE_LIMIT = 12;
+    private static final int MIDDLE_CLASS_BUILD_ENTERPRISE_COST = 15;
+    private static final int MIDDLE_CLASS_ENTERPRISE_LIMIT = 8;
+    private static final int CAPITALIST_LOBBY_COST = 30;
+    private static final int CAPITALIST_LOBBY_INFLUENCE_GAIN = 3;
+    private static final int CAPITALIST_BONUS_COST = 5;
+    private static final int CAPITALIST_STORAGE_COST = 20;
+    private static final int CAPITALIST_REPAY_LOAN_COST = 50;
+    private static final int CAPITALIST_FOOD_STORAGE_LIMIT = 8;
+    private static final int CAPITALIST_DEFAULT_RESOURCE_STORAGE_LIMIT = 12;
+    private static final int FOOD_EXTRA_STORAGE_TOKEN_CAPACITY = 8;
+    private static final int DEFAULT_EXTRA_STORAGE_TOKEN_CAPACITY = 12;
     private static final int STATE_LOAN_AMOUNT = 50;
     private static final int STATE_LOAN_INTEREST = 5;
+    private static final int PLAYER_LOAN_AMOUNT = 50;
+    private static final int PLAYER_LOAN_INTEREST = 5;
+    private static final int FINAL_LOAN_SETTLEMENT_COST = 55;
+    private static final String LOAN_RESOURCE_ID = "loan";
+    private static final int STATE_EVENT_VISIBLE_COUNT = 2;
+    private static final String STATE_EVENT_DECK_ID = "state-events";
     private static final String WORKER_OPENING_MIGRATION_MARKER = "WORKER_OPENING_MIGRATION";
+    private static final List<StateEventDefinition> STATE_EVENT_DEFINITIONS = stateEventDefinitions();
 
     public GameRulesEngine(
             CardCatalog cardCatalog,
@@ -180,7 +210,7 @@ public class GameRulesEngine {
     public List<LegalMove> generateLegalMoves(GameState state) {
         List<LegalMove> moves = new ArrayList<>();
         for (GameCommand command : generateLegalCommands(state)) {
-            moves.add(new LegalMove(command.moveId(), command.type(), command.summary(), isLegacy(command.type()), Map.of()));
+            moves.add(new LegalMove(command.moveId(), command.type(), command.summary(), isLegacy(command.type()), legalMoveTemplate(command)));
         }
 
         if (state.isGameOver()) {
@@ -290,6 +320,16 @@ public class GameRulesEngine {
             if (session.getVotingStage() == VotingStage.DECLARE_STANCES) {
                 moves.add(new LegalMove("declare-stance-template", ActionType.DECLARE_VOTE_STANCE, "Declare FOR/AGAINST stance for current vote.", false,
                         Map.of("policyId", session.getActiveProposalPolicyId().name(), "stances", List.of("FOR", "AGAINST"))));
+            }
+            if (session.getVotingStage() == VotingStage.DRAW_BAG_CUBES) {
+                int available = Math.max(0, state.getVotingBag().totalCubes());
+                moves.add(new LegalMove(
+                        "draw-voting-cubes-template",
+                        ActionType.DRAW_VOTING_CUBES,
+                        "Draw voting cubes from the bag.",
+                        false,
+                        Map.of("min", 1, "max", Math.max(1, available), "defaultCount", Math.min(5, Math.max(1, available)))
+                ));
             }
             if (session.getVotingStage() == VotingStage.COMMIT_INFLUENCE) {
                 moves.add(new LegalMove("commit-influence-template", ActionType.COMMIT_VOTE_INFLUENCE, "Commit influence for current vote.", false, Map.of("min", 0)));
@@ -411,6 +451,22 @@ public class GameRulesEngine {
 
         return moves;
     }
+
+    public void ensureStateEventDeck(GameState state) {
+        ensureStateEventsInitialized(state);
+    }
+
+    private Map<String, Object> legalMoveTemplate(GameCommand command) {
+        if (command instanceof CapitalistActionCommand capitalistAction) {
+            Map<String, Object> template = new HashMap<>(capitalistAction.parameters() == null ? Map.of() : capitalistAction.parameters());
+            template.put("actorPlayerId", capitalistAction.actorPlayerId());
+            return template;
+        }
+        if (command instanceof AddVotingCubesCommand addVotingCubes) {
+            return Map.of("actorPlayerId", addVotingCubes.actorPlayerId(), "amount", ACTION_VOTING_CUBES_TO_ADD);
+        }
+        return Map.of();
+    }
     public ValidationResult validate(GameState state, GameCommand command) {
         if (state.isGameOver()) {
             return ValidationResult.invalid(
@@ -438,6 +494,7 @@ public class GameRulesEngine {
             case AdvanceRoundCommand advance -> validateAdvanceToNextRound(state, new AdvanceToNextRoundCommand(advance.actorPlayerId()));
             case ProposeBillCommand propose -> validateProposeBill(state, propose);
             case AddVotingCubesCommand add -> validateAddVotingCubes(state, add);
+            case CapitalistActionCommand capitalist -> validateCapitalistAction(state, capitalist);
             case CallExtraordinaryVoteCommand vote -> validateCallExtraordinaryVote(state, vote);
             case AssignWorkersCommand assign -> validateAssignWorkers(state, assign);
             case PlaceStrikesCommand strikes -> validatePlaceStrikes(state, strikes);
@@ -448,6 +505,7 @@ public class GameRulesEngine {
             case ConsumeLuxuryCommand consume -> validateConsumeCommand(state, consume.actorPlayerId(), ResourceType.LUXURY);
             case RefreshBusinessDealsCommand refresh -> validateRefreshBusinessDeals(state, refresh);
             case DeclareVoteStanceCommand stance -> validateDeclareVoteStance(state, stance);
+            case DrawVotingCubesCommand draw -> validateDrawVotingCubes(state, draw);
             case CommitVoteInfluenceCommand commit -> validateCommitVoteInfluence(state, commit);
             case StartTurnCommand start -> validateLegacyAction(state, start.type());
             case EndTurnCommand end -> state.isDemoMode()
@@ -493,6 +551,7 @@ public class GameRulesEngine {
             case AdvanceRoundCommand advance -> applyAdvanceToNextRound(next, new AdvanceToNextRoundCommand(advance.actorPlayerId()));
             case ProposeBillCommand propose -> applyProposeBill(next, propose);
             case AddVotingCubesCommand add -> applyAddVotingCubes(next, add);
+            case CapitalistActionCommand capitalist -> applyCapitalistAction(next, capitalist);
             case CallExtraordinaryVoteCommand vote -> applyCallExtraordinaryVote(next, vote);
             case AssignWorkersCommand assign -> applyAssignWorkers(next, assign);
             case PlaceStrikesCommand strikes -> applyPlaceStrikes(next, strikes);
@@ -503,6 +562,7 @@ public class GameRulesEngine {
             case ConsumeLuxuryCommand consume -> applyConsumeCommand(next, consume.actorPlayerId(), ResourceType.LUXURY);
             case RefreshBusinessDealsCommand refresh -> applyRefreshBusinessDeals(next, refresh);
             case DeclareVoteStanceCommand stance -> applyDeclareVoteStance(next, stance);
+            case DrawVotingCubesCommand draw -> applyDrawVotingCubes(next, draw);
             case CommitVoteInfluenceCommand commit -> applyCommitVoteInfluence(next, commit);
             case StartTurnCommand start -> applyLegacyStartTurn(next);
             case EndTurnCommand end -> next.isDemoMode()
@@ -559,6 +619,11 @@ public class GameRulesEngine {
             }
         }
         commands.addAll(generateProposeBillCommands(state, currentPlayer));
+        commands.addAll(generateCapitalistActionCommands(state, currentPlayer));
+        commands.addAll(generateMiddleClassEconomicActionCommands(state, currentPlayer));
+        commands.addAll(generateStateActionCommands(state, currentPlayer));
+        commands.addAll(generateExportActionCommands(state, currentPlayer));
+        maybeGenerateGenericRepayLoanCommand(state, currentPlayer).ifPresent(commands::add);
         maybeGenerateSimpleAssignWorkersCommand(state, currentPlayer).ifPresent(commands::add);
         maybeGenerateSimpleStrikeCommand(state, currentPlayer).ifPresent(commands::add);
         maybeGenerateSimpleDemonstrationCommand(state, currentPlayer).ifPresent(commands::add);
@@ -614,6 +679,17 @@ public class GameRulesEngine {
             }
         }
 
+        if (session.getVotingStage() == VotingStage.DRAW_BAG_CUBES) {
+            PlayerState drawer = activePlayers.stream()
+                    .filter(player -> player.getControlMode() == PlayerControlMode.HUMAN)
+                    .findFirst()
+                    .orElse(actor);
+            if (drawer != null) {
+                int available = Math.max(0, state.getVotingBag().totalCubes());
+                commands.add(new DrawVotingCubesCommand(drawer.getPlayerId(), Math.min(5, Math.max(1, available))));
+            }
+        }
+
         if (session.getVotingStage() == VotingStage.COMMIT_INFLUENCE) {
             for (PlayerState player : activePlayers) {
                 if (session.getInfluenceCommitments().containsKey(player.getPlayerId())) {
@@ -633,6 +709,230 @@ public class GameRulesEngine {
             commands.add(new AdvanceGameFlowCommand(actor.getPlayerId()));
         }
         return commands;
+    }
+
+    private List<GameCommand> generateCapitalistActionCommands(GameState state, PlayerState actor) {
+        if (actor == null
+                || actor.getClassType() != ClassType.CAPITALIST
+                || actor.getControlMode() != PlayerControlMode.HUMAN
+                || state.getTurnOrder().getPhase() != RoundPhase.ACTIONS
+                || state.getCurrentVoteState() != null) {
+            return List.of();
+        }
+
+        List<GameCommand> commands = new ArrayList<>();
+        List<Enterprise> market = state.getCapitalistEnterpriseMarket();
+        if (market.isEmpty() && availableCapitalistFunds(actor) >= CAPITALIST_BUILD_ENTERPRISE_COST) {
+            commands.add(capitalistCommand(ActionType.BUILD_ENTERPRISE, actor, Map.of(
+                    "cost", CAPITALIST_BUILD_ENTERPRISE_COST,
+                    "resourceType", ResourceType.FOOD.id()
+            )));
+        } else {
+            for (Enterprise enterprise : market) {
+                int cost = enterprise.getCost() > 0 ? enterprise.getCost() : CAPITALIST_BUILD_ENTERPRISE_COST;
+                if (availableCapitalistFunds(actor) >= cost) {
+                    commands.add(capitalistCommand(ActionType.BUILD_ENTERPRISE, actor, Map.of(
+                            "enterpriseId", enterprise.getId(),
+                            "name", enterprise.getName(),
+                            "cost", cost
+                    )));
+                }
+            }
+        }
+        state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)
+                .findFirst()
+                .ifPresent(enterprise -> commands.add(capitalistCommand(ActionType.SELL_ENTERPRISE, actor, Map.of(
+                        "enterpriseId", enterprise.getId()
+                ))));
+        if (hasExecutableExportOperation(state, actor)) {
+            commands.add(capitalistCommand(ActionType.SELL_ON_EXTERNAL_MARKET, actor, Map.of()));
+        }
+        BusinessDealPlan defaultDeal = firstExecutableBusinessDeal(state, actor);
+        if (defaultDeal.canExecute()) {
+            commands.add(capitalistCommand(ActionType.MAKE_BUSINESS_DEAL, actor, Map.of(
+                    "dealId", defaultDeal.card().getId()
+            )));
+        }
+        if (availableCapitalistFunds(actor) >= CAPITALIST_LOBBY_COST) {
+            commands.add(capitalistCommand(ActionType.LOBBY_INTERESTS, actor, Map.of("cost", CAPITALIST_LOBBY_COST)));
+        }
+        commands.add(capitalistCommand(ActionType.CHANGE_PRICES, actor, Map.of()));
+        if (state.getEnterprises().stream().anyMatch(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)) {
+            commands.add(capitalistCommand(ActionType.CHANGE_WAGES, actor, Map.of("wageLevel", 2)));
+        }
+        if (availableCapitalistFunds(actor) >= CAPITALIST_BONUS_COST && hasOccupiedCapitalistEnterprise(state)) {
+            commands.add(capitalistCommand(ActionType.PAY_BONUS, actor, Map.of("amount", CAPITALIST_BONUS_COST)));
+        }
+        if (availableCapitalistFunds(actor) >= CAPITALIST_STORAGE_COST) {
+            for (ResourceType resourceType : expandableStorageResources()) {
+                if (actor.getExtraStorageTokens(resourceType.id()) < 1) {
+                    commands.add(capitalistCommand(ActionType.BUY_STORAGE, actor, Map.of(
+                            "resourceType", resourceType.id(),
+                            "cost", CAPITALIST_STORAGE_COST
+                    )));
+                }
+            }
+        }
+        if (state.getTurnOrder().getActiveClasses().size() >= 4) {
+            commands.add(capitalistCommand(ActionType.TAKE_STATE_BENEFITS, actor, Map.of()));
+        }
+        if (playerLoanCount(actor) > 0 && availableCapitalistFunds(actor) >= CAPITALIST_REPAY_LOAN_COST) {
+            commands.add(capitalistCommand(ActionType.REPAY_LOAN, actor, Map.of("cost", CAPITALIST_REPAY_LOAN_COST)));
+        }
+        return commands;
+    }
+
+    private Optional<GameCommand> maybeGenerateGenericRepayLoanCommand(GameState state, PlayerState actor) {
+        if (actor == null
+                || actor.getControlMode() != PlayerControlMode.HUMAN
+                || state.getTurnOrder().getPhase() != RoundPhase.ACTIONS
+                || state.getCurrentVoteState() != null
+                || actor.getClassType() == ClassType.CAPITALIST
+                || actor.getClassType() == ClassType.MIDDLE_CLASS) {
+            return Optional.empty();
+        }
+        if (actor.getClassType() == ClassType.STATE) {
+            return state.getStateLoans() > 0 && state.getTreasury() >= CAPITALIST_REPAY_LOAN_COST
+                    ? Optional.of(capitalistCommand(ActionType.REPAY_LOAN, actor, Map.of("cost", CAPITALIST_REPAY_LOAN_COST)))
+                    : Optional.empty();
+        }
+        return playerLoanCount(actor) > 0 && actor.getMoney() >= CAPITALIST_REPAY_LOAN_COST
+                ? Optional.of(capitalistCommand(ActionType.REPAY_LOAN, actor, Map.of("cost", CAPITALIST_REPAY_LOAN_COST)))
+                : Optional.empty();
+    }
+
+    private List<GameCommand> generateExportActionCommands(GameState state, PlayerState actor) {
+        if (actor == null
+                || actor.getClassType() != ClassType.MIDDLE_CLASS
+                || actor.getControlMode() != PlayerControlMode.HUMAN
+                || state.getTurnOrder().getPhase() != RoundPhase.ACTIONS
+                || state.getCurrentVoteState() != null
+                || !hasExecutableExportOperation(state, actor)) {
+            return List.of();
+        }
+        return List.of(new CapitalistActionCommand(ActionType.SELL_ON_EXTERNAL_MARKET, actor.getPlayerId(), Map.of()));
+    }
+
+    private List<GameCommand> generateStateActionCommands(GameState state, PlayerState actor) {
+        if (actor == null
+                || actor.getClassType() != ClassType.STATE
+                || actor.getControlMode() != PlayerControlMode.HUMAN
+                || state.getTurnOrder().getPhase() != RoundPhase.ACTIONS
+                || state.getCurrentVoteState() != null) {
+            return List.of();
+        }
+        List<GameCommand> commands = new ArrayList<>();
+        ensureStateEventsInitialized(state);
+        for (StateEventDefinition event : activeStateEventDefinitions(state)) {
+            for (StateEventOption option : event.options()) {
+                Map<String, Object> parameters = new LinkedHashMap<>();
+                parameters.put("eventId", event.id());
+                parameters.put("eventTitle", event.title());
+                parameters.put("targetClass", option.targetClass().name());
+                parameters.put("eventOption", option.variant());
+                parameters.put("summary", option.summary());
+                commands.add(capitalistCommand(ActionType.RESPOND_TO_EVENT, actor, parameters));
+            }
+            commands.add(capitalistCommand(ActionType.RESPOND_TO_EVENT, actor, Map.of(
+                    "eventId", event.id(),
+                    "eventTitle", event.title(),
+                    "noAction", true,
+                    "summary", "Бездействие: применить штраф легитимности с карты."
+            )));
+        }
+        if (hasExecutableExportOperation(state, actor)) {
+            commands.add(capitalistCommand(ActionType.SELL_ON_EXTERNAL_MARKET, actor, Map.of()));
+        }
+        if (actor.getInfluence() >= 2) {
+            for (ClassType targetClass : opponentClassesForState(state)) {
+                if (legitimacyFor(actor, targetClass) < 5) {
+                    commands.add(capitalistCommand(ActionType.MEET_DEPUTIES, actor, Map.of(
+                            "targetClass", targetClass.name()
+                    )));
+                }
+            }
+        }
+        if (canIntroduceExtraTax(state, actor)) {
+            commands.add(capitalistCommand(ActionType.INTRODUCE_EXTRA_TAX, actor, Map.of("amountPerOpponent", 10)));
+        }
+        int mediaInfluence = state.getPublicServiceAmount(ResourceType.MEDIA_INFLUENCE.id());
+        if (mediaInfluence > 0) {
+            commands.add(capitalistCommand(ActionType.RUN_CAMPAIGN, actor, Map.of(
+                    "amount", Math.min(3, mediaInfluence)
+            )));
+        }
+        state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.STATE)
+                .forEach(enterprise -> commands.add(capitalistCommand(ActionType.CHANGE_WAGES, actor, Map.of(
+                        "enterpriseId", enterprise.getId(),
+                        "wageLevel", minimumWageLevel(state)
+                ))));
+        if (state.getStateLoans() > 0 && state.getTreasury() >= CAPITALIST_REPAY_LOAN_COST) {
+            commands.add(capitalistCommand(ActionType.REPAY_LOAN, actor, Map.of("cost", CAPITALIST_REPAY_LOAN_COST)));
+        }
+        return commands;
+    }
+
+    private List<GameCommand> generateMiddleClassEconomicActionCommands(GameState state, PlayerState actor) {
+        if (actor == null
+                || actor.getClassType() != ClassType.MIDDLE_CLASS
+                || actor.getControlMode() != PlayerControlMode.HUMAN
+                || state.getTurnOrder().getPhase() != RoundPhase.ACTIONS
+                || state.getCurrentVoteState() != null) {
+            return List.of();
+        }
+        List<GameCommand> commands = new ArrayList<>();
+        if (ownedEnterpriseCount(state, ClassType.MIDDLE_CLASS) < MIDDLE_CLASS_ENTERPRISE_LIMIT) {
+            List<Enterprise> market = state.getMiddleClassEnterpriseMarket();
+            if (market.isEmpty()) {
+                if (actor.getMoney() >= MIDDLE_CLASS_BUILD_ENTERPRISE_COST && !availableMiddleClassBuildWorkers(state).isEmpty()) {
+                    commands.add(new CapitalistActionCommand(ActionType.BUILD_ENTERPRISE, actor.getPlayerId(), Map.of(
+                            "cost", MIDDLE_CLASS_BUILD_ENTERPRISE_COST,
+                            "resourceType", ResourceType.FOOD.id(),
+                            "middleClassWorkerSlots", 1
+                    )));
+                }
+            } else {
+                for (Enterprise enterprise : market) {
+                    int cost = enterprise.getCost() > 0 ? enterprise.getCost() : MIDDLE_CLASS_BUILD_ENTERPRISE_COST;
+                    if (actor.getMoney() < cost || !canStaffMiddleClassEnterprise(state, enterprise)) {
+                        continue;
+                    }
+                    Map<String, Object> parameters = new HashMap<>();
+                    parameters.put("enterpriseId", enterprise.getId());
+                    parameters.put("name", enterprise.getName());
+                    parameters.put("cost", cost);
+                    parameters.put("middleClassWorkerSlots", middleClassWorkerSlotCount(enterprise, null));
+                    if (hasMiddleClassHiredWorkerSlot(enterprise, null)) {
+                        parameters.put("workerClassSlot", true);
+                        parameters.put("wageLevel", minimumWageLevel(state));
+                    }
+                    commands.add(new CapitalistActionCommand(ActionType.BUILD_ENTERPRISE, actor.getPlayerId(), parameters));
+                }
+            }
+        }
+        state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.MIDDLE_CLASS)
+                .filter(enterprise -> !hasTiedWorker(state, enterprise))
+                .forEach(enterprise -> commands.add(capitalistCommand(ActionType.SELL_ENTERPRISE, actor, Map.of(
+                        "enterpriseId", enterprise.getId()
+                ))));
+        commands.add(capitalistCommand(ActionType.CHANGE_PRICES, actor, Map.of()));
+        state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.MIDDLE_CLASS)
+                .forEach(enterprise -> commands.add(capitalistCommand(ActionType.CHANGE_WAGES, actor, Map.of(
+                        "enterpriseId", enterprise.getId(),
+                        "wageLevel", minimumWageLevel(state)
+                ))));
+        if (playerLoanCount(actor) > 0 && actor.getMoney() >= CAPITALIST_REPAY_LOAN_COST) {
+            commands.add(capitalistCommand(ActionType.REPAY_LOAN, actor, Map.of("cost", CAPITALIST_REPAY_LOAN_COST)));
+        }
+        return commands;
+    }
+
+    private CapitalistActionCommand capitalistCommand(ActionType actionType, PlayerState actor, Map<String, Object> parameters) {
+        return new CapitalistActionCommand(actionType, actor.getPlayerId(), parameters);
     }
 
     private List<GameCommand> generateProductionPhaseCommands(GameState state) {
@@ -899,9 +1199,6 @@ public class GameRulesEngine {
         if (policy != null && policy.getOccupyingProposalToken() != null) {
             addError(errors, codes, ValidationReasonCode.POLICY_ALREADY_HAS_PROPOSAL, "Policy already has pending proposal token.");
         }
-        if (policy != null && command.targetCourse() != null && !policy.getCurrentCourse().isAdjacentTo(command.targetCourse())) {
-            addError(errors, codes, ValidationReasonCode.TARGET_COURSE_NOT_ADJACENT, "Target course must be adjacent to current course.");
-        }
         if (actor != null
                 && isAutomaControlled(actor)
                 && state.getCurrentRound() >= state.getMaxRounds()
@@ -938,6 +1235,126 @@ public class GameRulesEngine {
         return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
     }
 
+    private ValidationResult validateCapitalistAction(GameState state, CapitalistActionCommand command) {
+        List<String> errors = new ArrayList<>();
+        List<ValidationReasonCode> codes = new ArrayList<>();
+
+        if (state.getTurnOrder().getPhase() != RoundPhase.ACTIONS) {
+            addError(errors, codes, ValidationReasonCode.NOT_IN_ACTIONS_PHASE, command.type() + " is only allowed in ACTIONS phase.");
+        }
+        if (state.getCurrentVoteState() != null) {
+            addError(errors, codes, ValidationReasonCode.NOT_CURRENT_VOTING_STAGE, "Resolve the active vote before taking capitalist actions.");
+        }
+
+        PlayerState actor = state.findPlayerById(command.actorPlayerId()).orElse(null);
+        if (actor == null || state.currentPlayer() == null || !Objects.equals(state.currentPlayer().getPlayerId(), command.actorPlayerId())) {
+            addError(errors, codes, ValidationReasonCode.NOT_CURRENT_PLAYER, "Only current player can take capitalist actions.");
+        }
+        boolean middleClassSupportedAction = actor != null
+                && actor.getClassType() == ClassType.MIDDLE_CLASS
+                && isMiddleClassBusinessAction(command.type());
+        boolean stateSupportedAction = actor != null
+                && actor.getClassType() == ClassType.STATE
+                && isStateAction(command.type());
+        boolean genericRepayLoanAction = command.type() == ActionType.REPAY_LOAN;
+        if (actor != null
+                && actor.getClassType() != ClassType.CAPITALIST
+                && !middleClassSupportedAction
+                && !stateSupportedAction
+                && !genericRepayLoanAction) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, command.type() + " is not available to this class.");
+        }
+        if (actor != null && actor.getControlMode() != PlayerControlMode.HUMAN) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, command.type() + " is only exposed for a human player.");
+        }
+
+        if (actor != null) {
+            switch (command.type()) {
+                case BUILD_ENTERPRISE -> validateBuildEnterpriseAction(state, actor, command, errors, codes);
+                case SELL_ENTERPRISE -> {
+                    Enterprise enterprise = ownedEnterpriseForCommand(state, command, actor.getClassType());
+                    if (enterprise == null) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No owned enterprise is available to sell.");
+                    } else if (actor.getClassType() == ClassType.MIDDLE_CLASS && hasTiedWorker(state, enterprise)) {
+                        addError(errors, codes, ValidationReasonCode.WORKER_TIED_BY_CONTRACT,
+                                "Middle class cannot sell an enterprise while any worker there is tied by contract.");
+                    }
+                }
+                case SELL_ON_EXTERNAL_MARKET -> {
+                    if (actor.getClassType() != ClassType.CAPITALIST
+                            && actor.getClassType() != ClassType.MIDDLE_CLASS
+                            && actor.getClassType() != ClassType.STATE) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Export is available only to capitalist, middle class, and state players.");
+                    }
+                    if (!hasExecutableExportOperation(state, actor)) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No active export card operation can be paid from stored goods.");
+                    }
+                }
+                case MAKE_BUSINESS_DEAL -> {
+                    BusinessDealPlan plan = businessDealPlanForCommand(state, actor, command);
+                    if (plan.card() == null) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No visible business deal is available.");
+                    } else if (!plan.canExecute()) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Business deal cannot be paid or stored: " + String.join(", ", plan.reasonCodes()));
+                    }
+                }
+                case LOBBY_INTERESTS -> requireCapitalistFunds(errors, codes, actor, CAPITALIST_LOBBY_COST, command.type());
+                case CHANGE_PRICES -> {
+                    // Always legal for the human capitalist in this MVP slice.
+                }
+                case CHANGE_WAGES -> {
+                    validateChangeWagesAction(state, actor, command, errors, codes);
+                }
+                case PAY_BONUS -> {
+                    requireCapitalistFunds(errors, codes, actor, CAPITALIST_BONUS_COST, command.type());
+                    if (!hasOccupiedCapitalistEnterprise(state)) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No worker is employed at a capitalist enterprise for bonus payment.");
+                    }
+                }
+                case BUY_STORAGE -> {
+                    requireCapitalistFunds(errors, codes, actor, CAPITALIST_STORAGE_COST, command.type());
+                    String rawResourceId = stringParameter(command, "resourceType", ResourceType.FOOD.id());
+                    ResourceType requestedStorage = ResourceType.fromRaw(rawResourceId);
+                    String resourceId = requestedStorage == null ? rawResourceId : requestedStorage.id();
+                    if (!isExpandableStorageResource(resourceId)) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Storage can be bought only for food, luxury, healthcare, or education.");
+                    } else if (actor.getExtraStorageTokens(resourceId) >= 1) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Only one extra storage token is allowed per resource.");
+                    }
+                }
+                case TAKE_STATE_BENEFITS -> {
+                    if (state.getTurnOrder().getActiveClasses().size() < 4) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "State benefits are available only in a four-class game.");
+                    }
+                }
+                case RESPOND_TO_EVENT -> {
+                    if (actor.getClassType() != ClassType.STATE) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Only state can respond to events.");
+                    }
+                    ensureStateEventsInitialized(state);
+                    String eventId = stringParameter(command, "eventId", firstActiveStateEventId(state));
+                    if (findStateEventDefinition(eventId).isEmpty() || !state.getStateEventDeck().getVisibleCardIds().contains(eventId)) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "State event is not active.");
+                    }
+                }
+                case MEET_DEPUTIES -> validateMeetDeputiesAction(state, actor, command, errors, codes);
+                case INTRODUCE_EXTRA_TAX -> validateIntroduceExtraTaxAction(state, actor, errors, codes);
+                case RUN_CAMPAIGN -> {
+                    if (actor.getClassType() != ClassType.STATE) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Only state can run a campaign.");
+                    }
+                    if (state.getPublicServiceAmount(ResourceType.MEDIA_INFLUENCE.id()) <= 0) {
+                        addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No media influence is available on public services.");
+                    }
+                }
+                case REPAY_LOAN -> validateRepayLoanAction(state, actor, errors, codes);
+                default -> addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Unsupported capitalist action: " + command.type());
+            }
+        }
+
+        return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
+    }
+
     private ValidationResult validateCallExtraordinaryVote(GameState state, CallExtraordinaryVoteCommand command) {
         List<String> errors = new ArrayList<>();
         List<ValidationReasonCode> codes = new ArrayList<>();
@@ -949,9 +1366,6 @@ public class GameRulesEngine {
         PlayerState actor = state.findPlayerById(command.actorPlayerId()).orElse(null);
         if (actor == null || state.currentPlayer() == null || !Objects.equals(state.currentPlayer().getPlayerId(), command.actorPlayerId())) {
             addError(errors, codes, ValidationReasonCode.NOT_CURRENT_PLAYER, "Only current player can call an extraordinary vote.");
-        }
-        if (actor != null && votingBagRules.ownerForClass(actor.getClassType()) == null) {
-            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Actor class has no voting cube color in this slice.");
         }
         if (actor != null && actor.getInfluence() < 1) {
             addError(errors, codes, ValidationReasonCode.INFLUENCE_EXCEEDS_AVAILABLE, "Extraordinary vote requires 1 influence.");
@@ -981,6 +1395,218 @@ public class GameRulesEngine {
         }
 
         return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
+    }
+
+    private void validateBuildEnterpriseAction(
+            GameState state,
+            PlayerState actor,
+            CapitalistActionCommand command,
+            List<String> errors,
+            List<ValidationReasonCode> codes
+    ) {
+        int cost = intParameter(command, "cost", actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? MIDDLE_CLASS_BUILD_ENTERPRISE_COST
+                : CAPITALIST_BUILD_ENTERPRISE_COST);
+        if (actor.getClassType() == ClassType.CAPITALIST) {
+            Enterprise marketEnterprise = capitalistMarketEnterpriseForCommand(state, command);
+            if (!state.getCapitalistEnterpriseMarket().isEmpty() && marketEnterprise == null) {
+                addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Capitalist must build one of the 4 visible enterprise market cards.");
+                return;
+            }
+            if (marketEnterprise != null) {
+                cost = marketEnterprise.getCost() > 0 ? marketEnterprise.getCost() : CAPITALIST_BUILD_ENTERPRISE_COST;
+            }
+            requireCapitalistFunds(errors, codes, actor, cost, command.type());
+            if (ownedEnterpriseCount(state, ClassType.CAPITALIST) >= CAPITALIST_ENTERPRISE_LIMIT) {
+                addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Capitalist cannot own more than 12 enterprises.");
+            }
+            return;
+        }
+        if (actor.getClassType() != ClassType.MIDDLE_CLASS) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Only capitalist and middle class players can build enterprises in this slice.");
+            return;
+        }
+        Enterprise marketEnterprise = middleClassMarketEnterpriseForCommand(state, command);
+        if (!state.getMiddleClassEnterpriseMarket().isEmpty() && marketEnterprise == null) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Middle class must build one of the 3 visible enterprise market cards.");
+            return;
+        }
+        if (marketEnterprise != null) {
+            cost = marketEnterprise.getCost() > 0 ? marketEnterprise.getCost() : MIDDLE_CLASS_BUILD_ENTERPRISE_COST;
+        }
+        if (actor.getMoney() < cost) {
+            addError(errors, codes, ValidationReasonCode.INSUFFICIENT_FUNDS, "BUILD_ENTERPRISE requires " + cost + " money.");
+        }
+        if (ownedEnterpriseCount(state, ClassType.MIDDLE_CLASS) >= MIDDLE_CLASS_ENTERPRISE_LIMIT) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Middle class cannot own more than 8 enterprises.");
+        }
+        int requiredMiddleWorkers = middleClassWorkerSlotCount(marketEnterprise, command);
+        List<String> requestedWorkerIds = stringListParameter(command, "middleClassWorkerIds");
+        if (requestedWorkerIds.isEmpty() && marketEnterprise != null && !canStaffMiddleClassEnterprise(state, marketEnterprise)) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION,
+                    "Middle class must have " + requiredMiddleWorkers + " untied own worker(s) available for this enterprise.");
+        } else if (requestedWorkerIds.isEmpty() && availableMiddleClassBuildWorkers(state).size() < requiredMiddleWorkers) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION,
+                    "Middle class must have " + requiredMiddleWorkers + " untied own worker(s) available for this enterprise.");
+        }
+        boolean hasHiredWorkerSlot = hasMiddleClassHiredWorkerSlot(marketEnterprise, command);
+        if (hasHiredWorkerSlot) {
+            int wageLevel = clamp(intParameter(command, "wageLevel", minimumWageLevel(state)), 1, 3);
+            if (wageLevel < minimumWageLevel(state)) {
+                addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Hired worker wage cannot be below the current minimum wage.");
+            }
+            if (requiredMiddleWorkers != 1) {
+                addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION,
+                        "Middle-class enterprises with a hired worker slot must require exactly one middle-class worker.");
+            }
+        }
+        if (!requestedWorkerIds.isEmpty() && requestedWorkerIds.size() != requiredMiddleWorkers) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET,
+                    "middleClassWorkerIds must contain exactly " + requiredMiddleWorkers + " worker id(s).");
+        }
+        if (!requestedWorkerIds.isEmpty()
+                && marketEnterprise != null
+                && !canStaffMiddleClassEnterprise(state, marketEnterprise, requestedWorkerIds)) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET,
+                    "Requested middle-class workers cannot fill the enterprise owner slots.");
+        }
+        for (String workerId : requestedWorkerIds) {
+            Worker worker = state.findWorker(workerId).orElse(null);
+            if (worker == null || !isAvailableMiddleClassBuildWorker(state, worker)) {
+                addError(errors, codes, ValidationReasonCode.INVALID_TARGET,
+                        "Middle-class build worker is unavailable, tied, or not owned by the middle class: " + workerId);
+            }
+        }
+        if (booleanParameter(command, "hireWorkerClass", false)) {
+            if (!hasHiredWorkerSlot) {
+                addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "This middle-class enterprise has no hired worker slot.");
+            } else if (firstAvailableWorkerClassHire(state) == null) {
+                addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "No unemployed worker-class worker is available for the hired slot.");
+            }
+        }
+    }
+
+    private boolean isMiddleClassBusinessAction(ActionType actionType) {
+        return switch (actionType) {
+            case BUILD_ENTERPRISE,
+                 SELL_ENTERPRISE,
+                 SELL_ON_EXTERNAL_MARKET,
+                 CHANGE_PRICES,
+                 CHANGE_WAGES,
+                 TAKE_STATE_BENEFITS,
+                 REPAY_LOAN -> true;
+            default -> false;
+        };
+    }
+
+    private boolean isStateAction(ActionType actionType) {
+        return switch (actionType) {
+            case SELL_ON_EXTERNAL_MARKET,
+                 CHANGE_WAGES,
+                 REPAY_LOAN,
+                 RESPOND_TO_EVENT,
+                 MEET_DEPUTIES,
+                 INTRODUCE_EXTRA_TAX,
+                 RUN_CAMPAIGN -> true;
+            default -> false;
+        };
+    }
+
+    private void validateMeetDeputiesAction(
+            GameState state,
+            PlayerState actor,
+            CapitalistActionCommand command,
+            List<String> errors,
+            List<ValidationReasonCode> codes
+    ) {
+        if (actor.getClassType() != ClassType.STATE) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Only state can meet deputies.");
+            return;
+        }
+        if (actor.getInfluence() < 2) {
+            addError(errors, codes, ValidationReasonCode.INSUFFICIENT_FUNDS, "MEET_DEPUTIES requires 2 influence.");
+        }
+        ClassType targetClass = classTypeParameter(command, lowestLegitimacyClass(actor));
+        if (!opponentClassesForState(state).contains(targetClass)) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Target class is not an active opponent: " + targetClass + ".");
+        } else if (legitimacyFor(actor, targetClass) >= 5) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Legitimacy is already at maximum for " + targetClass + ".");
+        }
+    }
+
+    private void validateIntroduceExtraTaxAction(
+            GameState state,
+            PlayerState actor,
+            List<String> errors,
+            List<ValidationReasonCode> codes
+    ) {
+        if (actor.getClassType() != ClassType.STATE) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Only state can introduce an extra tax.");
+            return;
+        }
+        if (!canIntroduceExtraTax(state, actor)) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Extra tax requires at least two legitimacy tracks above level 1.");
+        }
+    }
+
+    private void validateChangeWagesAction(
+            GameState state,
+            PlayerState actor,
+            CapitalistActionCommand command,
+            List<String> errors,
+            List<ValidationReasonCode> codes
+    ) {
+        ClassType ownerClass = actor.getClassType();
+        List<Enterprise> targets = enterprisesForWageChange(state, ownerClass, stringParameter(command, "enterpriseId", ""));
+        if (targets.isEmpty()) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No owned enterprise is available for wage changes.");
+            return;
+        }
+        int wageLevel = clamp(intParameter(command, "wageLevel", minimumWageLevel(state)), 1, 3);
+        if (wageLevel < minimumWageLevel(state)) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "Wage level cannot be below the current minimum wage.");
+        }
+        if (ownerClass == ClassType.MIDDLE_CLASS) {
+            for (Enterprise enterprise : targets) {
+                if (wageLevel < enterprise.getWageLevel() && hasTiedHiredWorker(state, enterprise)) {
+                    addError(errors, codes, ValidationReasonCode.WORKER_TIED_BY_CONTRACT,
+                            "Cannot lower wages at " + enterprise.getId() + " while its hired worker is tied by contract.");
+                }
+            }
+        }
+    }
+
+    private void validateRepayLoanAction(
+            GameState state,
+            PlayerState actor,
+            List<String> errors,
+            List<ValidationReasonCode> codes
+    ) {
+        if (actor.getClassType() == ClassType.STATE) {
+            if (state.getStateLoans() <= 0) {
+                addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No state loan card is available to repay.");
+            }
+            if (state.getTreasury() < CAPITALIST_REPAY_LOAN_COST) {
+                addError(errors, codes, ValidationReasonCode.INSUFFICIENT_FUNDS,
+                        "REPAY_LOAN requires " + CAPITALIST_REPAY_LOAN_COST + " treasury money.");
+            }
+            return;
+        }
+        int loans = playerLoanCount(actor);
+        if (actor.getClassType() == ClassType.MIDDLE_CLASS || actor.getClassType() == ClassType.WORKER) {
+            if (loans <= 0) {
+                addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No loan card is available to repay.");
+            }
+            if (actor.getMoney() < CAPITALIST_REPAY_LOAN_COST) {
+                addError(errors, codes, ValidationReasonCode.INSUFFICIENT_FUNDS,
+                        "REPAY_LOAN requires " + CAPITALIST_REPAY_LOAN_COST + " money.");
+            }
+            return;
+        }
+        if (loans <= 0) {
+            addError(errors, codes, ValidationReasonCode.UNSUPPORTED_ACTION, "No loan card is available to repay.");
+        }
+        requireCapitalistFunds(errors, codes, actor, CAPITALIST_REPAY_LOAN_COST, ActionType.REPAY_LOAN);
     }
 
     private boolean isImmediateExtraordinaryVoteWindow(GameState state, PlayerState actor, PolicyState policy) {
@@ -1025,13 +1651,8 @@ public class GameRulesEngine {
             return ValidationResult.invalid(errors, codes);
         }
 
-        if (command.assignments().size() > 3) {
-            addError(errors, codes, ValidationReasonCode.TOO_MANY_WORKERS_IN_ONE_ASSIGN_ACTION, "At most 3 workers can be assigned in one action.");
-        }
-
         Set<String> seenWorkers = new HashSet<>();
         Set<String> seenSlots = new HashSet<>();
-        boolean hasEnterpriseTargets = false;
 
         for (WorkerAssignmentOperation op : command.assignments()) {
             if (op.targetType() == AssignmentTargetType.UNION) {
@@ -1064,7 +1685,6 @@ public class GameRulesEngine {
                 continue;
             }
 
-            hasEnterpriseTargets = true;
             SlotRef target = parseSlotRef(op.targetId());
             if (target == null) {
                 addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Invalid ENTERPRISE_SLOT targetId format: " + op.targetId());
@@ -1091,11 +1711,6 @@ public class GameRulesEngine {
             }
         }
 
-        if (errors.isEmpty() && hasEnterpriseTargets && !enterprisesRemainBinaryAfterSimulation(state, command.assignments())) {
-            addError(errors, codes, ValidationReasonCode.ENTERPRISE_CANNOT_BE_PARTIALLY_FILLED,
-                    "Enterprises must end fully staffed or fully empty after whole assignment action.");
-        }
-
         return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
     }
 
@@ -1119,10 +1734,6 @@ public class GameRulesEngine {
         if (enterpriseIds.isEmpty()) {
             addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "At least one enterprise is required for PLACE_STRIKES.");
         }
-        if (enterpriseIds.size() > 2) {
-            addError(errors, codes, ValidationReasonCode.TOO_MANY_STRIKES_IN_ONE_ACTION, "At most 2 strike tokens can be placed in one action.");
-        }
-
         Set<String> seen = new HashSet<>();
         for (String enterpriseId : enterpriseIds) {
             if (!seen.add(enterpriseId)) {
@@ -1328,7 +1939,7 @@ public class GameRulesEngine {
         if (session.getVotingStage() == VotingStage.DECLARE_STANCES) {
             addError(errors, codes, ValidationReasonCode.NOT_CURRENT_VOTING_STAGE, "Influence cannot be committed before cube draw stage.");
             addError(errors, codes, ValidationReasonCode.CANNOT_RESOLVE_BEFORE_ALL_STANCES, "Cannot resolve vote before all stances are submitted.");
-        } else if (session.getVotingStage() != VotingStage.COMMIT_INFLUENCE) {
+        } else if (session.getVotingStage() != VotingStage.COMMIT_INFLUENCE && session.getVotingStage() != VotingStage.DRAW_BAG_CUBES) {
             addError(errors, codes, ValidationReasonCode.NOT_CURRENT_VOTING_STAGE, "Current voting stage does not accept influence commits.");
             addError(errors, codes, ValidationReasonCode.CANNOT_RESOLVE_BEFORE_ALL_INFLUENCE_COMMITS,
                     "Cannot resolve vote before all influence commitments are submitted.");
@@ -1353,6 +1964,41 @@ public class GameRulesEngine {
 
         return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
     }
+
+    private ValidationResult validateDrawVotingCubes(GameState state, DrawVotingCubesCommand command) {
+        List<String> errors = new ArrayList<>();
+        List<ValidationReasonCode> codes = new ArrayList<>();
+        CurrentVoteState session = state.getCurrentVoteState();
+
+        boolean extraordinaryActionVote = session != null
+                && session.isExtraordinary()
+                && state.getTurnOrder().getPhase() == RoundPhase.ACTIONS;
+        if (state.getTurnOrder().getPhase() != RoundPhase.VOTING && !extraordinaryActionVote) {
+            addError(errors, codes, ValidationReasonCode.NOT_IN_VOTING_PHASE, "DRAW_VOTING_CUBES is only allowed in VOTING phase.");
+        }
+        if (session == null || session.getActiveProposalPolicyId() == null) {
+            addError(errors, codes, ValidationReasonCode.NO_PENDING_PROPOSAL_FOR_POLICY, "No active proposal to draw voting cubes for.");
+            return ValidationResult.invalid(errors, codes);
+        }
+        if (session.getVotingStage() != VotingStage.DRAW_BAG_CUBES) {
+            addError(errors, codes, ValidationReasonCode.NOT_CURRENT_VOTING_STAGE, "Current voting stage does not accept cube draws.");
+        }
+        PlayerState actor = state.findPlayerById(command.actorPlayerId()).orElse(null);
+        if (actor == null || !state.getTurnOrder().getActiveClasses().contains(actor.getClassType())) {
+            addError(errors, codes, ValidationReasonCode.NOT_CURRENT_PLAYER, "Actor is not an active class in current vote.");
+        }
+        if (command.count() <= 0) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Cube draw count must be positive.");
+        }
+        if (session.isExtraordinary() && command.count() > state.getVotingBag().totalCubes()) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Extraordinary votes can only draw cubes currently in the bag.");
+        }
+        if (command.count() > 20) {
+            addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Cube draw count cannot exceed 20 in one action.");
+        }
+
+        return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
+    }
     private List<DomainEvent> applyAdvanceGameFlow(GameState state, AdvanceGameFlowCommand command) {
         GameCommand next = nextFlowCommand(state, command.actorPlayerId());
         if (next == null) {
@@ -1367,6 +2013,7 @@ public class GameRulesEngine {
             case AdvanceToNextRoundCommand advance -> applyAdvanceToNextRound(state, advance);
             case ResolvePreparationPhaseCommand resolve -> applyResolvePreparationPhase(state, resolve);
             case DeclareVoteStanceCommand stance -> applyDeclareVoteStance(state, stance);
+            case DrawVotingCubesCommand draw -> applyDrawVotingCubes(state, draw);
             case CommitVoteInfluenceCommand commit -> applyCommitVoteInfluence(state, commit);
             default -> List.of();
         };
@@ -1479,6 +2126,581 @@ public class GameRulesEngine {
         return List.of();
     }
 
+    private List<DomainEvent> applyCapitalistAction(GameState state, CapitalistActionCommand command) {
+        PlayerState actor = state.findPlayerById(command.actorPlayerId()).orElseThrow();
+        return switch (command.type()) {
+            case BUILD_ENTERPRISE -> applyBuildEnterprise(state, actor, command);
+            case SELL_ENTERPRISE -> applySellEnterprise(state, actor, command);
+            case SELL_ON_EXTERNAL_MARKET -> applySellOnExternalMarket(state, actor);
+            case MAKE_BUSINESS_DEAL -> applyCapitalistBusinessDeal(state, actor, command);
+            case LOBBY_INTERESTS -> applyCapitalistLobby(actor);
+            case CHANGE_PRICES -> applyCapitalistChangePrices(actor, command);
+            case CHANGE_WAGES -> applyChangeWages(state, actor, command);
+            case PAY_BONUS -> applyCapitalistPayBonus(state, actor, command);
+            case BUY_STORAGE -> applyCapitalistBuyStorage(actor, command);
+            case TAKE_STATE_BENEFITS -> applyCapitalistTakeBenefits(actor);
+            case REPAY_LOAN -> applyCapitalistRepayLoan(state, actor);
+            case RESPOND_TO_EVENT -> applyStateRespondToEvent(state, actor, command);
+            case MEET_DEPUTIES -> applyStateMeetDeputies(state, actor, command);
+            case INTRODUCE_EXTRA_TAX -> applyStateExtraTax(state, actor);
+            case RUN_CAMPAIGN -> applyStateCampaign(state, actor, command);
+            default -> List.of();
+        };
+    }
+
+    private List<DomainEvent> applyBuildEnterprise(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        int defaultCost = actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? MIDDLE_CLASS_BUILD_ENTERPRISE_COST
+                : CAPITALIST_BUILD_ENTERPRISE_COST;
+        Enterprise marketEnterprise = actor.getClassType() == ClassType.CAPITALIST
+                ? capitalistMarketEnterpriseForCommand(state, command)
+                : actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? middleClassMarketEnterpriseForCommand(state, command)
+                : null;
+        int cost = marketEnterprise == null
+                ? intParameter(command, "cost", defaultCost)
+                : marketEnterprise.getCost() > 0 ? marketEnterprise.getCost() : defaultCost;
+        consumeBuildEnterpriseFunds(actor, cost);
+
+        Enterprise enterprise;
+        if (marketEnterprise != null) {
+            enterprise = marketEnterprise.copy();
+            enterprise.setOwnerClass(actor.getClassType());
+            enterprise.setWageLevel(Math.max(minimumWageLevel(state), clamp(intParameter(command, "wageLevel", 2), 1, 3)));
+            enterprise.getSlots().forEach(slot -> slot.setOccupiedWorkerId(null));
+            if (actor.getClassType() == ClassType.CAPITALIST) {
+                state.getCapitalistEnterpriseMarket().removeIf(candidate -> Objects.equals(candidate.getId(), marketEnterprise.getId()));
+            } else if (actor.getClassType() == ClassType.MIDDLE_CLASS) {
+                state.getMiddleClassEnterpriseMarket().removeIf(candidate -> Objects.equals(candidate.getId(), marketEnterprise.getId()));
+                refillMiddleClassEnterpriseMarket(state);
+            }
+        } else {
+            String resourceId = resourceIdParameter(command, ResourceType.FOOD.id());
+            String enterpriseId = stringParameter(command, "enterpriseId", actor.getPlayerId() + "-enterprise-" + (state.getEnterprises().size() + 1));
+            enterprise = new Enterprise();
+            enterprise.setId(enterpriseId);
+            enterprise.setName(stringParameter(command, "name", actor.getClassType() == ClassType.MIDDLE_CLASS
+                    ? "Middle Class MVP Enterprise"
+                    : "Capitalist MVP Enterprise"));
+            enterprise.setCategory("mvp");
+            enterprise.setOwnerClass(actor.getClassType());
+            enterprise.setSector(WorkerSector.GENERAL);
+            enterprise.setWageLevel(Math.max(minimumWageLevel(state), clamp(intParameter(command, "wageLevel", 2), 1, 3)));
+            enterprise.setProductionAmount(intParameter(command, "productionAmount", 2));
+            enterprise.setProducedResources(Map.of(resourceId, intParameter(command, "productionAmount", 2)));
+            enterprise.setSlots(actor.getClassType() == ClassType.MIDDLE_CLASS
+                    ? middleClassEnterpriseSlots(command, enterpriseId)
+                    : List.of(new EnterpriseSlot(
+                    enterpriseId + "-slot-1",
+                    WorkerQualification.UNSKILLED,
+                    null,
+                    null,
+                    null
+            )));
+        }
+        enterprise.setCost(cost);
+        state.getEnterprises().add(enterprise);
+        int hired = actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? staffMiddleClassEnterprise(state, command, enterprise)
+                : hireWorkersForNewEnterprise(state, actor, enterprise);
+        if (actor.getClassType() == ClassType.MIDDLE_CLASS && !enterprise.isFunctioning()) {
+            state.appendLog("BUILD_ENTERPRISE_PARTIAL", enterprise.getId() + " was built but not fully staffed in MVP flow.");
+        }
+        return List.of(new CapitalistActionAppliedEvent(
+                actor.getClassType() == ClassType.MIDDLE_CLASS ? "MIDDLE_CLASS_ENTERPRISE_BUILT" : "CAPITALIST_ENTERPRISE_BUILT",
+                actor.getPlayerId() + " built " + enterprise.getId() + " for " + cost
+                        + " and hired " + hired + " worker(s)."
+        ));
+    }
+
+    private Enterprise capitalistMarketEnterpriseForCommand(GameState state, CapitalistActionCommand command) {
+        List<Enterprise> market = state.getCapitalistEnterpriseMarket();
+        if (market.isEmpty()) {
+            return null;
+        }
+        String requestedEnterpriseId = stringParameter(command, "enterpriseId", "");
+        return market.stream()
+                .filter(enterprise -> requestedEnterpriseId.isBlank() || Objects.equals(enterprise.getId(), requestedEnterpriseId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Enterprise middleClassMarketEnterpriseForCommand(GameState state, CapitalistActionCommand command) {
+        List<Enterprise> market = state.getMiddleClassEnterpriseMarket();
+        if (market.isEmpty()) {
+            return null;
+        }
+        String requestedEnterpriseId = stringParameter(command, "enterpriseId", "");
+        return market.stream()
+                .filter(enterprise -> requestedEnterpriseId.isBlank() || Objects.equals(enterprise.getId(), requestedEnterpriseId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void refillMiddleClassEnterpriseMarket(GameState state) {
+        List<Enterprise> market = new ArrayList<>(state.getMiddleClassEnterpriseMarket());
+        List<Enterprise> deck = new ArrayList<>(state.getMiddleClassEnterpriseDeck());
+        while (market.size() < 3 && !deck.isEmpty()) {
+            market.add(deck.remove(0));
+        }
+        state.setMiddleClassEnterpriseMarket(market);
+        state.setMiddleClassEnterpriseDeck(deck);
+    }
+
+    private List<DomainEvent> applySellEnterprise(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        Enterprise enterprise = ownedEnterpriseForCommand(state, command, actor.getClassType());
+        if (enterprise == null) {
+            return List.of();
+        }
+
+        int value = enterprise.getCost() > 0 ? enterprise.getCost() : actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? MIDDLE_CLASS_BUILD_ENTERPRISE_COST
+                : CAPITALIST_BUILD_ENTERPRISE_COST;
+        for (EnterpriseSlot slot : enterprise.getSlots()) {
+            if (!slot.isOccupied()) {
+                continue;
+            }
+            Worker worker = state.findWorker(slot.getOccupiedWorkerId()).orElse(null);
+            if (worker != null) {
+                worker.setLocation(WorkerLocation.UNEMPLOYED);
+                worker.setEnterpriseId(null);
+                worker.setSlotId(null);
+                worker.setTiedContract(false);
+            }
+            slot.setOccupiedWorkerId(null);
+        }
+        state.getEnterprises().removeIf(existing -> Objects.equals(existing.getId(), enterprise.getId()));
+        addBusinessFunds(actor, value);
+        String eventType = actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? "MIDDLE_CLASS_ENTERPRISE_SOLD"
+                : "CAPITALIST_ENTERPRISE_SOLD";
+        return List.of(new CapitalistActionAppliedEvent(
+                eventType,
+                actor.getPlayerId() + " sold " + enterprise.getId() + " for " + value + "."
+        ));
+    }
+
+    private List<DomainEvent> applySellOnExternalMarket(GameState state, PlayerState actor) {
+        ExportExecution execution = executeExportOperations(state, actor);
+        creditExportRevenue(actor, execution.revenue());
+        if (actor.getClassType() == ClassType.MIDDLE_CLASS && execution.operations() > 0) {
+            actor.setVictoryPoints(actor.getVictoryPoints() + execution.operations());
+        }
+        String eventType = actor.getClassType() == ClassType.CAPITALIST
+                ? "CAPITALIST_EXTERNAL_MARKET_SALE"
+                : "MIDDLE_CLASS_EXTERNAL_MARKET_SALE";
+        return List.of(new CapitalistActionAppliedEvent(
+                eventType,
+                actor.getPlayerId() + " executed " + execution.operations()
+                        + " export operation(s), sold " + execution.quantity()
+                        + " stored goods, and gained " + execution.revenue() + "."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistBusinessDeal(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        BusinessDealPlan plan = businessDealPlanForCommand(state, actor, command);
+        if (plan.card() == null || !plan.canExecute()) {
+            return List.of();
+        }
+
+        consumeCapitalistFunds(actor, plan.totalCost());
+        state.setTreasury(state.getTreasury() + plan.dutyCost());
+        for (Map.Entry<String, Integer> entry : plan.regularStorage().entrySet()) {
+            actor.addProducedResource(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, Integer> entry : plan.freeTradeStorage().entrySet()) {
+            actor.addFreeTradeZoneResource(entry.getKey(), entry.getValue());
+        }
+        consumeBusinessDealCardFromMarket(state, plan.card().getId());
+        return List.of(new CapitalistActionAppliedEvent(
+                "CAPITALIST_BUSINESS_DEAL",
+                actor.getPlayerId() + " made deal " + plan.card().getId()
+                        + " for " + plan.totalCost()
+                        + " (base=" + plan.baseCost()
+                        + ", duty=" + plan.dutyCost()
+                        + ", regular_storage=" + plan.regularStorage()
+                        + ", free_trade_zone=" + plan.freeTradeStorage() + ")."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistLobby(PlayerState actor) {
+        consumeCapitalistFunds(actor, CAPITALIST_LOBBY_COST);
+        actor.setInfluence(actor.getInfluence() + CAPITALIST_LOBBY_INFLUENCE_GAIN);
+        return List.of(new CapitalistActionAppliedEvent(
+                "CAPITALIST_LOBBIED",
+                actor.getPlayerId() + " paid " + CAPITALIST_LOBBY_COST + " and gained " + CAPITALIST_LOBBY_INFLUENCE_GAIN + " influence."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistChangePrices(PlayerState actor, CapitalistActionCommand command) {
+        Map<String, Integer> prices = pricePatch(command);
+        if (prices.isEmpty()) {
+            prices = Map.of(
+                    ResourceType.FOOD.id(), actor.getPrice(ResourceType.FOOD.id()) + 1,
+                    ResourceType.LUXURY.id(), actor.getPrice(ResourceType.LUXURY.id()) + 1,
+                    ResourceType.EDUCATION.id(), actor.getPrice(ResourceType.EDUCATION.id()) + 1,
+                    ResourceType.HEALTHCARE.id(), actor.getPrice(ResourceType.HEALTHCARE.id()) + 1
+            );
+        }
+        for (Map.Entry<String, Integer> entry : prices.entrySet()) {
+            actor.setPrice(entry.getKey(), Math.max(0, entry.getValue()));
+        }
+        String eventType = actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? "MIDDLE_CLASS_PRICES_CHANGED"
+                : "CAPITALIST_PRICES_CHANGED";
+        return List.of(new CapitalistActionAppliedEvent(
+                eventType,
+                actor.getPlayerId() + " changed prices: " + prices + "."
+        ));
+    }
+
+    private List<DomainEvent> applyChangeWages(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        int wageLevel = Math.max(minimumWageLevel(state), clamp(intParameter(command, "wageLevel", minimumWageLevel(state)), 1, 3));
+        String enterpriseId = stringParameter(command, "enterpriseId", "");
+        int changed = 0;
+        for (Enterprise enterprise : enterprisesForWageChange(state, actor.getClassType(), enterpriseId)) {
+            int previousWage = enterprise.getWageLevel();
+            enterprise.setWageLevel(wageLevel);
+            for (EnterpriseSlot slot : enterprise.getSlots()) {
+                if (!slot.isOccupied()) {
+                    continue;
+                }
+                state.findWorker(slot.getOccupiedWorkerId()).ifPresent(worker -> {
+                    boolean shouldTie = actor.getClassType() == ClassType.CAPITALIST
+                            || (actor.getClassType() == ClassType.STATE && wageLevel > previousWage)
+                            || (actor.getClassType() == ClassType.MIDDLE_CLASS
+                            && worker.getClassType() == ClassType.WORKER
+                            && wageLevel > previousWage);
+                    if (shouldTie) {
+                        worker.setTiedContract(true);
+                    }
+                });
+            }
+            changed++;
+        }
+        String eventType = actor.getClassType() == ClassType.STATE
+                ? "STATE_WAGES_CHANGED"
+                : actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? "MIDDLE_CLASS_WAGES_CHANGED"
+                : "CAPITALIST_WAGES_CHANGED";
+        return List.of(new CapitalistActionAppliedEvent(
+                eventType,
+                actor.getPlayerId() + " changed wages to level " + wageLevel + " on " + changed + " enterprise(s)."
+        ));
+    }
+
+    private List<DomainEvent> applyStateRespondToEvent(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        ensureStateEventsInitialized(state);
+        String eventId = stringParameter(command, "eventId", firstActiveStateEventId(state));
+        StateEventDefinition event = findStateEventDefinition(eventId).orElse(null);
+        if (event == null) {
+            return List.of();
+        }
+        boolean noAction = booleanParameter(command, "noAction", false);
+        StateEventOutcome outcome = noAction
+                ? applyStateEventNoAction(actor, event)
+                : applyStateEventResponse(state, actor, event, command);
+        consumeStateEventCard(state, event.id());
+        return List.of(new CapitalistActionAppliedEvent(
+                "STATE_EVENT_RESPONDED",
+                actor.getPlayerId() + " resolved event '" + event.title() + "': " + outcome.summary()
+        ));
+    }
+
+    private StateEventOutcome applyStateEventNoAction(PlayerState statePlayer, StateEventDefinition event) {
+        List<ClassType> penalties = event.noActionPenaltyClasses().isEmpty()
+                ? twoLowestLegitimacyClasses(statePlayer)
+                : event.noActionPenaltyClasses();
+        penalties.stream().limit(2).forEach(classType -> decreaseLegitimacy(statePlayer, classType, 1));
+        return new StateEventOutcome("бездействие, легитимность снижена у " + penalties.stream().limit(2).toList() + ".");
+    }
+
+    private StateEventOutcome applyStateEventResponse(
+            GameState state,
+            PlayerState statePlayer,
+            StateEventDefinition event,
+            CapitalistActionCommand command
+    ) {
+        ClassType targetClass = classTypeParameter(command, event.options().stream()
+                .map(StateEventOption::targetClass)
+                .findFirst()
+                .orElse(ClassType.WORKER));
+        ClassType secondaryTarget = secondaryClassTypeParameter(command, nextOpponentClass(state, targetClass));
+
+        return switch (event.id()) {
+            case "urgent_deflation_concern" -> {
+                int paid = payTreasury(state, intParameter(command, "amount", 45), event.title());
+                int vp = paid / 15 * 2;
+                statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + vp);
+                yield new StateEventOutcome("заплачено " + paid + ", государство получило " + vp + " ПО.");
+            }
+            case "enterprise_internet_speed" -> {
+                int provided = provideResourceForClass(state, targetClass, ResourceType.LUXURY.id(), halfUp(functioningEnterpriseCount(state, targetClass)));
+                int legitimacy = provided / 2;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("обеспечено " + provided + " роскоши для " + targetClass + ", легитимность +" + legitimacy + ".");
+            }
+            case "neighboring_states_war" -> {
+                int spent = Math.min(6, intParameter(command, "amount", 6));
+                int provided = provideResourceForClass(state, ClassType.STATE, ResourceType.HEALTHCARE.id(), spent);
+                statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + provided);
+                yield new StateEventOutcome("потрачено " + provided + " здравоохранения, государство получило " + provided + " ПО.");
+            }
+            case "local_industry_crisis" -> {
+                int amount = 5 * functioningEnterpriseCount(state, targetClass);
+                int paid = payClassMoney(state, targetClass, amount, event.title());
+                if (targetClass == ClassType.CAPITALIST) {
+                    int vp = paid / 15 * 2;
+                    statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + vp);
+                    yield new StateEventOutcome("капиталистам выплачено " + paid + ", государство получило " + vp + " ПО.");
+                }
+                int legitimacy = paid / 20;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("среднему классу выплачено " + paid + ", легитимность +" + legitimacy + ".");
+            }
+            case "declining_birth_rate", "low_education_index" -> {
+                String resourceId = "declining_birth_rate".equals(event.id()) ? ResourceType.HEALTHCARE.id() : ResourceType.EDUCATION.id();
+                int provided = provideResourceForClass(state, targetClass, resourceId, halfUp(populationForClass(state, targetClass)));
+                increaseLegitimacy(statePlayer, targetClass, provided > 0 ? 1 : 0);
+                yield new StateEventOutcome("обеспечено " + provided + " " + resourceId + " для " + targetClass + ", легитимность +1.");
+            }
+            case "port_strike" -> {
+                int influence = provideInfluenceForClass(state, targetClass, 2);
+                increaseLegitimacy(statePlayer, targetClass, influence > 0 ? 1 : 0);
+                yield new StateEventOutcome("обеспечено " + influence + " влияния СМИ для " + targetClass + ", легитимность +1.");
+            }
+            case "drought" -> {
+                int need = targetClass == ClassType.CAPITALIST
+                        ? halfUp(functioningEnterpriseCount(state, targetClass))
+                        : halfUp(populationForClass(state, targetClass));
+                int provided = provideResourceForClass(state, targetClass, ResourceType.FOOD.id(), need);
+                increaseLegitimacy(statePlayer, targetClass, provided > 0 ? 1 : 0);
+                yield new StateEventOutcome("обеспечено " + provided + " еды для " + targetClass + ", легитимность +1.");
+            }
+            case "public_unrest" -> {
+                increaseLegitimacy(statePlayer, targetClass, 2);
+                yield new StateEventOutcome("внесен законопроект в пользу " + targetClass + ", легитимность +2.");
+            }
+            case "stimulus_measures" -> {
+                boolean large = "15".equals(stringParameter(command, "eventOption", "10"));
+                int amountPerClass = large ? 15 : 10;
+                int paid = 0;
+                for (ClassType classType : opponentClassesForState(state)) {
+                    paid += payClassMoney(state, classType, amountPerClass, event.title());
+                    if (large) {
+                        increaseLegitimacy(statePlayer, classType, 1);
+                    }
+                }
+                if (!large) {
+                    statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + 3);
+                }
+                yield new StateEventOutcome("выплачено " + paid + "; " + (large ? "легитимность всех классов +1." : "государство получило 3 ПО."));
+            }
+            case "young_industry_support" -> {
+                int paid = payClassMoney(state, targetClass, intParameter(command, "amount", 15), event.title());
+                increaseLegitimacy(statePlayer, targetClass, paid >= 15 ? 1 : 0);
+                yield new StateEventOutcome("поддержано предприятие для " + targetClass + " на " + paid + ", легитимность +1.");
+            }
+            case "unfair_representation" -> {
+                int influence = provideInfluenceForClass(state, targetClass, 1);
+                int cubes = addVotingCubesForClass(state, targetClass, 2);
+                increaseLegitimacy(statePlayer, targetClass, 1);
+                yield new StateEventOutcome("класс " + targetClass + " получил " + influence + " влияния и " + cubes + " кубика, легитимность +1.");
+            }
+            case "university_rating", "old_state_infrastructure", "pandemic" -> {
+                String resourceId = switch (event.id()) {
+                    case "university_rating" -> ResourceType.EDUCATION.id();
+                    case "old_state_infrastructure" -> ResourceType.LUXURY.id();
+                    default -> ResourceType.HEALTHCARE.id();
+                };
+                int bought = buyResourceFromOpponents(state, resourceId, stateEnterpriseCount(state));
+                int legitimacy = bought / 3;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("куплено " + bought + " " + resourceId + ", легитимность " + targetClass + " +" + legitimacy + ".");
+            }
+            case "sustainable_development_initiative" -> {
+                int paid = payClassMoney(state, targetClass, 25, event.title())
+                        + payClassMoney(state, secondaryTarget, 25, event.title());
+                increaseLegitimacy(statePlayer, targetClass, 1);
+                increaseLegitimacy(statePlayer, secondaryTarget, 1);
+                yield new StateEventOutcome("выбраны " + targetClass + " и " + secondaryTarget + ", выплачено " + paid + ", легитимность +1 каждому.");
+            }
+            case "welfare_standards_demand" -> {
+                int need = halfUp(populationForClass(state, targetClass));
+                int provided = provideSplitResourcesForClass(state, targetClass, ResourceType.HEALTHCARE.id(), ResourceType.EDUCATION.id(), need);
+                increaseLegitimacy(statePlayer, targetClass, provided > 0 ? 1 : 0);
+                yield new StateEventOutcome("обеспечено " + provided + " компонентов здравоохранения/образования для " + targetClass + ", легитимность +1.");
+            }
+            case "pension_reform_demand" -> {
+                int paid = payClassMoney(state, targetClass, populationForClass(state, targetClass) * 5, event.title());
+                if (targetClass == ClassType.WORKER) {
+                    int vp = paid / 15 * 2;
+                    statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + vp);
+                    yield new StateEventOutcome("рабочему классу выплачено " + paid + ", государство получило " + vp + " ПО.");
+                }
+                int legitimacy = paid / 20;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("среднему классу выплачено " + paid + ", легитимность +" + legitimacy + ".");
+            }
+            case "earthquake" -> {
+                int provided = provideSplitResourcesForClass(state, targetClass, ResourceType.FOOD.id(), ResourceType.HEALTHCARE.id(), halfUp(populationForClass(state, targetClass)));
+                int legitimacy = provided / 2;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("обеспечено " + provided + " компонентов еды/здравоохранения, легитимность +" + legitimacy + ".");
+            }
+            case "political_polarization" -> {
+                int paid = payTreasury(state, 30, event.title());
+                int cubes = addVotingCubesForClass(state, targetClass, 4);
+                int legitimacy = cubes / 2;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("заплачено " + paid + " и добавлено " + cubes + " кубика для " + targetClass + ", легитимность +" + legitimacy + ".");
+            }
+            case "technological_illiteracy" -> {
+                int need = Math.max(halfUp(populationForClass(state, targetClass)), halfUp(functioningEnterpriseCount(state, targetClass)));
+                int provided = provideSplitResourcesForClass(state, targetClass, ResourceType.LUXURY.id(), ResourceType.EDUCATION.id(), need);
+                int legitimacy = provided / 2;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("обеспечено " + provided + " компонентов роскоши/образования, легитимность +" + legitimacy + ".");
+            }
+            case "global_supply_chain_crisis" -> {
+                int provided = provideSplitResourcesForClass(state, targetClass, ResourceType.FOOD.id(), ResourceType.LUXURY.id(), halfUp(populationForClass(state, targetClass)));
+                if (targetClass == ClassType.MIDDLE_CLASS) {
+                    statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + provided);
+                    yield new StateEventOutcome("средний класс получил " + provided + " компонентов, государство получило " + provided + " ПО.");
+                }
+                int legitimacy = provided / 2;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("рабочий класс получил " + provided + " компонентов, легитимность +" + legitimacy + ".");
+            }
+            case "political_scandal" -> {
+                int paid = payTreasury(state, 25, event.title());
+                int media = Math.min(3, intParameter(command, "amount", 3));
+                int influence = provideInfluenceForClass(state, targetClass, media);
+                increaseLegitimacy(statePlayer, targetClass, influence);
+                yield new StateEventOutcome("заплачено " + paid + ", обеспечено " + influence + " СМИ для " + targetClass + ", легитимность +" + influence + ".");
+            }
+            case "thirteenth_salary_demand" -> {
+                int paid = payClassMoney(state, targetClass, stateSectorWorkersForClass(state, targetClass) * 5, event.title());
+                int divider = targetClass == ClassType.WORKER ? 25 : 15;
+                int legitimacy = paid / divider;
+                increaseLegitimacy(statePlayer, targetClass, legitimacy);
+                yield new StateEventOutcome("выплачено " + paid + " работникам госсектора класса " + targetClass + ", легитимность +" + legitimacy + ".");
+            }
+            case "developing_countries_education" -> {
+                int spent = provideResourceForClass(state, ClassType.STATE, ResourceType.EDUCATION.id(), Math.min(6, intParameter(command, "amount", 6)));
+                statePlayer.setVictoryPoints(statePlayer.getVictoryPoints() + spent);
+                yield new StateEventOutcome("потрачено " + spent + " образования, государство получило " + spent + " ПО.");
+            }
+            default -> {
+                increaseLegitimacy(statePlayer, targetClass, 1);
+                yield new StateEventOutcome("MVP-реакция в пользу " + targetClass + ", легитимность +1.");
+            }
+        };
+    }
+
+    private List<DomainEvent> applyStateMeetDeputies(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        ClassType targetClass = classTypeParameter(command, lowestLegitimacyClass(actor));
+        PlayerState target = findPlayerByClass(state, targetClass).orElse(null);
+        actor.setInfluence(Math.max(0, actor.getInfluence() - 2));
+        if (target != null) {
+            target.setInfluence(target.getInfluence() + 2);
+        }
+        increaseLegitimacy(actor, targetClass, 1);
+        return List.of(new CapitalistActionAppliedEvent(
+                "STATE_MET_DEPUTIES",
+                actor.getPlayerId() + " gave 2 influence to " + targetClass + " and raised that legitimacy by 1."
+        ));
+    }
+
+    private List<DomainEvent> applyStateExtraTax(GameState state, PlayerState actor) {
+        List<ClassType> opponents = opponentClassesForState(state);
+        int collected = 0;
+        for (ClassType opponentClass : opponents) {
+            PlayerState opponent = findPlayerByClass(state, opponentClass).orElse(null);
+            if (opponent == null) {
+                continue;
+            }
+            ensurePlayerCanPayMandatory(state, opponent, 10, "state extra tax");
+            collected += consumeLoanInterestFunds(opponent, 10);
+        }
+        state.setTreasury(state.getTreasury() + collected);
+        List<ClassType> reduced = twoLowestLegitimacyClasses(actor);
+        for (ClassType classType : reduced) {
+            decreaseLegitimacy(actor, classType, 1);
+        }
+        return List.of(new CapitalistActionAppliedEvent(
+                "STATE_EXTRA_TAX_INTRODUCED",
+                actor.getPlayerId() + " collected " + collected + " extra tax and reduced legitimacy for " + reduced + "."
+        ));
+    }
+
+    private List<DomainEvent> applyStateCampaign(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        int requested = Math.max(1, intParameter(command, "amount", 3));
+        int converted = state.consumePublicServiceAmount(ResourceType.MEDIA_INFLUENCE.id(), Math.min(3, requested));
+        actor.setInfluence(actor.getInfluence() + converted);
+        return List.of(new CapitalistActionAppliedEvent(
+                "STATE_CAMPAIGN_RUN",
+                actor.getPlayerId() + " converted " + converted + " media influence into personal influence."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistPayBonus(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        consumeCapitalistFunds(actor, CAPITALIST_BONUS_COST);
+        Worker recipient = firstWorkerAtCapitalistEnterprise(state);
+        if (recipient != null) {
+            recipient.setTiedContract(true);
+            state.getPlayers().stream()
+                    .filter(player -> player.getClassType() == recipient.getClassType())
+                    .findFirst()
+                    .ifPresent(player -> player.setMoney(player.getMoney() + CAPITALIST_BONUS_COST));
+        }
+        return List.of(new CapitalistActionAppliedEvent(
+                "CAPITALIST_BONUS_PAID",
+                actor.getPlayerId() + " paid a " + CAPITALIST_BONUS_COST + " bonus."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistBuyStorage(PlayerState actor, CapitalistActionCommand command) {
+        consumeCapitalistFunds(actor, CAPITALIST_STORAGE_COST);
+        String resourceId = resourceIdParameter(command, ResourceType.FOOD.id());
+        actor.addExtraStorageToken(resourceId);
+        return List.of(new CapitalistActionAppliedEvent(
+                "CAPITALIST_STORAGE_BOUGHT",
+                actor.getPlayerId() + " bought storage for " + resourceId + "."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistTakeBenefits(PlayerState actor) {
+        actor.addProducedResource(ResourceType.FOOD.id(), 1);
+        actor.setInfluence(actor.getInfluence() + 1);
+        return List.of(new CapitalistActionAppliedEvent(
+                "CAPITALIST_STATE_BENEFITS_TAKEN",
+                actor.getPlayerId() + " took state benefits: 1 food and 1 influence."
+        ));
+    }
+
+    private List<DomainEvent> applyCapitalistRepayLoan(GameState state, PlayerState actor) {
+        if (actor.getClassType() == ClassType.STATE) {
+            state.setTreasury(Math.max(0, state.getTreasury() - CAPITALIST_REPAY_LOAN_COST));
+            state.setStateLoans(Math.max(0, state.getStateLoans() - 1));
+            return List.of(new CapitalistActionAppliedEvent(
+                    "STATE_LOAN_REPAID",
+                    actor.getPlayerId() + " repaid a state loan for " + CAPITALIST_REPAY_LOAN_COST + "."
+            ));
+        }
+        consumeRepayLoanFunds(actor, CAPITALIST_REPAY_LOAN_COST);
+        actor.consumeResource(LOAN_RESOURCE_ID, 1);
+        String eventType = actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? "MIDDLE_CLASS_LOAN_REPAID"
+                : actor.getClassType() == ClassType.WORKER
+                ? "WORKER_LOAN_REPAID"
+                : "CAPITALIST_LOAN_REPAID";
+        return List.of(new CapitalistActionAppliedEvent(
+                eventType,
+                actor.getPlayerId() + " repaid a loan for " + CAPITALIST_REPAY_LOAN_COST + "."
+        ));
+    }
+
     private List<DomainEvent> applyCallExtraordinaryVote(GameState state, CallExtraordinaryVoteCommand command) {
         PlayerState actor = state.findPlayerById(command.actorPlayerId()).orElseThrow();
         PolicyState policy = state.findPolicy(command.policyId()).orElseThrow();
@@ -1507,22 +2729,11 @@ public class GameRulesEngine {
                     : VoteStance.AGAINST;
             session.getStanceByPlayer().put(player.getPlayerId(), stance);
         }
-        drawAndInterpretCubes(state, session);
-        session.setVotingStage(VotingStage.COMMIT_INFLUENCE);
         state.setCurrentVoteState(session);
         state.appendLog(
                 "EXTRAORDINARY_VOTE_STARTED",
                 actor.getPlayerId() + " spent 1 influence and started an extraordinary vote on " + policy.getId() + "."
         );
-        state.appendLog(
-                "VOTING_CUBES_DRAWN",
-                "Drawn " + session.getDrawnVotingCubes().size() + " existing cubes for extraordinary vote on " + policy.getId() + "."
-        );
-        appendPreliminaryVoteResultLog(state, session);
-        autoCommitAutomaInfluence(state, session);
-        if (allInfluenceCommitted(state, session)) {
-            return resolveCurrentVoteAndAdvance(state, session);
-        }
         return List.of();
     }
 
@@ -1601,7 +2812,7 @@ public class GameRulesEngine {
                 .flatMap(Optional::stream)
                 .anyMatch(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)) {
             state.appendLog("AUTOMA_STRIKE_RESPONSE_PENDING",
-                    "Capitalist automa strike-response instruction is not modeled yet; legal future moves remain engine-generated.");
+                    "Capitalist automa will check Reaction to Strike on its next action turn if a struck capitalist enterprise remains.");
         }
         return List.of();
     }
@@ -1684,14 +2895,29 @@ public class GameRulesEngine {
 
         if (allStancesSubmitted(state, session)) {
             session.setVotingStage(VotingStage.DRAW_BAG_CUBES);
-            drawAndInterpretCubes(state, session);
-            events.add(new VotingCubesDrawnEvent(session.getActiveProposalPolicyId(), session.getDrawnVotingCubes().size()));
-            session.setVotingStage(VotingStage.COMMIT_INFLUENCE);
-            appendPreliminaryVoteResultLog(state, session);
-            autoCommitAutomaInfluence(state, session);
-            if (allInfluenceCommitted(state, session)) {
-                events.addAll(resolveCurrentVoteAndAdvance(state, session));
-            }
+        }
+        return events;
+    }
+
+    private List<DomainEvent> applyDrawVotingCubes(GameState state, DrawVotingCubesCommand command) {
+        List<DomainEvent> events = new ArrayList<>();
+        CurrentVoteState session = state.getCurrentVoteState();
+        if (session == null || session.getActiveProposalPolicyId() == null) {
+            state.appendLog("VOTING_CUBES_DRAW_SKIPPED", "Cube draw ignored because no active voting session exists.");
+            return events;
+        }
+
+        drawAndInterpretCubes(state, session, command.count());
+        events.add(new VotingCubesDrawnEvent(
+                session.getActiveProposalPolicyId(),
+                session.getDrawnVotingCubes().size(),
+                session.getDrawnVotingCubes()
+        ));
+        session.setVotingStage(VotingStage.COMMIT_INFLUENCE);
+        appendPreliminaryVoteResultLog(state, session);
+        autoCommitAutomaInfluence(state, session);
+        if (allInfluenceCommitted(state, session)) {
+            events.addAll(resolveCurrentVoteAndAdvance(state, session));
         }
         return events;
     }
@@ -1704,6 +2930,17 @@ public class GameRulesEngine {
             return events;
         }
 
+        if (session.getVotingStage() == VotingStage.DRAW_BAG_CUBES) {
+            drawAndInterpretCubes(state, session, 5);
+            events.add(new VotingCubesDrawnEvent(
+                    session.getActiveProposalPolicyId(),
+                    session.getDrawnVotingCubes().size(),
+                    session.getDrawnVotingCubes()
+            ));
+            session.setVotingStage(VotingStage.COMMIT_INFLUENCE);
+            appendPreliminaryVoteResultLog(state, session);
+            autoCommitAutomaInfluence(state, session);
+        }
         session.getInfluenceCommitments().put(command.actorPlayerId(), command.influenceAmount());
         events.add(new VoteInfluenceCommittedEvent(command.actorPlayerId(), session.getActiveProposalPolicyId(), command.influenceAmount()));
 
@@ -1722,7 +2959,7 @@ public class GameRulesEngine {
         }
 
         production.setStage(ProductionSubPhase.PRODUCE_GOODS_AND_SERVICES);
-        productionResolver.resolveGoodsAndServices(state, production);
+        productionResolver.resolveGoodsAndServices(state, production, command.workerFoodPurchases());
 
         production.setStage(ProductionSubPhase.ROUND_CLOSE);
         production.setProductionResolved(true);
@@ -1758,6 +2995,8 @@ public class GameRulesEngine {
             int gained = 0;
             if (player.getClassType() == ClassType.CAPITALIST) {
                 gained += applyCapitalistWealthScoring(player, sources);
+            } else if (player.getClassType() == ClassType.STATE) {
+                gained += applyStateLegitimacyScoring(player, sources);
             } else {
                 sources.add(new ScoringSourceEntry(
                         "persisted_vp_from_supported_actions",
@@ -1826,6 +3065,19 @@ public class GameRulesEngine {
         return baseVp + growthVp;
     }
 
+    private int applyStateLegitimacyScoring(PlayerState statePlayer, List<ScoringSourceEntry> sources) {
+        int score = twoLowestLegitimacyClasses(statePlayer).stream()
+                .mapToInt(classType -> legitimacyFor(statePlayer, classType))
+                .sum();
+        sources.add(new ScoringSourceEntry(
+                "state_legitimacy_two_lowest",
+                score,
+                true,
+                "State scores the sum of its two lowest legitimacy tracks."
+        ));
+        return score;
+    }
+
     private int wealthTrackLevelForCapital(int capital) {
         int safeCapital = Math.max(0, capital);
         int[] thresholds = {10, 25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500};
@@ -1889,9 +3141,15 @@ public class GameRulesEngine {
         summary.setResolved(true);
         summary.setSkipped(false);
         int stateLoanInterestPaid = payStateLoanInterest(state);
+        int playerLoanInterestPaid = payPlayerLoanInterest(state);
+        List<String> capitalistMarket = refillCapitalistEnterpriseMarket(state).stream()
+                .map(enterprise -> enterprise.getId() + "(cost=" + enterprise.getCost() + ")")
+                .toList();
         summary.setExecutedSubsteps(List.of(
                 "round_marker_confirmed",
                 "state_loan_interest_paid",
+                "player_loan_interest_paid",
+                "capitalist_enterprise_market_refilled",
                 "business_deals_refreshed",
                 "export_card_refreshed",
                 "worker_welfare_decreased",
@@ -1918,7 +3176,6 @@ public class GameRulesEngine {
         }
 
         List<String> unsupported = List.of(
-                "UNSUPPORTED_PREPARATION_SUBSTEP: player loan interest is unavailable because per-player loans are not modeled.",
                 "UNSUPPORTED_PREPARATION_SUBSTEP: card refill requires deck/hand refill subsystem.",
                 "UNSUPPORTED_PREPARATION_SUBSTEP: event/agenda refresh requires corresponding deck subsystems."
         );
@@ -1928,6 +3185,10 @@ public class GameRulesEngine {
         if (stateLoanInterestPaid > 0) {
             notes.add("State loan interest paid from treasury: " + stateLoanInterestPaid + ".");
         }
+        if (playerLoanInterestPaid > 0) {
+            notes.add("Player loan interest paid: " + playerLoanInterestPaid + ".");
+        }
+        notes.add("Capitalist enterprise market: " + (capitalistMarket.isEmpty() ? "empty" : String.join(", ", capitalistMarket)));
         notes.add("Business deals refreshed: " + (visibleDeals.isEmpty() ? "none visible under current foreign trade policy" : String.join(", ", visibleDeals)));
         notes.add("Export card refreshed: " + exportCard.getCardId() + " (" + exportCard.getAvailableOperations() + " operations).");
         notes.add("Worker welfare decreased from " + welfareBefore + " to "
@@ -1954,6 +3215,17 @@ public class GameRulesEngine {
 
     private List<DomainEvent> applyRefreshBusinessDeals(GameState state, RefreshBusinessDealsCommand command) {
         return List.of();
+    }
+
+    private List<Enterprise> refillCapitalistEnterpriseMarket(GameState state) {
+        List<Enterprise> market = new ArrayList<>(state.getCapitalistEnterpriseMarket());
+        List<Enterprise> deck = new ArrayList<>(state.getCapitalistEnterpriseDeck());
+        while (market.size() < 4 && !deck.isEmpty()) {
+            market.add(deck.remove(0));
+        }
+        state.setCapitalistEnterpriseMarket(market);
+        state.setCapitalistEnterpriseDeck(deck);
+        return state.getCapitalistEnterpriseMarket();
     }
 
     private int decreaseWorkerWelfareForPreparation(GameState state) {
@@ -1992,7 +3264,8 @@ public class GameRulesEngine {
     private void applyFinalScoring(GameState state, List<PlayerScoringBreakdown> rows) {
         for (PlayerState player : state.getPlayers()) {
             List<ScoringSourceEntry> sources = new ArrayList<>();
-            int gained = switch (player.getClassType()) {
+            int gained = applyFinalLoanSettlement(state, player, sources);
+            gained += switch (player.getClassType()) {
                 case WORKER -> applyWorkerFinalScoring(state, player, sources);
                 case CAPITALIST -> applyCapitalistFinalScoring(state, player, sources);
                 default -> 0;
@@ -2009,6 +3282,71 @@ public class GameRulesEngine {
             mergedSources.addAll(sources);
             row.setSources(mergedSources);
         }
+    }
+
+    private int applyFinalLoanSettlement(GameState state, PlayerState player, List<ScoringSourceEntry> sources) {
+        if (player.getClassType() == ClassType.STATE) {
+            return applyStateFinalLoanSettlement(state, player, sources);
+        }
+
+        int loans = playerLoanCount(player);
+        if (loans <= 0) {
+            return 0;
+        }
+        if (player.getClassType() == ClassType.CAPITALIST) {
+            int penalty = loans * 5;
+            player.consumeResource(LOAN_RESOURCE_ID, loans);
+            sources.add(new ScoringSourceEntry(
+                    "capitalist_final_unpaid_loans",
+                    -penalty,
+                    true,
+                    loans + " unpaid loan(s) cost 5 VP each."
+            ));
+            state.appendLog("FINAL_LOAN_PENALTY", player.getPlayerId() + " lost " + penalty + " VP for " + loans + " unpaid loan(s).");
+            return -penalty;
+        }
+
+        int due = loans * FINAL_LOAN_SETTLEMENT_COST;
+        int paid = Math.min(due, (Math.max(0, player.getMoney()) / 5) * 5);
+        player.setMoney(Math.max(0, player.getMoney() - paid));
+        player.consumeResource(LOAN_RESOURCE_ID, loans);
+        int unpaid = due - paid;
+        int penalty = unpaid / 5;
+        sources.add(new ScoringSourceEntry(
+                player.getClassType().name().toLowerCase(Locale.ROOT) + "_final_loan_settlement",
+                -penalty,
+                true,
+                loans + " loan(s) settled at 55 each; paid " + paid + ", unpaid " + unpaid + "."
+        ));
+        state.appendLog(
+                "FINAL_LOAN_SETTLEMENT",
+                player.getPlayerId() + " paid " + paid + " toward final loan settlement and lost " + penalty + " VP."
+        );
+        return -penalty;
+    }
+
+    private int applyStateFinalLoanSettlement(GameState state, PlayerState player, List<ScoringSourceEntry> sources) {
+        int loans = Math.max(0, state.getStateLoans());
+        if (loans <= 0) {
+            return 0;
+        }
+        int due = loans * FINAL_LOAN_SETTLEMENT_COST;
+        int paid = Math.min(due, (Math.max(0, state.getTreasury()) / 5) * 5);
+        state.setTreasury(Math.max(0, state.getTreasury() - paid));
+        state.setStateLoans(0);
+        int unpaid = due - paid;
+        int penalty = unpaid / 5;
+        sources.add(new ScoringSourceEntry(
+                "state_final_loan_settlement",
+                -penalty,
+                true,
+                loans + " state loan(s) settled at 55 each; paid " + paid + ", unpaid " + unpaid + "."
+        ));
+        state.appendLog(
+                "FINAL_LOAN_SETTLEMENT",
+                player.getPlayerId() + " paid " + paid + " from treasury toward final loan settlement and lost " + penalty + " VP."
+        );
+        return -penalty;
     }
 
     private int applyWorkerFinalScoring(GameState state, PlayerState worker, List<ScoringSourceEntry> sources) {
@@ -2275,6 +3613,15 @@ public class GameRulesEngine {
             return null;
         }
 
+        if (session.getVotingStage() == VotingStage.DRAW_BAG_CUBES) {
+            PlayerState actor = state.currentPlayer();
+            if (actor == null) {
+                return null;
+            }
+            int available = Math.max(0, state.getVotingBag().totalCubes());
+            return new DrawVotingCubesCommand(actor.getPlayerId(), Math.min(5, Math.max(1, available)));
+        }
+
         if (session.getVotingStage() == VotingStage.COMMIT_INFLUENCE) {
             for (PlayerState player : activePlayers(state)) {
                 if (session.getInfluenceCommitments().containsKey(player.getPlayerId())) {
@@ -2340,7 +3687,7 @@ public class GameRulesEngine {
         List<DomainEvent> events = new ArrayList<>(votingResolutionService.resolveOrdinaryVote(state, session));
         if (resolvedPolicyId == PolicyId.POLICY_2_LABOR_MARKET && state.getLastProposalResolution() != null
                 && state.getLastProposalResolution().getResult() == VoteResolutionResult.PASSED) {
-            enforceStateEnterpriseMinimumWages(state);
+            enforceEnterpriseMinimumWages(state);
         }
         if (resolvedPolicyId == PolicyId.POLICY_1_FISCAL && state.getLastProposalResolution() != null
                 && state.getLastProposalResolution().getResult() == VoteResolutionResult.PASSED) {
@@ -2375,6 +3722,28 @@ public class GameRulesEngine {
         return interest;
     }
 
+    private int payPlayerLoanInterest(GameState state) {
+        int totalPaid = 0;
+        for (PlayerState player : state.getPlayers()) {
+            if (player.getClassType() == ClassType.STATE) {
+                continue;
+            }
+            int loans = playerLoanCount(player);
+            if (loans <= 0) {
+                continue;
+            }
+            int interest = loans * PLAYER_LOAN_INTEREST;
+            ensurePlayerCanPayMandatory(state, player, interest, "loan interest");
+            int paid = consumeLoanInterestFunds(player, interest);
+            totalPaid += paid;
+            state.appendLog(
+                    "PLAYER_LOAN_INTEREST_PAID",
+                    player.getPlayerId() + " paid " + paid + " interest for " + loans + " loan(s)."
+            );
+        }
+        return totalPaid;
+    }
+
     private void ensureTreasuryCanPay(GameState state, int amount, String reason) {
         while (state.getTreasury() < amount) {
             state.setTreasury(state.getTreasury() + STATE_LOAN_AMOUNT);
@@ -2386,23 +3755,22 @@ public class GameRulesEngine {
         }
     }
 
-    private void enforceStateEnterpriseMinimumWages(GameState state) {
-        int minimum = minimumStateWageLevel(state);
+    private void enforceEnterpriseMinimumWages(GameState state) {
+        int minimum = minimumEnterpriseWageLevel(state);
+        int adjusted = 0;
         for (Enterprise enterprise : state.getEnterprises()) {
-            if (enterprise.getOwnerClass() != ClassType.STATE || enterprise.getWageLevel() >= minimum) {
+            if (enterprise.getWageLevel() >= minimum) {
                 continue;
             }
-            int before = enterprise.getWageLevel();
             enterprise.setWageLevel(minimum);
-            enterprise.setWageTrack(Map.of("low", 15, "medium", 20, "high", 25));
-            state.appendLog(
-                    "STATE_WAGE_ADJUSTED",
-                    enterprise.getId() + " wage level adjusted from L" + before + " to L" + minimum + " after labor policy changed."
-            );
+            adjusted++;
+        }
+        if (adjusted > 0) {
+            state.appendLog("WAGES_SYNCED", "Зарплаты на предприятиях приведены к минимальному уровню: L" + minimum + ".");
         }
     }
 
-    private int minimumStateWageLevel(GameState state) {
+    private int minimumEnterpriseWageLevel(GameState state) {
         PolicyCourse labor = state.findPolicy(PolicyId.POLICY_2_LABOR_MARKET)
                 .map(PolicyState::getCurrentCourse)
                 .orElse(PolicyCourse.B);
@@ -2532,7 +3900,7 @@ public class GameRulesEngine {
         state.setCurrentVoteState(session);
     }
 
-    private void drawAndInterpretCubes(GameState state, CurrentVoteState session) {
+    private void drawAndInterpretCubes(GameState state, CurrentVoteState session, int count) {
         List<DrawnVotingCube> drawn = new ArrayList<>();
         Map<String, Integer> interpreted = new HashMap<>();
         interpreted.put(InterpretedVote.FOR.name(), 0);
@@ -2540,8 +3908,8 @@ public class GameRulesEngine {
         interpreted.put(InterpretedVote.NEUTRAL.name(), 0);
 
         List<VotingCubeOwnerClass> drawnOwners = session.isExtraordinary()
-                ? votingBagRules.drawExistingCubes(state, 5)
-                : votingBagRules.drawCubes(state, 5);
+                ? votingBagRules.drawRandomExistingCubes(state, count)
+                : votingBagRules.drawRandomCubes(state, count);
         for (VotingCubeOwnerClass ownerClass : drawnOwners) {
             InterpretedVote vote = interpretCubeVote(state, session, ownerClass);
             drawn.add(new DrawnVotingCube(ownerClass, vote));
@@ -2938,6 +4306,12 @@ public class GameRulesEngine {
             if (player.getProducedResourceStorage() == null) {
                 player.setProducedResourceStorage(Map.of());
             }
+            if (player.getFreeTradeZoneStorage() == null) {
+                player.setFreeTradeZoneStorage(Map.of());
+            }
+            if (player.getExtraStorageTokens() == null) {
+                player.setExtraStorageTokens(Map.of());
+            }
             if (player.getPrices() == null) {
                 player.setPrices(Map.of());
             }
@@ -3306,6 +4680,7 @@ public class GameRulesEngine {
             case AdvanceRoundCommand advance -> advance.actorPlayerId();
             case ProposeBillCommand propose -> propose.actorPlayerId();
             case AddVotingCubesCommand add -> add.actorPlayerId();
+            case CapitalistActionCommand capitalist -> capitalist.actorPlayerId();
             case CallExtraordinaryVoteCommand vote -> vote.actorPlayerId();
             case AssignWorkersCommand assign -> assign.actorPlayerId();
             case BuyGoodsAndServicesCommand buy -> buy.actorPlayerId();
@@ -3314,9 +4689,1122 @@ public class GameRulesEngine {
             case ConsumeLuxuryCommand consume -> consume.actorPlayerId();
             case RefreshBusinessDealsCommand refresh -> refresh.actorPlayerId();
             case DeclareVoteStanceCommand stance -> stance.actorPlayerId();
+            case DrawVotingCubesCommand draw -> draw.actorPlayerId();
             case CommitVoteInfluenceCommand commit -> commit.actorPlayerId();
             default -> "";
         };
+    }
+
+    private void requireCapitalistFunds(
+            List<String> errors,
+            List<ValidationReasonCode> codes,
+            PlayerState actor,
+            int amount,
+            ActionType actionType
+    ) {
+        if (availableCapitalistFunds(actor) < amount) {
+            addError(errors, codes, ValidationReasonCode.INSUFFICIENT_FUNDS,
+                    actionType + " requires " + amount + " capitalist funds.");
+        }
+    }
+
+    private int availableCapitalistFunds(PlayerState actor) {
+        if (actor == null) {
+            return 0;
+        }
+        return Math.max(0, actor.getRevenue()) + Math.max(0, actor.getCapital()) + Math.max(0, actor.getMoney());
+    }
+
+    private int availableLoanPaymentFunds(PlayerState actor) {
+        if (actor == null) {
+            return 0;
+        }
+        if (actor.getClassType() == ClassType.CAPITALIST) {
+            return availableCapitalistFunds(actor);
+        }
+        return Math.max(0, actor.getMoney());
+    }
+
+    private int playerLoanCount(PlayerState actor) {
+        return actor == null ? 0 : Math.max(0, actor.getResourceAmount(LOAN_RESOURCE_ID));
+    }
+
+    private void ensurePlayerCanPayMandatory(GameState state, PlayerState actor, int amount, String reason) {
+        if (actor == null || amount <= 0) {
+            return;
+        }
+        while (availableLoanPaymentFunds(actor) < amount) {
+            takePlayerLoan(state, actor, reason);
+        }
+    }
+
+    private void takePlayerLoan(GameState state, PlayerState actor, String reason) {
+        actor.addResource(LOAN_RESOURCE_ID, 1);
+        if (actor.getClassType() == ClassType.CAPITALIST) {
+            actor.setCapital(actor.getCapital() + PLAYER_LOAN_AMOUNT);
+        } else {
+            actor.setMoney(actor.getMoney() + PLAYER_LOAN_AMOUNT);
+        }
+        state.appendLog(
+                "PLAYER_LOAN_TAKEN",
+                actor.getPlayerId() + " took a 50 loan for " + reason
+                        + "; active loans: " + playerLoanCount(actor) + "."
+        );
+    }
+
+    private int consumeCapitalistFunds(PlayerState actor, int requested) {
+        if (actor == null || requested <= 0) {
+            return 0;
+        }
+        int remaining = requested;
+        int fromRevenue = Math.min(Math.max(0, actor.getRevenue()), remaining);
+        actor.setRevenue(actor.getRevenue() - fromRevenue);
+        remaining -= fromRevenue;
+
+        int fromCapital = Math.min(Math.max(0, actor.getCapital()), remaining);
+        actor.setCapital(actor.getCapital() - fromCapital);
+        remaining -= fromCapital;
+
+        int fromMoney = Math.min(Math.max(0, actor.getMoney()), remaining);
+        actor.setMoney(actor.getMoney() - fromMoney);
+        remaining -= fromMoney;
+        return requested - remaining;
+    }
+
+    private int consumeBuildEnterpriseFunds(PlayerState actor, int requested) {
+        if (actor == null || requested <= 0) {
+            return 0;
+        }
+        if (actor.getClassType() == ClassType.CAPITALIST) {
+            return consumeCapitalistFunds(actor, requested);
+        }
+        int paid = Math.min(Math.max(0, actor.getMoney()), requested);
+        actor.setMoney(actor.getMoney() - paid);
+        return paid;
+    }
+
+    private void addCapitalistFunds(PlayerState actor, int amount) {
+        if (actor == null || amount <= 0) {
+            return;
+        }
+        actor.setRevenue(actor.getRevenue() + amount);
+    }
+
+    private void addBusinessFunds(PlayerState actor, int amount) {
+        if (actor == null || amount <= 0) {
+            return;
+        }
+        if (actor.getClassType() == ClassType.MIDDLE_CLASS) {
+            actor.setMoney(actor.getMoney() + amount);
+            return;
+        }
+        addCapitalistFunds(actor, amount);
+    }
+
+    private int consumeRepayLoanFunds(PlayerState actor, int requested) {
+        if (actor == null || requested <= 0) {
+            return 0;
+        }
+        if (actor.getClassType() == ClassType.MIDDLE_CLASS) {
+            int paid = Math.min(Math.max(0, actor.getMoney()), requested);
+            actor.setMoney(actor.getMoney() - paid);
+            return paid;
+        }
+        return consumeCapitalistFunds(actor, requested);
+    }
+
+    private int consumeLoanInterestFunds(PlayerState actor, int requested) {
+        if (actor == null || requested <= 0) {
+            return 0;
+        }
+        if (actor.getClassType() == ClassType.CAPITALIST) {
+            return consumeCapitalistFunds(actor, requested);
+        }
+        int paid = Math.min(Math.max(0, actor.getMoney()), requested);
+        actor.setMoney(actor.getMoney() - paid);
+        return paid;
+    }
+
+    private int totalProducedResources(PlayerState actor) {
+        if (actor == null) {
+            return 0;
+        }
+        int standard = actor.getProducedResourceStorage().values().stream()
+                .mapToInt(value -> Math.max(0, value))
+                .sum();
+        int freeTrade = actor.getFreeTradeZoneStorage().values().stream()
+                .mapToInt(value -> Math.max(0, value))
+                .sum();
+        return standard + freeTrade;
+    }
+
+    private boolean hasExecutableExportOperation(GameState state, PlayerState actor) {
+        ExportCardState activeCard = state == null ? null : state.getActiveExportCard();
+        if (actor == null
+                || activeCard == null
+                || activeCard.getAvailableOperations() <= 0
+                || activeCard.getOffers() == null
+                || activeCard.getOffers().isEmpty()) {
+            return false;
+        }
+        for (ExportCardOffer offer : activeCard.getOffers()) {
+            String resourceId = normalizedResourceId(offer.getResourceId());
+            if (isExportableResource(resourceId)
+                    && offer.getQuantity() > 0
+                    && exportableAmount(actor, resourceId) >= offer.getQuantity()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ExportExecution executeExportOperations(GameState state, PlayerState actor) {
+        ExportCardState activeCard = state.getActiveExportCard();
+        if (activeCard == null || activeCard.getAvailableOperations() <= 0 || activeCard.getOffers() == null) {
+            return new ExportExecution(0, 0, 0);
+        }
+
+        int remainingOperations = activeCard.getAvailableOperations();
+        int operations = 0;
+        int quantity = 0;
+        int revenue = 0;
+        for (ExportCardOffer offer : activeCard.getOffers()) {
+            if (remainingOperations <= 0) {
+                break;
+            }
+            String resourceId = normalizedResourceId(offer.getResourceId());
+            int requested = Math.max(0, offer.getQuantity());
+            if (!isExportableResource(resourceId) || requested <= 0 || exportableAmount(actor, resourceId) < requested) {
+                continue;
+            }
+            consumeExportableResource(actor, resourceId, requested);
+            operations++;
+            remainingOperations--;
+            quantity += requested;
+            revenue += Math.max(0, offer.getRevenue());
+        }
+        activeCard.setAvailableOperations(Math.max(0, activeCard.getAvailableOperations() - operations));
+        return new ExportExecution(operations, quantity, revenue);
+    }
+
+    private int exportableAmount(PlayerState actor, String resourceId) {
+        if (actor == null || resourceId == null) {
+            return 0;
+        }
+        return Math.max(0, actor.getProducedResourceAmount(resourceId))
+                + Math.max(0, actor.getFreeTradeZoneAmount(resourceId));
+    }
+
+    private void consumeExportableResource(PlayerState actor, String resourceId, int requested) {
+        int remaining = Math.max(0, requested);
+        int fromStandard = actor.consumeProducedResource(resourceId, remaining);
+        remaining -= fromStandard;
+        if (remaining > 0) {
+            actor.consumeFreeTradeZoneResource(resourceId, remaining);
+        }
+    }
+
+    private void creditExportRevenue(PlayerState actor, int revenue) {
+        if (actor == null || revenue <= 0) {
+            return;
+        }
+        if (actor.getClassType() == ClassType.CAPITALIST) {
+            addCapitalistFunds(actor, revenue);
+        } else {
+            actor.setMoney(actor.getMoney() + revenue);
+        }
+    }
+
+    private boolean isExportableResource(String resourceId) {
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        return resourceType == ResourceType.FOOD
+                || resourceType == ResourceType.LUXURY
+                || resourceType == ResourceType.HEALTHCARE
+                || resourceType == ResourceType.EDUCATION;
+    }
+
+    private List<ResourceType> expandableStorageResources() {
+        return List.of(ResourceType.FOOD, ResourceType.LUXURY, ResourceType.HEALTHCARE, ResourceType.EDUCATION);
+    }
+
+    private boolean isExpandableStorageResource(String resourceId) {
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        return resourceType == ResourceType.FOOD
+                || resourceType == ResourceType.LUXURY
+                || resourceType == ResourceType.HEALTHCARE
+                || resourceType == ResourceType.EDUCATION;
+    }
+
+    private BusinessDealPlan firstExecutableBusinessDeal(GameState state, PlayerState actor) {
+        for (BusinessDealCard card : businessDealDeckManager.currentVisibleDeals(state)) {
+            BusinessDealPlan plan = assessBusinessDeal(state, actor, card);
+            if (plan.canExecute()) {
+                return plan;
+            }
+        }
+        return BusinessDealPlan.unavailable();
+    }
+
+    private BusinessDealPlan businessDealPlanForCommand(GameState state, PlayerState actor, CapitalistActionCommand command) {
+        List<BusinessDealCard> visibleDeals = businessDealDeckManager.currentVisibleDeals(state);
+        if (visibleDeals.isEmpty()) {
+            return BusinessDealPlan.unavailable();
+        }
+        String requestedDealId = stringParameter(command, "dealId", "");
+        BusinessDealCard card = visibleDeals.stream()
+                .filter(candidate -> requestedDealId.isBlank() || Objects.equals(candidate.getId(), requestedDealId))
+                .findFirst()
+                .orElse(null);
+        return assessBusinessDeal(state, actor, card);
+    }
+
+    private BusinessDealPlan assessBusinessDeal(GameState state, PlayerState actor, BusinessDealCard card) {
+        if (actor == null || card == null) {
+            return BusinessDealPlan.unavailable();
+        }
+        int baseCost = Math.max(0, card.getThresholdAmount());
+        Map<String, Integer> regularStorage = new HashMap<>();
+        Map<String, Integer> freeTradeStorage = new HashMap<>();
+        List<String> reasonCodes = new ArrayList<>();
+
+        for (BusinessDealRequirement requirement : card.getRequirements()) {
+            if (requirement == null || requirement.getAmount() <= 0 || requirement.getResourceId() == null) {
+                continue;
+            }
+            String resourceId = normalizedResourceId(requirement.getResourceId());
+            if (ResourceType.fromRaw(resourceId) != ResourceType.FOOD && ResourceType.fromRaw(resourceId) != ResourceType.LUXURY) {
+                reasonCodes.add("UNSUPPORTED_DEAL_RESOURCE");
+                continue;
+            }
+
+            int remaining = requirement.getAmount();
+            int regularSpace = capitalistStandardStorageSpace(actor, resourceId)
+                    - regularStorage.getOrDefault(resourceId, 0);
+            int toRegular = Math.min(remaining, Math.max(0, regularSpace));
+            if (toRegular > 0) {
+                regularStorage.merge(resourceId, toRegular, Integer::sum);
+                remaining -= toRegular;
+            }
+            if (remaining > 0 && isFreeTradeOverflowCandidate(resourceId)) {
+                freeTradeStorage.merge(resourceId, remaining, Integer::sum);
+                remaining = 0;
+            }
+            if (remaining > 0) {
+                reasonCodes.add("STORAGE_LIMIT_EXCEEDED");
+            }
+        }
+
+        int dutyCost = regularStorage.values().stream().mapToInt(Integer::intValue).sum() * dealDutyPerGood(state);
+        int totalCost = baseCost + dutyCost;
+        if (availableCapitalistFunds(actor) < totalCost) {
+            reasonCodes.add("INSUFFICIENT_FUNDS_FOR_DEAL");
+        }
+        boolean canExecute = reasonCodes.isEmpty() && (!regularStorage.isEmpty() || !freeTradeStorage.isEmpty());
+        if (regularStorage.isEmpty() && freeTradeStorage.isEmpty()) {
+            reasonCodes.add("EMPTY_DEAL");
+        }
+
+        return new BusinessDealPlan(card, canExecute, baseCost, dutyCost, totalCost, regularStorage, freeTradeStorage, reasonCodes);
+    }
+
+    private int capitalistStandardStorageSpace(PlayerState actor, String resourceId) {
+        int limit = capitalistStorageLimit(actor, resourceId);
+        return Math.max(0, limit - actor.getProducedResourceAmount(resourceId));
+    }
+
+    private int capitalistStorageLimit(PlayerState actor, String resourceId) {
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        int base = resourceType == ResourceType.FOOD
+                ? CAPITALIST_FOOD_STORAGE_LIMIT
+                : CAPITALIST_DEFAULT_RESOURCE_STORAGE_LIMIT;
+        return base + actor.getExtraStorageTokens(resourceId) * extraStorageTokenCapacity(resourceType);
+    }
+
+    private int extraStorageTokenCapacity(ResourceType resourceType) {
+        return resourceType == ResourceType.FOOD
+                ? FOOD_EXTRA_STORAGE_TOKEN_CAPACITY
+                : DEFAULT_EXTRA_STORAGE_TOKEN_CAPACITY;
+    }
+
+    private int dealDutyPerGood(GameState state) {
+        PolicyCourse course = state.findPolicy(PolicyId.POLICY_6_FOREIGN_TRADE)
+                .map(PolicyState::getCurrentCourse)
+                .orElse(PolicyCourse.B);
+        return switch (course) {
+            case A -> 2;
+            case B -> 1;
+            case C -> 0;
+        };
+    }
+
+    private void consumeBusinessDealCardFromMarket(GameState state, String dealId) {
+        OrderedCardDeckState deck = state.getBusinessDealDeck();
+        if (deck == null || dealId == null || dealId.isBlank()) {
+            return;
+        }
+        List<String> order = new ArrayList<>(deck.getOrderedCardIds() == null ? List.of() : deck.getOrderedCardIds());
+        List<String> visible = new ArrayList<>(deck.getVisibleCardIds() == null ? List.of() : deck.getVisibleCardIds());
+        order.removeIf(id -> Objects.equals(id, dealId));
+        visible.removeIf(id -> Objects.equals(id, dealId));
+        deck.setOrderedCardIds(order);
+
+        if (order.isEmpty()) {
+            deck.setVisibleCardIds(List.of());
+            deck.setNextCardIndex(0);
+            state.setBusinessDealDeck(deck);
+            return;
+        }
+
+        int window = Math.max(0, Math.min(deck.getVisibleWindowSize(), order.size()));
+        int cursor = Math.floorMod(deck.getNextCardIndex(), order.size());
+        int guard = 0;
+        while (visible.size() < window && guard++ < order.size() * 2) {
+            String candidate = order.get(cursor);
+            cursor = (cursor + 1) % order.size();
+            if (!visible.contains(candidate)) {
+                visible.add(candidate);
+            }
+        }
+        deck.setVisibleCardIds(visible);
+        deck.setNextCardIndex(cursor);
+        state.setBusinessDealDeck(deck);
+    }
+
+    private int ownedEnterpriseCount(GameState state, ClassType ownerClass) {
+        return (int) state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ownerClass)
+                .count();
+    }
+
+    private List<Worker> unemployedWorkersForClass(GameState state, ClassType classType) {
+        return state.getWorkers().stream()
+                .filter(worker -> worker.getClassType() == classType)
+                .filter(worker -> worker.getLocation() == WorkerLocation.UNEMPLOYED)
+                .filter(worker -> !worker.isTiedContract())
+                .toList();
+    }
+
+    private List<Worker> availableMiddleClassBuildWorkers(GameState state) {
+        return state.getWorkers().stream()
+                .filter(worker -> isAvailableMiddleClassBuildWorker(state, worker))
+                .toList();
+    }
+
+    private boolean isAvailableMiddleClassBuildWorker(GameState state, Worker worker) {
+        if (worker == null
+                || worker.getClassType() != ClassType.MIDDLE_CLASS
+                || worker.isTiedContract()
+                || worker.getLocation() == WorkerLocation.UNION) {
+            return false;
+        }
+        if (worker.getLocation() == WorkerLocation.UNEMPLOYED) {
+            return true;
+        }
+        if (worker.getLocation() != WorkerLocation.ENTERPRISE_SLOT || worker.getEnterpriseId() == null) {
+            return false;
+        }
+        Enterprise enterprise = state.findEnterprise(worker.getEnterpriseId()).orElse(null);
+        return enterprise != null && enterprise.getOwnerClass() == ClassType.MIDDLE_CLASS;
+    }
+
+    private List<EnterpriseSlot> middleClassEnterpriseSlots(CapitalistActionCommand command, String enterpriseId) {
+        List<EnterpriseSlot> slots = new ArrayList<>();
+        int middleSlots = middleClassWorkerSlotCount(null, command);
+        for (int idx = 1; idx <= middleSlots; idx++) {
+            slots.add(new EnterpriseSlot(
+                    enterpriseId + "-middle-slot-" + idx,
+                    WorkerQualification.UNSKILLED,
+                    null,
+                    null,
+                    null
+            ));
+        }
+        if (hasMiddleClassHiredWorkerSlot(null, command)) {
+            slots.add(new EnterpriseSlot(
+                    enterpriseId + "-hired-worker-slot-1",
+                    WorkerQualification.UNSKILLED,
+                    null,
+                    null,
+                    null
+            ));
+        }
+        return slots;
+    }
+
+    private int middleClassWorkerSlotCount(Enterprise enterprise, CapitalistActionCommand command) {
+        if (enterprise != null) {
+            int count = (int) enterprise.getSlots().stream()
+                    .filter(this::isMiddleClassOwnerSlot)
+                    .count();
+            if (count > 0) {
+                return count;
+            }
+        }
+        if (command == null) {
+            return 1;
+        }
+        return clamp(intParameter(command, "middleClassWorkerSlots", 1), 1, 2);
+    }
+
+    private boolean hasMiddleClassHiredWorkerSlot(Enterprise enterprise, CapitalistActionCommand command) {
+        if (enterprise != null) {
+            return enterprise.getSlots().stream().anyMatch(this::isMiddleClassHiredWorkerSlot);
+        }
+        if (command == null) {
+            return false;
+        }
+        return booleanParameter(command, "workerClassSlot", false);
+    }
+
+    private boolean isMiddleClassOwnerSlot(EnterpriseSlot slot) {
+        return slot != null && slot.getId() != null && slot.getId().contains("-middle-slot-");
+    }
+
+    private boolean isMiddleClassHiredWorkerSlot(EnterpriseSlot slot) {
+        return slot != null && slot.getId() != null && slot.getId().contains("-hired-worker-slot-");
+    }
+
+    private boolean canStaffMiddleClassEnterprise(GameState state, Enterprise enterprise) {
+        return canStaffMiddleClassEnterprise(state, enterprise, List.of());
+    }
+
+    private boolean canStaffMiddleClassEnterprise(GameState state, Enterprise enterprise, List<String> requestedWorkerIds) {
+        if (enterprise == null) {
+            return false;
+        }
+        List<EnterpriseSlot> middleSlots = enterprise.getSlots().stream()
+                .filter(this::isMiddleClassOwnerSlot)
+                .toList();
+        if (middleSlots.isEmpty()) {
+            return false;
+        }
+        List<Worker> candidates = requestedWorkerIds == null || requestedWorkerIds.isEmpty()
+                ? availableMiddleClassBuildWorkers(state)
+                : requestedWorkerIds.stream()
+                .map(workerId -> state.findWorker(workerId).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(worker -> isAvailableMiddleClassBuildWorker(state, worker))
+                .toList();
+        Set<String> usedWorkers = new HashSet<>();
+        for (EnterpriseSlot slot : middleSlots) {
+            Worker worker = candidates.stream()
+                    .filter(candidate -> !usedWorkers.contains(candidate.getId()))
+                    .filter(candidate -> slotMatchesWorker(slot, candidate))
+                    .findFirst()
+                    .orElse(null);
+            if (worker == null) {
+                return false;
+            }
+            usedWorkers.add(worker.getId());
+        }
+        return true;
+    }
+
+    private int staffMiddleClassEnterprise(GameState state, CapitalistActionCommand command, Enterprise enterprise) {
+        List<EnterpriseSlot> middleSlots = enterprise.getSlots().stream()
+                .filter(this::isMiddleClassOwnerSlot)
+                .toList();
+        List<String> requestedWorkerIds = stringListParameter(command, "middleClassWorkerIds");
+        List<Worker> candidates = requestedWorkerIds.isEmpty()
+                ? availableMiddleClassBuildWorkers(state)
+                : requestedWorkerIds.stream()
+                .map(workerId -> state.findWorker(workerId).orElse(null))
+                .filter(Objects::nonNull)
+                .filter(worker -> isAvailableMiddleClassBuildWorker(state, worker))
+                .toList();
+        Set<String> usedWorkers = new HashSet<>();
+        int staffed = 0;
+        for (EnterpriseSlot slot : middleSlots) {
+            Worker worker = candidates.stream()
+                    .filter(candidate -> !usedWorkers.contains(candidate.getId()))
+                    .filter(candidate -> slotMatchesWorker(slot, candidate))
+                    .findFirst()
+                    .orElse(null);
+            if (worker == null) {
+                break;
+            }
+            clearWorkerCurrentSlot(state, worker);
+            assignWorkerToEnterprise(worker, enterprise, slot, true);
+            usedWorkers.add(worker.getId());
+            staffed++;
+        }
+        if (booleanParameter(command, "hireWorkerClass", false)) {
+            enterprise.getSlots().stream()
+                    .filter(this::isMiddleClassHiredWorkerSlot)
+                    .findFirst()
+                    .ifPresent(slot -> {
+                        Worker worker = firstAvailableWorkerClassHire(state);
+                        if (worker != null && slotMatchesWorker(slot, worker)) {
+                            assignWorkerToEnterprise(worker, enterprise, slot, true);
+                        }
+                    });
+        }
+        return staffed;
+    }
+
+    private Worker firstAvailableWorkerClassHire(GameState state) {
+        List<Worker> candidates = unemployedWorkersForClass(state, ClassType.WORKER);
+        return candidates.stream()
+                .filter(worker -> worker.getQualificationType() == WorkerQualification.UNSKILLED)
+                .findFirst()
+                .orElse(candidates.isEmpty() ? null : candidates.getFirst());
+    }
+
+    private void clearWorkerCurrentSlot(GameState state, Worker worker) {
+        if (worker.getLocation() != WorkerLocation.ENTERPRISE_SLOT
+                || worker.getEnterpriseId() == null
+                || worker.getSlotId() == null) {
+            return;
+        }
+        state.findEnterprise(worker.getEnterpriseId())
+                .ifPresent(enterprise -> enterprise.getSlots().stream()
+                        .filter(slot -> Objects.equals(slot.getId(), worker.getSlotId()))
+                        .findFirst()
+                        .ifPresent(slot -> slot.setOccupiedWorkerId(null)));
+    }
+
+    private int hireWorkersForNewEnterprise(GameState state, PlayerState actor, Enterprise enterprise) {
+        if (enterprise.isAutomated() || enterprise.getSlots().isEmpty()) {
+            return 0;
+        }
+        List<Worker> candidates = actor.getClassType() == ClassType.MIDDLE_CLASS
+                ? unemployedWorkersForClass(state, ClassType.MIDDLE_CLASS)
+                : state.getWorkers().stream()
+                .filter(worker -> worker.getLocation() == WorkerLocation.UNEMPLOYED)
+                .filter(worker -> !worker.isTiedContract())
+                .toList();
+        Set<String> usedWorkers = new HashSet<>();
+        int hired = 0;
+        for (EnterpriseSlot slot : enterprise.getSlots()) {
+            Worker worker = candidates.stream()
+                    .filter(candidate -> !usedWorkers.contains(candidate.getId()))
+                    .filter(candidate -> slotMatchesWorker(slot, candidate))
+                    .findFirst()
+                    .orElse(null);
+            if (worker == null) {
+                if (actor.getClassType() == ClassType.MIDDLE_CLASS) {
+                    break;
+                }
+                continue;
+            }
+            assignWorkerToEnterprise(worker, enterprise, slot, actor.getClassType() == ClassType.CAPITALIST);
+            usedWorkers.add(worker.getId());
+            hired++;
+        }
+        return hired;
+    }
+
+    private void assignWorkerToEnterprise(Worker worker, Enterprise enterprise, EnterpriseSlot slot, boolean tiedContract) {
+        slot.setOccupiedWorkerId(worker.getId());
+        worker.setLocation(WorkerLocation.ENTERPRISE_SLOT);
+        worker.setEnterpriseId(enterprise.getId());
+        worker.setSlotId(slot.getId());
+        worker.setTiedContract(tiedContract);
+    }
+
+    private int minimumWageLevel(GameState state) {
+        PolicyCourse labor = state.findPolicy(PolicyId.POLICY_2_LABOR_MARKET)
+                .map(PolicyState::getCurrentCourse)
+                .orElse(PolicyCourse.B);
+        return switch (labor) {
+            case A -> 3;
+            case B -> 2;
+            case C -> 1;
+        };
+    }
+
+    private boolean hasOccupiedCapitalistEnterprise(GameState state) {
+        return firstWorkerAtCapitalistEnterprise(state) != null;
+    }
+
+    private boolean isFreeTradeOverflowCandidate(String resourceId) {
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        return resourceType == ResourceType.FOOD || resourceType == ResourceType.LUXURY;
+    }
+
+    private record ExportExecution(int operations, int quantity, int revenue) {
+    }
+
+    private record BusinessDealPlan(
+            BusinessDealCard card,
+            boolean canExecute,
+            int baseCost,
+            int dutyCost,
+            int totalCost,
+            Map<String, Integer> regularStorage,
+            Map<String, Integer> freeTradeStorage,
+            List<String> reasonCodes
+    ) {
+        private static BusinessDealPlan unavailable() {
+            return new BusinessDealPlan(null, false, 0, 0, 0, Map.of(), Map.of(), List.of("NO_VISIBLE_BUSINESS_DEAL"));
+        }
+    }
+
+    private Worker firstWorkerAtCapitalistEnterprise(GameState state) {
+        if (state == null) {
+            return null;
+        }
+        for (Enterprise enterprise : state.getEnterprises()) {
+            if (enterprise.getOwnerClass() != ClassType.CAPITALIST) {
+                continue;
+            }
+            for (EnterpriseSlot slot : enterprise.getSlots()) {
+                if (!slot.isOccupied()) {
+                    continue;
+                }
+                Worker worker = state.findWorker(slot.getOccupiedWorkerId()).orElse(null);
+                if (worker != null) {
+                    return worker;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Enterprise capitalistEnterpriseForCommand(GameState state, CapitalistActionCommand command) {
+        String enterpriseId = stringParameter(command, "enterpriseId", "");
+        if (!enterpriseId.isBlank()) {
+            Enterprise enterprise = state.findEnterprise(enterpriseId).orElse(null);
+            return enterprise != null && enterprise.getOwnerClass() == ClassType.CAPITALIST ? enterprise : null;
+        }
+        return state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Enterprise ownedEnterpriseForCommand(GameState state, CapitalistActionCommand command, ClassType ownerClass) {
+        String enterpriseId = stringParameter(command, "enterpriseId", "");
+        if (!enterpriseId.isBlank()) {
+            Enterprise enterprise = state.findEnterprise(enterpriseId).orElse(null);
+            return enterprise != null && enterprise.getOwnerClass() == ownerClass ? enterprise : null;
+        }
+        return state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ownerClass)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<Enterprise> enterprisesForWageChange(GameState state, ClassType ownerClass, String enterpriseId) {
+        return state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ownerClass)
+                .filter(enterprise -> enterpriseId == null || enterpriseId.isBlank() || Objects.equals(enterprise.getId(), enterpriseId))
+                .toList();
+    }
+
+    private boolean hasTiedWorker(GameState state, Enterprise enterprise) {
+        return workersAtEnterprise(state, enterprise).stream().anyMatch(Worker::isTiedContract);
+    }
+
+    private boolean hasTiedHiredWorker(GameState state, Enterprise enterprise) {
+        return workersAtEnterprise(state, enterprise).stream()
+                .filter(worker -> worker.getClassType() == ClassType.WORKER)
+                .anyMatch(Worker::isTiedContract);
+    }
+
+    private void ensureStateEventsInitialized(GameState state) {
+        if (state == null || !state.getTurnOrder().getActiveClasses().contains(ClassType.STATE)) {
+            if (state != null) {
+                state.setStateEventCards(List.of());
+                state.setStateEventDeck(new OrderedCardDeckState());
+            }
+            return;
+        }
+        if (state.getStateEventCards().isEmpty()) {
+            state.setStateEventCards(STATE_EVENT_DEFINITIONS.stream().map(this::stateEventCardMap).toList());
+        }
+        OrderedCardDeckState deck = state.getStateEventDeck();
+        if (deck.getDeckId() == null || deck.getDeckId().isBlank()) {
+            deck.setDeckId(STATE_EVENT_DECK_ID);
+            deck.setOrderedCardIds(STATE_EVENT_DEFINITIONS.stream().map(StateEventDefinition::id).toList());
+            deck.setVisibleCardIds(List.of());
+            deck.setVisibleWindowSize(STATE_EVENT_VISIBLE_COUNT);
+            deck.setNextCardIndex(0);
+            deck.setRefreshCount(0);
+            deck.setLastRefreshedRound(state.getCurrentRound());
+            deck.setLastRefreshReason("SETUP_STATE_PLAYER");
+        }
+        refillStateEventWindow(state, "REFILL_VISIBLE_EVENTS");
+    }
+
+    private Map<String, Object> stateEventCardMap(StateEventDefinition definition) {
+        Map<String, Object> card = new LinkedHashMap<>();
+        card.put("id", definition.id());
+        card.put("title", definition.title());
+        card.put("instruction", definition.instruction());
+        card.put("noActionPenaltyClasses", definition.noActionPenaltyClasses().stream().map(Enum::name).toList());
+        card.put("options", definition.options().stream().map(option -> {
+            Map<String, Object> optionMap = new LinkedHashMap<>();
+            optionMap.put("targetClass", option.targetClass().name());
+            optionMap.put("variant", option.variant());
+            optionMap.put("summary", option.summary());
+            return optionMap;
+        }).toList());
+        return card;
+    }
+
+    private void refillStateEventWindow(GameState state, String reason) {
+        OrderedCardDeckState deck = state.getStateEventDeck();
+        List<String> visible = new ArrayList<>(deck.getVisibleCardIds());
+        List<String> ordered = deck.getOrderedCardIds();
+        int next = Math.max(0, deck.getNextCardIndex());
+        int beforeVisible = visible.size();
+        int beforeNext = next;
+        while (visible.size() < STATE_EVENT_VISIBLE_COUNT && next < ordered.size()) {
+            String cardId = ordered.get(next++);
+            if (!visible.contains(cardId)) {
+                visible.add(cardId);
+            }
+        }
+        deck.setVisibleCardIds(visible);
+        deck.setNextCardIndex(next);
+        deck.setVisibleWindowSize(STATE_EVENT_VISIBLE_COUNT);
+        if (visible.size() != beforeVisible || next != beforeNext) {
+            deck.setLastRefreshedRound(state.getCurrentRound());
+            deck.setLastRefreshReason(reason);
+            deck.setRefreshCount(deck.getRefreshCount() + 1);
+        }
+    }
+
+    private void consumeStateEventCard(GameState state, String eventId) {
+        OrderedCardDeckState deck = state.getStateEventDeck();
+        List<String> visible = new ArrayList<>(deck.getVisibleCardIds());
+        visible.remove(eventId);
+        deck.setVisibleCardIds(visible);
+        refillStateEventWindow(state, "EVENT_RESOLVED");
+    }
+
+    private List<StateEventDefinition> activeStateEventDefinitions(GameState state) {
+        return state.getStateEventDeck().getVisibleCardIds().stream()
+                .map(this::findStateEventDefinition)
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
+    private Optional<StateEventDefinition> findStateEventDefinition(String eventId) {
+        return STATE_EVENT_DEFINITIONS.stream()
+                .filter(definition -> Objects.equals(definition.id(), eventId))
+                .findFirst();
+    }
+
+    private String firstActiveStateEventId(GameState state) {
+        ensureStateEventsInitialized(state);
+        return state.getStateEventDeck().getVisibleCardIds().stream().findFirst().orElse("");
+    }
+
+    private ClassType secondaryClassTypeParameter(CapitalistActionCommand command, ClassType fallback) {
+        Object raw = command.parameters() == null ? null : command.parameters().get("secondaryTargetClass");
+        if (raw == null || String.valueOf(raw).isBlank()) {
+            return fallback;
+        }
+        try {
+            return ClassType.valueOf(String.valueOf(raw).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return fallback;
+        }
+    }
+
+    private ClassType classTypeParameter(CapitalistActionCommand command, ClassType fallback) {
+        Object raw = command.parameters() == null ? null : command.parameters().get("targetClass");
+        if (raw == null || String.valueOf(raw).isBlank()) {
+            return fallback;
+        }
+        try {
+            return ClassType.valueOf(String.valueOf(raw).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return fallback;
+        }
+    }
+
+    private List<ClassType> opponentClassesForState(GameState state) {
+        return state.getPlayers().stream()
+                .map(PlayerState::getClassType)
+                .filter(classType -> classType == ClassType.WORKER
+                        || classType == ClassType.MIDDLE_CLASS
+                        || classType == ClassType.CAPITALIST)
+                .distinct()
+                .toList();
+    }
+
+    private ClassType nextOpponentClass(GameState state, ClassType classType) {
+        return opponentClassesForState(state).stream()
+                .filter(candidate -> candidate != classType)
+                .findFirst()
+                .orElse(classType == ClassType.WORKER ? ClassType.MIDDLE_CLASS : ClassType.WORKER);
+    }
+
+    private int payTreasury(GameState state, int amount, String reason) {
+        int safeAmount = Math.max(0, amount);
+        ensureTreasuryCanPay(state, safeAmount, reason);
+        state.setTreasury(Math.max(0, state.getTreasury() - safeAmount));
+        return safeAmount;
+    }
+
+    private int payClassMoney(GameState state, ClassType classType, int amount, String reason) {
+        int paid = payTreasury(state, amount, reason);
+        findPlayerByClass(state, classType).ifPresent(player -> addMoneyToClass(player, paid));
+        return paid;
+    }
+
+    private void addMoneyToClass(PlayerState player, int amount) {
+        if (player == null || amount <= 0) {
+            return;
+        }
+        if (player.getClassType() == ClassType.CAPITALIST) {
+            player.setCapital(player.getCapital() + amount);
+            return;
+        }
+        player.setMoney(player.getMoney() + amount);
+    }
+
+    private int provideResourceForClass(GameState state, ClassType classType, String resourceId, int amount) {
+        int safeAmount = Math.max(0, amount);
+        if (safeAmount <= 0) {
+            return 0;
+        }
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        if (classType == ClassType.STATE) {
+            return consumeStateServiceOrVirtualSupply(state, resourceType == null ? resourceId : resourceType.id(), safeAmount);
+        }
+        findPlayerByClass(state, classType).ifPresent(player -> player.addResource(resourceId, safeAmount));
+        return safeAmount;
+    }
+
+    private int provideSplitResourcesForClass(GameState state, ClassType classType, String firstResourceId, String secondResourceId, int total) {
+        int safeTotal = Math.max(0, total);
+        if (safeTotal <= 0) {
+            return 0;
+        }
+        int first = Math.max(1, safeTotal / 2);
+        int second = Math.max(1, safeTotal - first);
+        if (first + second > safeTotal) {
+            second = Math.max(0, safeTotal - first);
+        }
+        return provideResourceForClass(state, classType, firstResourceId, first)
+                + provideResourceForClass(state, classType, secondResourceId, second);
+    }
+
+    private int consumeStateServiceOrVirtualSupply(GameState state, String resourceId, int amount) {
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        if (resourceType == ResourceType.HEALTHCARE
+                || resourceType == ResourceType.EDUCATION
+                || resourceType == ResourceType.MEDIA_INFLUENCE) {
+            int consumed = state.consumePublicServiceAmount(resourceType.id(), amount);
+            if (consumed >= amount) {
+                return consumed;
+            }
+        }
+        return amount;
+    }
+
+    private int provideInfluenceForClass(GameState state, ClassType classType, int amount) {
+        int safeAmount = Math.max(0, amount);
+        findPlayerByClass(state, classType).ifPresent(player -> player.setInfluence(player.getInfluence() + safeAmount));
+        return safeAmount;
+    }
+
+    private int addVotingCubesForClass(GameState state, ClassType classType, int amount) {
+        VotingCubeOwnerClass ownerClass = switch (classType) {
+            case WORKER -> VotingCubeOwnerClass.WORKER;
+            case MIDDLE_CLASS -> VotingCubeOwnerClass.MIDDLE_CLASS;
+            case CAPITALIST -> VotingCubeOwnerClass.CAPITALIST;
+            default -> null;
+        };
+        if (ownerClass == null || amount <= 0) {
+            return 0;
+        }
+        state.getVotingBag().add(ownerClass, amount);
+        return amount;
+    }
+
+    private int buyResourceFromOpponents(GameState state, String resourceId, int limit) {
+        int remaining = Math.max(0, limit);
+        int bought = 0;
+        for (ClassType classType : List.of(ClassType.MIDDLE_CLASS, ClassType.CAPITALIST)) {
+            if (remaining <= 0) {
+                break;
+            }
+            PlayerState seller = findPlayerByClass(state, classType).orElse(null);
+            if (seller == null) {
+                continue;
+            }
+            int consumed = seller.consumeResource(resourceId, remaining);
+            if (consumed <= 0) {
+                continue;
+            }
+            int price = Math.max(1, seller.getPrice(resourceId));
+            payTreasury(state, consumed * price, "buy " + resourceId + " from " + classType);
+            addMoneyToClass(seller, consumed * price);
+            bought += consumed;
+            remaining -= consumed;
+        }
+        return bought;
+    }
+
+    private int functioningEnterpriseCount(GameState state, ClassType classType) {
+        return (int) state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == classType)
+                .filter(Enterprise::isFunctioning)
+                .count();
+    }
+
+    private int stateEnterpriseCount(GameState state) {
+        return (int) state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.STATE)
+                .count();
+    }
+
+    private int stateSectorWorkersForClass(GameState state, ClassType classType) {
+        return (int) state.getWorkers().stream()
+                .filter(worker -> worker.getClassType() == classType)
+                .filter(worker -> worker.getLocation() == WorkerLocation.ENTERPRISE_SLOT)
+                .filter(worker -> state.findEnterprise(worker.getEnterpriseId())
+                        .map(enterprise -> enterprise.getOwnerClass() == ClassType.STATE)
+                        .orElse(false))
+                .count();
+    }
+
+    private int halfUp(int value) {
+        return (Math.max(0, value) + 1) / 2;
+    }
+
+    private boolean canIntroduceExtraTax(GameState state, PlayerState statePlayer) {
+        return twoLowestLegitimacyClasses(statePlayer).size() >= 2
+                && twoLowestLegitimacyClasses(statePlayer).stream().allMatch(classType -> legitimacyFor(statePlayer, classType) > 1)
+                && !opponentClassesForState(state).isEmpty();
+    }
+
+    private List<ClassType> twoLowestLegitimacyClasses(PlayerState statePlayer) {
+        return List.of(ClassType.WORKER, ClassType.MIDDLE_CLASS, ClassType.CAPITALIST).stream()
+                .sorted(Comparator
+                        .comparingInt((ClassType classType) -> legitimacyFor(statePlayer, classType))
+                        .thenComparing(Enum::name))
+                .limit(2)
+                .toList();
+    }
+
+    private ClassType lowestLegitimacyClass(PlayerState statePlayer) {
+        return twoLowestLegitimacyClasses(statePlayer).stream().findFirst().orElse(ClassType.WORKER);
+    }
+
+    private int legitimacyFor(PlayerState statePlayer, ClassType classType) {
+        if (statePlayer == null || classType == null) {
+            return 0;
+        }
+        return switch (classType) {
+            case WORKER -> statePlayer.getLegitimacyWorker();
+            case MIDDLE_CLASS -> statePlayer.getLegitimacyMiddleClass();
+            case CAPITALIST -> statePlayer.getLegitimacyCapitalist();
+            default -> 0;
+        };
+    }
+
+    private void increaseLegitimacy(PlayerState statePlayer, ClassType classType, int amount) {
+        setLegitimacy(statePlayer, classType, legitimacyFor(statePlayer, classType) + Math.max(0, amount));
+    }
+
+    private void decreaseLegitimacy(PlayerState statePlayer, ClassType classType, int amount) {
+        setLegitimacy(statePlayer, classType, legitimacyFor(statePlayer, classType) - Math.max(0, amount));
+    }
+
+    private void setLegitimacy(PlayerState statePlayer, ClassType classType, int value) {
+        int clamped = clamp(value, 1, 5);
+        switch (classType) {
+            case WORKER -> statePlayer.setLegitimacyWorker(clamped);
+            case MIDDLE_CLASS -> statePlayer.setLegitimacyMiddleClass(clamped);
+            case CAPITALIST -> statePlayer.setLegitimacyCapitalist(clamped);
+            default -> {
+            }
+        }
+    }
+
+    private int intParameter(CapitalistActionCommand command, String key, int defaultValue) {
+        Object raw = command.parameters() == null ? null : command.parameters().get(key);
+        if (raw == null || String.valueOf(raw).isBlank()) {
+            return defaultValue;
+        }
+        if (raw instanceof Number number) {
+            return number.intValue();
+        }
+        try {
+            return Integer.parseInt(String.valueOf(raw));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private String stringParameter(CapitalistActionCommand command, String key, String defaultValue) {
+        Object raw = command.parameters() == null ? null : command.parameters().get(key);
+        if (raw == null) {
+            return defaultValue;
+        }
+        String value = String.valueOf(raw).trim();
+        return value.isBlank() ? defaultValue : value;
+    }
+
+    private boolean booleanParameter(CapitalistActionCommand command, String key, boolean defaultValue) {
+        Object raw = command.parameters() == null ? null : command.parameters().get(key);
+        if (raw == null || String.valueOf(raw).isBlank()) {
+            return defaultValue;
+        }
+        if (raw instanceof Boolean value) {
+            return value;
+        }
+        return Boolean.parseBoolean(String.valueOf(raw));
+    }
+
+    private List<String> stringListParameter(CapitalistActionCommand command, String key) {
+        Object raw = command.parameters() == null ? null : command.parameters().get(key);
+        if (!(raw instanceof List<?> list)) {
+            return List.of();
+        }
+        return list.stream()
+                .filter(Objects::nonNull)
+                .map(String::valueOf)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .toList();
+    }
+
+    private String resourceIdParameter(CapitalistActionCommand command, String defaultValue) {
+        ResourceType resourceType = ResourceType.fromRaw(stringParameter(command, "resourceType", defaultValue));
+        return resourceType == null ? defaultValue : resourceType.id();
+    }
+
+    private String normalizedResourceId(String rawResourceId) {
+        ResourceType resourceType = ResourceType.fromRaw(rawResourceId);
+        return resourceType == null ? rawResourceId : resourceType.id();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Integer> pricePatch(CapitalistActionCommand command) {
+        Object raw = command.parameters() == null ? null : command.parameters().get("prices");
+        if (!(raw instanceof Map<?, ?> map)) {
+            return Map.of();
+        }
+        Map<String, Integer> prices = new HashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+            ResourceType resourceType = ResourceType.fromRaw(String.valueOf(entry.getKey()));
+            String resourceId = resourceType == null ? String.valueOf(entry.getKey()).toLowerCase() : resourceType.id();
+            Object value = entry.getValue();
+            if (value instanceof Number number) {
+                prices.put(resourceId, number.intValue());
+                continue;
+            }
+            try {
+                prices.put(resourceId, Integer.parseInt(String.valueOf(value)));
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid price entries; validation keeps the command shape intentionally light for MVP.
+            }
+        }
+        return prices;
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private List<DomainEvent> applyOpeningWorkerMigrationIfNeededInternal(GameState state) {
@@ -3754,6 +6242,16 @@ public class GameRulesEngine {
                 continue;
             }
 
+            if (trimmed.startsWith("manual_victory_points_delta:")) {
+                applyManualVictoryPointsDelta(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_remove_unemployed_worker:")) {
+                applyManualRemoveUnemployedWorker(state, actor, trimmed);
+                continue;
+            }
+
             if (trimmed.startsWith("state_to_actor_resource:")) {
                 applyStateToActorResourceTransfer(state, actor, trimmed);
                 continue;
@@ -3761,6 +6259,51 @@ public class GameRulesEngine {
 
             if (trimmed.startsWith("capitalist_to_actor_resource:")) {
                 applyCapitalistToActorResourceTransfer(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_money_transfer:")) {
+                applyManualMoneyTransfer(state, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_resource_transfer:")) {
+                applyManualResourceTransfer(state, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_extraordinary_vote_draw:")) {
+                applyManualExtraordinaryVoteDraw(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_extraordinary_vote_exact:")) {
+                applyManualExtraordinaryVoteExact(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.equals("manual_vote_return_drawn")) {
+                applyManualVoteReturnDrawn(state, actor);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_voting_bag_add_exact:")) {
+                applyManualVotingBagAddExact(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_voting_bag_discard_exact:")) {
+                applyManualVotingBagDiscardExact(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_voting_bag_discard:")) {
+                applyManualVotingBagDiscard(state, actor, trimmed);
+                continue;
+            }
+
+            if (trimmed.startsWith("manual_policy_target:")) {
+                applyManualPolicyTarget(state, actor, trimmed);
                 continue;
             }
 
@@ -3817,6 +6360,522 @@ public class GameRulesEngine {
         int transferred = consumeMoneyFromActor(actor, requested);
         addMoneyToActor(recipient, transferred);
         state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " transferred " + transferred + " to " + recipient.getPlayerId() + ".");
+    }
+
+    private void applyManualVictoryPointsDelta(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_victory_points_delta:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 2) {
+            return;
+        }
+        PlayerState target = state.findPlayerById(parts[0].trim()).orElse(null);
+        int delta = parseIntSafe(parts[1]);
+        if (target == null || delta == 0) {
+            return;
+        }
+        target.setVictoryPoints(Math.max(0, target.getVictoryPoints() + delta));
+        state.appendLog(
+                "MANUAL_OVERRIDE",
+                actor.getPlayerId() + " adjusted victory points for " + target.getPlayerId() + " by " + delta + "."
+        );
+    }
+
+    private void applyManualRemoveUnemployedWorker(GameState state, PlayerState actor, String instruction) {
+        String workerId = instruction.substring("manual_remove_unemployed_worker:".length()).trim();
+        if (workerId.isBlank()) {
+            return;
+        }
+        Worker worker = state.findWorker(workerId).orElse(null);
+        if (worker == null || worker.getLocation() != WorkerLocation.UNEMPLOYED) {
+            return;
+        }
+        ClassType workerClass = worker.getClassType();
+        state.getWorkers().removeIf(candidate -> Objects.equals(candidate.getId(), workerId));
+        PlayerState owner = findPlayerByClassType(state, workerClass);
+        if (owner != null) {
+            owner.setPopulation(Math.max(0, owner.getPopulation() - 1));
+        }
+        state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " removed unemployed worker " + workerId + ".");
+    }
+
+    private void applyManualMoneyTransfer(GameState state, String instruction) {
+        String payload = instruction.substring("manual_money_transfer:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 3) {
+            return;
+        }
+        String sourceId = parts[0].trim();
+        String targetId = parts[1].trim();
+        int requested = Math.max(0, parseIntSafe(parts[2]));
+        if (requested <= 0 || sourceId.equals(targetId)) {
+            return;
+        }
+
+        int transferred;
+        if ("TREASURY".equals(sourceId)) {
+            transferred = Math.min(requested, Math.max(0, state.getTreasury()));
+            state.setTreasury(state.getTreasury() - transferred);
+        } else {
+            PlayerState source = state.findPlayerById(sourceId).orElse(null);
+            if (source == null) {
+                return;
+            }
+            transferred = consumeMoneyFromPlayer(source, requested);
+        }
+
+        if ("TREASURY".equals(targetId)) {
+            state.setTreasury(state.getTreasury() + transferred);
+        } else {
+            PlayerState target = state.findPlayerById(targetId).orElse(null);
+            if (target == null) {
+                if ("TREASURY".equals(sourceId)) {
+                    state.setTreasury(state.getTreasury() + transferred);
+                }
+                return;
+            }
+            addMoneyToActor(target, transferred);
+        }
+        state.appendLog("MANUAL_OVERRIDE", "Manual money transfer " + transferred + " from " + sourceId + " to " + targetId + ".");
+    }
+
+    private void applyManualResourceTransfer(GameState state, String instruction) {
+        String payload = instruction.substring("manual_resource_transfer:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 4) {
+            return;
+        }
+        String sourceId = parts[0].trim();
+        String targetId = parts[1].trim();
+        ResourceType resourceType = ResourceType.fromRaw(parts[2]);
+        int requested = Math.max(0, parseIntSafe(parts[3]));
+        if (resourceType == null || requested <= 0 || sourceId.equals(targetId)) {
+            return;
+        }
+
+        int transferred;
+        String stateServiceResourceId = mapStateServiceResourceId(resourceType);
+        if ("STATE_SERVICES".equals(sourceId)) {
+            if (stateServiceResourceId == null) {
+                return;
+            }
+            transferred = state.consumePublicServiceAmount(stateServiceResourceId, requested);
+        } else {
+            PlayerState source = state.findPlayerById(sourceId).orElse(null);
+            if (source == null) {
+                return;
+            }
+            transferred = source.consumeResource(resourceType.id(), requested);
+        }
+
+        if (transferred <= 0) {
+            return;
+        }
+        if ("STATE_SERVICES".equals(targetId)) {
+            if (stateServiceResourceId == null) {
+                PlayerState source = state.findPlayerById(sourceId).orElse(null);
+                if (source != null) {
+                    source.addResource(resourceType.id(), transferred);
+                }
+                return;
+            }
+            state.addPublicServiceAmount(stateServiceResourceId, transferred);
+        } else {
+            PlayerState target = state.findPlayerById(targetId).orElse(null);
+            if (target == null) {
+                if ("STATE_SERVICES".equals(sourceId) && stateServiceResourceId != null) {
+                    state.addPublicServiceAmount(stateServiceResourceId, transferred);
+                }
+                return;
+            }
+            target.addResource(resourceType.id(), transferred);
+        }
+        state.appendLog("MANUAL_OVERRIDE", "Manual resource transfer " + transferred + " " + resourceType.id() + " from " + sourceId + " to " + targetId + ".");
+    }
+
+    private void applyManualExtraordinaryVoteDraw(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_extraordinary_vote_draw:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 2) {
+            return;
+        }
+        PolicyId policyId = parsePolicyId(parts[0]);
+        int count = Math.max(0, parseIntSafe(parts[1]));
+        if (policyId == null || count <= 0) {
+            return;
+        }
+        CurrentVoteState session = ensureManualExtraordinaryVoteSession(state, actor, policyId);
+        if (session == null) {
+            return;
+        }
+        applyManualVotingCubes(state, session, votingBagRules.drawRandomExistingCubes(state, count));
+        state.appendLog("MANUAL_OVERRIDE", "Manual extraordinary vote drew " + session.getDrawnVotingCubes().size() + " random cube(s).");
+    }
+
+    private void applyManualExtraordinaryVoteExact(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_extraordinary_vote_exact:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 4) {
+            return;
+        }
+        PolicyId policyId = parsePolicyId(parts[0]);
+        if (policyId == null) {
+            return;
+        }
+        List<VotingCubeOwnerClass> owners = new ArrayList<>();
+        appendManualVotingCubeOwners(state, owners, VotingCubeOwnerClass.WORKER, Math.max(0, parseIntSafe(parts[1])));
+        appendManualVotingCubeOwners(state, owners, VotingCubeOwnerClass.MIDDLE_CLASS, Math.max(0, parseIntSafe(parts[2])));
+        appendManualVotingCubeOwners(state, owners, VotingCubeOwnerClass.CAPITALIST, Math.max(0, parseIntSafe(parts[3])));
+        if (owners.isEmpty()) {
+            return;
+        }
+        CurrentVoteState session = ensureManualExtraordinaryVoteSession(state, actor, policyId);
+        if (session == null) {
+            return;
+        }
+        applyManualVotingCubes(state, session, owners);
+        state.appendLog("MANUAL_OVERRIDE", "Manual extraordinary vote used replacement cube result: " + owners.size() + " cube(s).");
+    }
+
+    private void applyManualVoteReturnDrawn(GameState state, PlayerState actor) {
+        CurrentVoteState session = state.getCurrentVoteState();
+        if (session == null || session.getDrawnVotingCubes().isEmpty()) {
+            return;
+        }
+        int returned = 0;
+        for (DrawnVotingCube cube : session.getDrawnVotingCubes()) {
+            if (cube.getOwnerClass() != null) {
+                state.getVotingBag().add(cube.getOwnerClass(), 1);
+                returned++;
+            }
+        }
+        if (session.isExtraordinary()) {
+            state.setCurrentVoteState(null);
+        } else {
+            session.setDrawnVotingCubes(List.of());
+            session.setInterpretedVotes(Map.of());
+            session.setVotingStage(VotingStage.DRAW_BAG_CUBES);
+        }
+        state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " returned " + returned + " drawn voting cube(s) to the bag.");
+    }
+
+    private void applyManualVotingBagDiscard(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_voting_bag_discard:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 2) {
+            return;
+        }
+        VotingCubeOwnerClass ownerClass = parseVotingCubeOwner(parts[0]);
+        int requested = Math.max(0, parseIntSafe(parts[1]));
+        if (ownerClass == null || requested <= 0) {
+            return;
+        }
+        int removed = 0;
+        for (int i = 0; i < requested; i++) {
+            if (state.getVotingBag().removeOne(ownerClass)) {
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " removed " + removed + " " + ownerClass.name() + " voting cube(s) from the bag.");
+        }
+    }
+
+    private void applyManualVotingBagDiscardExact(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_voting_bag_discard_exact:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 3) {
+            return;
+        }
+        int worker = removeManualVotingCubes(state, VotingCubeOwnerClass.WORKER, Math.max(0, parseIntSafe(parts[0])));
+        int middleClass = removeManualVotingCubes(state, VotingCubeOwnerClass.MIDDLE_CLASS, Math.max(0, parseIntSafe(parts[1])));
+        int capitalist = removeManualVotingCubes(state, VotingCubeOwnerClass.CAPITALIST, Math.max(0, parseIntSafe(parts[2])));
+        String summary = manualVotingCubeSummary(worker, middleClass, capitalist);
+        if (!summary.isBlank()) {
+            state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " removed voting cubes: " + summary + ".");
+        }
+    }
+
+    private void applyManualVotingBagAddExact(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_voting_bag_add_exact:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 3) {
+            return;
+        }
+        int worker = Math.max(0, parseIntSafe(parts[0]));
+        int middleClass = Math.max(0, parseIntSafe(parts[1]));
+        int capitalist = Math.max(0, parseIntSafe(parts[2]));
+        if (worker > 0) {
+            state.getVotingBag().add(VotingCubeOwnerClass.WORKER, worker);
+        }
+        if (middleClass > 0) {
+            state.getVotingBag().add(VotingCubeOwnerClass.MIDDLE_CLASS, middleClass);
+        }
+        if (capitalist > 0) {
+            state.getVotingBag().add(VotingCubeOwnerClass.CAPITALIST, capitalist);
+        }
+        String summary = manualVotingCubeSummary(worker, middleClass, capitalist);
+        if (!summary.isBlank()) {
+            state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " added voting cubes: " + summary + ".");
+        }
+    }
+
+    private int removeManualVotingCubes(GameState state, VotingCubeOwnerClass ownerClass, int requested) {
+        int removed = 0;
+        for (int i = 0; i < requested; i++) {
+            if (state.getVotingBag().removeOne(ownerClass)) {
+                removed++;
+            }
+        }
+        return removed;
+    }
+
+    private String manualVotingCubeSummary(int worker, int middleClass, int capitalist) {
+        List<String> parts = new ArrayList<>();
+        if (worker > 0) {
+            parts.add("WORKER=" + worker);
+        }
+        if (middleClass > 0) {
+            parts.add("MIDDLE_CLASS=" + middleClass);
+        }
+        if (capitalist > 0) {
+            parts.add("CAPITALIST=" + capitalist);
+        }
+        return String.join(", ", parts);
+    }
+
+    private void applyManualPolicyTarget(GameState state, PlayerState actor, String instruction) {
+        String payload = instruction.substring("manual_policy_target:".length()).trim();
+        String[] parts = payload.split(":");
+        if (parts.length < 2) {
+            return;
+        }
+        PolicyId policyId = parsePolicyId(parts[0]);
+        PolicyCourse course = parsePolicyCourse(parts[1]);
+        if (policyId == null || course == null) {
+            return;
+        }
+        PolicyState policy = state.findPolicy(policyId).orElse(null);
+        if (policy == null || policy.getOccupyingProposalToken() == null) {
+            return;
+        }
+        policy.getOccupyingProposalToken().setTargetCourse(course);
+        policy.getOccupyingProposalToken().setPolicyId(policyId);
+        policy.getOccupyingProposalToken().setAvailable(false);
+        if (state.getCurrentVoteState() != null && state.getCurrentVoteState().getActiveProposalPolicyId() == policyId) {
+            state.getCurrentVoteState().setTargetCourse(course);
+        }
+        state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " changed proposal target for " + policyId + " to " + course + ".");
+    }
+
+    private PolicyId parsePolicyId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return PolicyId.valueOf(raw.trim());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private PolicyCourse parsePolicyCourse(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return PolicyCourse.valueOf(raw.trim());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private VotingCubeOwnerClass parseVotingCubeOwner(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return VotingCubeOwnerClass.valueOf(raw.trim());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private CurrentVoteState ensureManualExtraordinaryVoteSession(GameState state, PlayerState actor, PolicyId policyId) {
+        CurrentVoteState current = state.getCurrentVoteState();
+        if (current != null) {
+            if (current.getActiveProposalPolicyId() == policyId) {
+                current.setExtraordinary(true);
+                return current;
+            }
+            state.appendLog("MANUAL_OVERRIDE", "Manual vote skipped because another vote is active.");
+            return null;
+        }
+
+        PolicyState policy = state.findPolicy(policyId).orElse(null);
+        if (policy == null || policy.getOccupyingProposalToken() == null) {
+            state.appendLog("MANUAL_OVERRIDE", "Manual vote skipped because policy has no pending proposal: " + policyId + ".");
+            return null;
+        }
+        startVoteSessionForPolicy(state, policy);
+        CurrentVoteState session = state.getCurrentVoteState();
+        if (session == null) {
+            return null;
+        }
+        session.setExtraordinary(true);
+        for (PlayerState player : activePlayers(state)) {
+            session.getStanceByPlayer().putIfAbsent(player.getPlayerId(), stanceForVotingFlow(state, session, player));
+        }
+        session.setVotingStage(VotingStage.DRAW_BAG_CUBES);
+        state.appendLog("MANUAL_OVERRIDE", actor.getPlayerId() + " started manual extraordinary vote for " + policyId + ".");
+        return session;
+    }
+
+    private void appendManualVotingCubeOwners(GameState state, List<VotingCubeOwnerClass> owners, VotingCubeOwnerClass ownerClass, int count) {
+        for (int i = 0; i < count; i++) {
+            if (state.getVotingBag().removeOne(ownerClass)) {
+                owners.add(ownerClass);
+            }
+        }
+    }
+
+    private void applyManualVotingCubes(GameState state, CurrentVoteState session, List<VotingCubeOwnerClass> owners) {
+        List<DrawnVotingCube> drawn = new ArrayList<>();
+        Map<String, Integer> interpreted = new HashMap<>();
+        interpreted.put(InterpretedVote.FOR.name(), 0);
+        interpreted.put(InterpretedVote.AGAINST.name(), 0);
+        interpreted.put(InterpretedVote.NEUTRAL.name(), 0);
+
+        for (VotingCubeOwnerClass ownerClass : owners) {
+            InterpretedVote vote = interpretCubeVote(state, session, ownerClass);
+            drawn.add(new DrawnVotingCube(ownerClass, vote));
+            interpreted.compute(vote.name(), (key, value) -> value == null ? 1 : value + 1);
+            String playerId = votingBagRules.playerIdForCubeOwner(state, ownerClass);
+            if (vote != InterpretedVote.NEUTRAL && playerId != null) {
+                interpreted.compute("PLAYER:" + playerId, (key, value) -> value == null ? 1 : value + 1);
+            }
+        }
+
+        session.setDrawnVotingCubes(drawn);
+        session.setInterpretedVotes(interpreted);
+        session.setVotingStage(VotingStage.COMMIT_INFLUENCE);
+        appendPreliminaryVoteResultLog(state, session);
+        autoCommitAutomaInfluence(state, session);
+        if (allInfluenceCommitted(state, session)) {
+            resolveCurrentVoteAndAdvance(state, session);
+        }
+    }
+
+    private static List<StateEventDefinition> stateEventDefinitions() {
+        List<ClassType> anyTwo = List.of();
+        List<ClassType> workerMiddle = List.of(ClassType.WORKER, ClassType.MIDDLE_CLASS);
+        List<ClassType> workerCapitalist = List.of(ClassType.WORKER, ClassType.CAPITALIST);
+        List<ClassType> middleCapitalist = List.of(ClassType.MIDDLE_CLASS, ClassType.CAPITALIST);
+        return List.of(
+                event("urgent_deflation_concern", "Опасение дефляции", "Заплатите 15, 30 или 45 монет.", anyTwo,
+                        option(ClassType.STATE, "45", "Заплатить 45: 2 ПО за каждые 15 монет.")),
+                event("enterprise_internet_speed", "Предприятия требуют улучшения скорости интернета", "Обеспечьте роскошь в количестве 1/2 функционирующих предприятий класса.", middleCapitalist,
+                        option(ClassType.MIDDLE_CLASS, "support", "Средний класс: +1 легитимность за каждые 2 роскоши."),
+                        option(ClassType.CAPITALIST, "support", "Капиталисты: +1 легитимность за каждые 2 роскоши.")),
+                event("neighboring_states_war", "Война соседних государств", "Потратьте не более 6 здравоохранения.", anyTwo,
+                        option(ClassType.STATE, "6", "1 ПО за каждое потраченное здравоохранение.")),
+                event("local_industry_crisis", "Кризис местной промышленности", "Обеспечьте по 5 монет за каждое функционирующее предприятие класса.", middleCapitalist,
+                        option(ClassType.MIDDLE_CLASS, "money", "Средний класс: +1 легитимность за каждые 20 монет."),
+                        option(ClassType.CAPITALIST, "money", "Капиталисты: 2 ПО за каждые 15 монет.")),
+                event("declining_birth_rate", "Снижение темпов рождаемости", "Обеспечьте здравоохранение в количестве 1/2 населения класса.", workerMiddle,
+                        option(ClassType.WORKER, "healthcare", "Рабочий класс: +1 легитимность."),
+                        option(ClassType.MIDDLE_CLASS, "healthcare", "Средний класс: +1 легитимность.")),
+                event("port_strike", "Забастовка в порту", "Обеспечьте классу 2 СМИ.", workerCapitalist,
+                        option(ClassType.WORKER, "media", "Рабочий класс: +1 легитимность."),
+                        option(ClassType.CAPITALIST, "media", "Капиталисты: +1 легитимность.")),
+                event("drought", "Засуха", "Обеспечьте еду в количестве 1/2 населения или 1/2 функционирующих предприятий класса.", workerCapitalist,
+                        option(ClassType.WORKER, "food", "Рабочий класс: +1 легитимность."),
+                        option(ClassType.CAPITALIST, "food", "Капиталисты: +1 легитимность.")),
+                event("public_unrest", "Народные волнения", "Внесите законопроект по выбору соперника.", workerCapitalist,
+                        option(ClassType.WORKER, "bill", "Рабочий класс: +2 легитимность."),
+                        option(ClassType.CAPITALIST, "bill", "Капиталисты: +2 легитимность.")),
+                event("stimulus_measures", "Необходимость мер стимулирования", "Выберите 1 вариант: обеспечьте по 10 или 15 монет каждому классу.", anyTwo,
+                        option(ClassType.STATE, "10", "По 10 монет каждому классу: государство получает 3 ПО."),
+                        option(ClassType.STATE, "15", "По 15 монет каждому классу: +1 легитимность всем классам.")),
+                event("young_industry_support", "Поддержка молодой отрасли", "Оплатите и постройте предприятие другому классу стоимостью 15 или более.", middleCapitalist,
+                        option(ClassType.MIDDLE_CLASS, "build", "Средний класс: +1 легитимность."),
+                        option(ClassType.CAPITALIST, "build", "Капиталисты: +1 легитимность.")),
+                event("unfair_representation", "Несправедливое представительство", "Обеспечьте классу 1 личное влияние и 2 кубика для голосования.", anyTwo,
+                        option(ClassType.WORKER, "votes", "Рабочий класс: +1 легитимность."),
+                        option(ClassType.MIDDLE_CLASS, "votes", "Средний класс: +1 легитимность."),
+                        option(ClassType.CAPITALIST, "votes", "Капиталисты: +1 легитимность.")),
+                event("university_rating", "Низкий рейтинг университетов", "Купите образование у соперников в количестве не больше числа госпредприятий.", middleCapitalist,
+                        option(ClassType.MIDDLE_CLASS, "buy", "Средний класс: +1 легитимность за каждые 3 образования."),
+                        option(ClassType.CAPITALIST, "buy", "Капиталисты: +1 легитимность за каждые 3 образования.")),
+                event("sustainable_development_initiative", "Необходимость инициативы устойчивого развития", "Выберите 2 класса. Обеспечьте по 25 монет каждому из них.", anyTwo,
+                        option(ClassType.WORKER, "money", "Выбранные классы: +1 легитимность."),
+                        option(ClassType.MIDDLE_CLASS, "money", "Выбранные классы: +1 легитимность."),
+                        option(ClassType.CAPITALIST, "money", "Выбранные классы: +1 легитимность.")),
+                event("welfare_standards_demand", "Требование повышения стандартов благосостояния", "Обеспечьте здравоохранение и образование в сумме 1/2 населения класса, минимум по 1 каждого.", workerMiddle,
+                        option(ClassType.WORKER, "services", "Рабочий класс: +1 легитимность."),
+                        option(ClassType.MIDDLE_CLASS, "services", "Средний класс: +1 легитимность.")),
+                event("pension_reform_demand", "Требование пенсионной реформы", "Обеспечьте монеты в количестве, равном населению класса, умноженному на 5.", workerMiddle,
+                        option(ClassType.WORKER, "money", "Рабочий класс: 2 ПО за каждые 15 монет."),
+                        option(ClassType.MIDDLE_CLASS, "money", "Средний класс: +1 легитимность за каждые 20 монет.")),
+                event("earthquake", "Землетрясение", "Обеспечьте еду и здравоохранение в сумме 1/2 населения класса, минимум по 1 каждого.", workerMiddle,
+                        option(ClassType.WORKER, "services", "Рабочий класс: +1 легитимность за каждые 2 компонента."),
+                        option(ClassType.MIDDLE_CLASS, "services", "Средний класс: +1 легитимность за каждые 2 компонента.")),
+                event("political_polarization", "Политическая поляризация", "Заплатите 30 монет и обеспечьте 4 кубика для голосования классам в любом сочетании.", workerCapitalist,
+                        option(ClassType.WORKER, "votes", "Рабочий класс: +1 легитимность за каждые 2 кубика."),
+                        option(ClassType.CAPITALIST, "votes", "Капиталисты: +1 легитимность за каждые 2 кубика.")),
+                event("technological_illiteracy", "Технологическая безграмотность", "Обеспечьте роскошь и образование в сумме 1/2 населения или 1/2 функционирующих предприятий класса, минимум по 1 каждого.", workerCapitalist,
+                        option(ClassType.WORKER, "services", "Рабочий класс: +1 легитимность за каждые 2 компонента."),
+                        option(ClassType.CAPITALIST, "services", "Капиталисты: +1 легитимность за каждые 2 компонента.")),
+                event("global_supply_chain_crisis", "Кризис глобальной цепочки поставок", "Обеспечьте еду и роскошь в сумме 1/2 населения класса, минимум по 1 каждого.", workerMiddle,
+                        option(ClassType.WORKER, "goods", "Рабочий класс: +1 легитимность за каждые 2 компонента."),
+                        option(ClassType.MIDDLE_CLASS, "goods", "Средний класс: 1 ПО за каждый компонент.")),
+                event("political_scandal", "Политический скандал", "Заплатите 25 монет и обеспечьте не более 3 СМИ классам в любом сочетании.", anyTwo,
+                        option(ClassType.WORKER, "media", "Рабочий класс: +1 легитимность за каждый СМИ."),
+                        option(ClassType.MIDDLE_CLASS, "media", "Средний класс: +1 легитимность за каждый СМИ."),
+                        option(ClassType.CAPITALIST, "media", "Капиталисты: +1 легитимность за каждый СМИ.")),
+                event("thirteenth_salary_demand", "Требование 13-й зарплаты", "Обеспечьте 5 монет за каждого работника класса, занятого в госсекторе.", workerMiddle,
+                        option(ClassType.WORKER, "money", "Рабочий класс: +1 легитимность за каждые 25 монет."),
+                        option(ClassType.MIDDLE_CLASS, "money", "Средний класс: +1 легитимность за каждые 15 монет.")),
+                event("old_state_infrastructure", "Устаревшая инфраструктура госсектора", "Купите роскошь у соперников в количестве не больше числа госпредприятий.", middleCapitalist,
+                        option(ClassType.MIDDLE_CLASS, "buy", "Средний класс: +1 легитимность за каждые 3 роскоши."),
+                        option(ClassType.CAPITALIST, "buy", "Капиталисты: +1 легитимность за каждые 3 роскоши.")),
+                event("developing_countries_education", "Образование для развивающихся стран", "Потратьте не более 6 образования.", anyTwo,
+                        option(ClassType.STATE, "6", "1 ПО за каждое потраченное образование.")),
+                event("pandemic", "Пандемия", "Купите здравоохранение у соперников в количестве не больше числа госпредприятий.", middleCapitalist,
+                        option(ClassType.MIDDLE_CLASS, "buy", "Средний класс: +1 легитимность за каждые 3 здравоохранения."),
+                        option(ClassType.CAPITALIST, "buy", "Капиталисты: +1 легитимность за каждые 3 здравоохранения.")),
+                event("low_education_index", "Низкий индекс образования", "Обеспечьте образование в количестве 1/2 населения класса.", workerMiddle,
+                        option(ClassType.WORKER, "education", "Рабочий класс: +1 легитимность."),
+                        option(ClassType.MIDDLE_CLASS, "education", "Средний класс: +1 легитимность."))
+        );
+    }
+
+    private static StateEventDefinition event(
+            String id,
+            String title,
+            String instruction,
+            List<ClassType> noActionPenaltyClasses,
+            StateEventOption... options
+    ) {
+        return new StateEventDefinition(id, title, instruction, noActionPenaltyClasses, List.of(options));
+    }
+
+    private static StateEventOption option(ClassType targetClass, String variant, String summary) {
+        return new StateEventOption(targetClass, variant, summary);
+    }
+
+    private record StateEventDefinition(
+            String id,
+            String title,
+            String instruction,
+            List<ClassType> noActionPenaltyClasses,
+            List<StateEventOption> options
+    ) {
+    }
+
+    private record StateEventOption(ClassType targetClass, String variant, String summary) {
+    }
+
+    private record StateEventOutcome(String summary) {
     }
 
     private void addManualWorkers(GameState state, PlayerState actor, WorkerSlotColor color, int count) {

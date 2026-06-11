@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.idea/
+*.log
+*.err.log
+*.tsbuildinfo
+hegemony-mobile*.png
+capacitor.config.js
+capacitor.config.d.ts
+vite.config.js
+vite.config.d.ts
+tailwind.config.js
+tailwind.config.d.ts
+android/.gradle/
+android/**/build/
+android/local.properties

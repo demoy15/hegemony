@@ -1,6 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpen, Menu, Settings } from "lucide-react";
 import { ClassBoards } from "@/features/board/components/class-boards";
 import { GameBoard } from "@/features/board/components/game-board";
 import { InteractionSidebar, TurnSummaryLogPanel } from "@/features/board/components/interaction-sidebar";
@@ -19,22 +18,6 @@ import type {
   PolicyId,
   PreviewActionResponse,
 } from "@/types/game";
-
-const PHASE_SEQUENCE: string[] = ["PREPARATION", "ACTIONS", "PRODUCTION", "VOTING", "SCORING"];
-const ROUND_ONE_SEQUENCE: string[] = ["ACTIONS", "PRODUCTION", "VOTING", "SCORING"];
-const CLASS_LABEL: Record<string, string> = {
-  WORKER: "Рабочий класс",
-  MIDDLE_CLASS: "Средний класс",
-  CAPITALIST: "Капиталист",
-  STATE: "Государство",
-};
-const CONSUME_ACTIONS: ActionType[] = ["CONSUME_LUXURY", "CONSUME_EDUCATION", "CONSUME_HEALTHCARE"];
-
-interface AssignmentDraft {
-  workerId: string;
-  targetType: "ENTERPRISE_SLOT" | "UNION" | "UNEMPLOYED";
-  targetId: string;
-}
 
 interface GameTableScreenProps {
   state: GameState;
@@ -63,29 +46,43 @@ interface GameTableScreenProps {
   onReset: () => void;
 }
 
-function sameList(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) {
-      return false;
-    }
-  }
-  return true;
-}
+const CLASS_LABEL: Record<string, string> = {
+  WORKER: "Рабочий класс",
+  MIDDLE_CLASS: "Средний класс",
+  CAPITALIST: "Капиталисты",
+  STATE: "Государство",
+};
 
-function parsePolicyIdFromZone(zoneId?: string): PolicyId | undefined {
-  if (!zoneId || !zoneId.startsWith("policy:")) {
-    return undefined;
-  }
-  return zoneId.slice("policy:".length) as PolicyId;
-}
+const ROUND_PHASES = ["PREPARATION", "ACTIONS", "PRODUCTION", "VOTING", "SCORING"];
+const CONSUME_ACTIONS: ActionType[] = ["CONSUME_LUXURY", "CONSUME_EDUCATION", "CONSUME_HEALTHCARE"];
+const LIFECYCLE_ACTIONS: ActionType[] = [
+  "RESOLVE_PREPARATION_PHASE",
+  "ADVANCE_TO_PRODUCTION",
+  "RESOLVE_PRODUCTION_PHASE",
+  "ADVANCE_TO_VOTING",
+  "ADVANCE_TO_SCORING",
+  "RESOLVE_SCORING_PHASE",
+  "ADVANCE_TO_NEXT_ROUND",
+  "ADVANCE_GAME_FLOW",
+  "ADVANCE_ROUND",
+];
 
-function phaseProgress(state: GameState): { index: number; total: number } {
-  const sequence = state.currentRound === 1 ? ROUND_ONE_SEQUENCE : PHASE_SEQUENCE;
-  const idx = sequence.indexOf(state.currentPhase);
-  return { index: idx >= 0 ? idx + 1 : 1, total: sequence.length };
+const LIFECYCLE_ACTION_LABEL: Partial<Record<ActionType, string>> = {
+  RESOLVE_PREPARATION_PHASE: "Завершить подготовку",
+  ADVANCE_TO_PRODUCTION: "Перейти к производству",
+  RESOLVE_PRODUCTION_PHASE: "Завершить производство",
+  ADVANCE_TO_VOTING: "Перейти к голосованию",
+  ADVANCE_TO_SCORING: "Перейти к подсчету",
+  RESOLVE_SCORING_PHASE: "Подсчитать итоги",
+  ADVANCE_TO_NEXT_ROUND: "Следующий раунд",
+  ADVANCE_GAME_FLOW: "Продолжить",
+  ADVANCE_ROUND: "Следующий раунд",
+};
+
+interface AssignmentDraft {
+  workerId: string;
+  targetType: "ENTERPRISE_SLOT" | "UNION" | "UNEMPLOYED";
+  targetId: string;
 }
 
 function phaseLabel(phase: string): string {
@@ -100,16 +97,34 @@ function phaseLabel(phase: string): string {
       return "Голосование";
     case "SCORING":
       return "Подсчет очков";
+    case "GAME_OVER":
+      return "Игра окончена";
     default:
       return phase;
   }
 }
 
 function classLabel(classType?: string): string {
-  if (!classType) {
-    return "н/д";
+  return classType ? CLASS_LABEL[classType] ?? classType : "н/д";
+}
+
+function parsePolicyIdFromZone(zoneId?: string): PolicyId | undefined {
+  if (!zoneId || !zoneId.startsWith("policy:")) {
+    return undefined;
   }
-  return CLASS_LABEL[classType] ?? classType;
+  return zoneId.slice("policy:".length) as PolicyId;
+}
+
+function sameList(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function normalizeAssignments(raw: unknown): AssignmentDraft[] {
@@ -192,6 +207,136 @@ function canAssignWorkersToEnterprise(
     usedSlotIds.add(slotId);
   }
   return true;
+}
+
+function TopHud({
+  state,
+  legalMoves,
+  isSubmitting,
+  isBotUntilLoading,
+  onSubmit,
+}: {
+  state: GameState;
+  legalMoves: LegalMove[];
+  isSubmitting: boolean;
+  isBotUntilLoading: boolean;
+  onSubmit: (actionType: ActionType, parameters: Record<string, unknown>) => void;
+}) {
+  const currentPlayerIndex = Number.isInteger(state.turnOrder?.currentPlayerIndex) ? Number(state.turnOrder.currentPlayerIndex) : 0;
+  const actor = state.players[currentPlayerIndex];
+  const turnOrderMeta = state.turnOrder as unknown as { actionsPerPlayer?: number; actionsTakenByPlayer?: unknown };
+  const actionsPerPlayer = Number.isInteger(turnOrderMeta.actionsPerPlayer) ? Number(turnOrderMeta.actionsPerPlayer) : 5;
+  const actionsTakenByPlayer = Array.isArray(turnOrderMeta.actionsTakenByPlayer)
+    ? turnOrderMeta.actionsTakenByPlayer.map((value) => (Number.isInteger(value) ? Number(value) : 0))
+    : [];
+  const actionsTakenCurrent = actionsTakenByPlayer[currentPlayerIndex] ?? 0;
+  const actionSlot = state.currentPhase === "ACTIONS" ? Math.min(actionsPerPlayer, actionsTakenCurrent + 1) : actionsTakenCurrent;
+  const taxCourse = state.policies.find((policy) => policy.id === "POLICY_3_TAXATION")?.currentCourse ?? "B";
+  const lifecycleMove = LIFECYCLE_ACTIONS.map((actionType) => legalMoves.find((move) => move.actionType === actionType)).find(Boolean);
+  const lifecycleLabel = lifecycleMove ? LIFECYCLE_ACTION_LABEL[lifecycleMove.actionType] ?? "Продолжить" : "";
+  const lifecycleActorPlayerId = actor?.playerId ?? state.players[0]?.playerId ?? "";
+
+  return (
+    <div className="grid gap-3 xl:grid-cols-[260px,620px,minmax(420px,1fr),280px]">
+      <div className="rounded-md border border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))] px-5 py-3 shadow-lg shadow-black/30">
+        <p className="text-4xl font-light text-stone-50">HEGEMONY</p>
+        <p className="text-xs font-semibold uppercase text-[#d8b56b]">Веди свой класс к победе</p>
+      </div>
+
+      <div className="grid grid-cols-[0.8fr,0.8fr,0.9fr,0.9fr,1.2fr] rounded-md border border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))] shadow-lg shadow-black/30">
+        <div className="border-r border-[#9b7338]/35 px-5 py-3">
+          <p className="text-xs uppercase text-stone-400">Раунд</p>
+          <p className="text-2xl font-bold text-amber-300">{state.currentRound}/{state.maxRounds}</p>
+        </div>
+        <div className="border-r border-[#9b7338]/35 px-5 py-3">
+          <p className="text-xs uppercase text-stone-400">Фаза</p>
+          <p className="text-xl font-semibold text-stone-100">{phaseLabel(state.currentPhase)}</p>
+        </div>
+        <div className="border-r border-[#9b7338]/35 px-5 py-3">
+          <p className="text-xs uppercase text-stone-400">Действие</p>
+          <p className="text-xl font-semibold text-amber-200">{actionSlot}/{actionsPerPlayer}</p>
+        </div>
+        <div className="border-r border-[#9b7338]/35 px-5 py-3">
+          <p className="text-xs uppercase text-stone-400">Налог</p>
+          <p className="text-xl font-semibold text-amber-200">x{state.taxMultiplier} <span className="text-sm text-stone-400">({taxCourse})</span></p>
+        </div>
+        <div className="px-5 py-3">
+          <p className="text-xs uppercase text-stone-400">Ходит</p>
+          <p className="truncate text-lg font-semibold text-stone-100">{classLabel(actor?.classType)}</p>
+        </div>
+      </div>
+
+      <div className="rounded-md border border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))] px-4 py-3 shadow-lg shadow-black/30">
+        <p className="mb-2 text-xs uppercase text-stone-400">Победные очки</p>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {state.players.map((player) => {
+            const active = actor?.playerId === player.playerId;
+            return (
+              <div
+                key={player.playerId}
+                className={`rounded-md border px-3 py-2 ${active ? "border-amber-300/70 bg-amber-500/15 text-amber-100" : "border-[#8f6b35]/45 bg-black/20 text-stone-100"}`}
+              >
+                <p className="truncate text-[11px] uppercase text-stone-400">{classLabel(player.classType)}</p>
+                <p className="text-lg font-semibold leading-none">{player.victoryPoints} ПО</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 rounded-md border border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))] shadow-lg shadow-black/30">
+        {[
+          { label: "Правила", icon: BookOpen },
+          { label: "Настройки", icon: Settings },
+          { label: "Меню", icon: Menu },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <button key={item.label} type="button" className="flex flex-col items-center justify-center gap-1 border-r border-[#9b7338]/35 px-3 py-3 text-stone-300 transition hover:bg-[#221907]/45 hover:text-stone-50 last:border-r-0">
+              <Icon className="h-5 w-5" />
+              <span className="text-xs uppercase">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="xl:col-span-4 rounded-md border border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.92),rgba(8,12,12,0.96))] px-4 py-2 shadow-lg shadow-black/25">
+        <div className="grid gap-3 lg:grid-cols-[1fr,220px]">
+          <div className="grid gap-2 sm:grid-cols-5">
+          {ROUND_PHASES.map((phase, index) => {
+            const active = state.currentPhase === phase;
+            const passed = ROUND_PHASES.indexOf(state.currentPhase) > index;
+            return (
+              <div
+                key={phase}
+                className={`rounded-md border px-3 py-2 text-center text-xs uppercase tracking-[0.1em] ${
+                  active
+                    ? "border-amber-300/75 bg-amber-500/15 text-amber-100"
+                    : passed
+                      ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100"
+                      : "border-stone-700/70 bg-black/20 text-stone-400"
+                }`}
+              >
+                {index + 1}. {phaseLabel(phase)}
+              </div>
+            );
+          })}
+          </div>
+          {lifecycleMove ? (
+            <button
+              type="button"
+              onClick={() => onSubmit(lifecycleMove.actionType, { actorPlayerId: lifecycleActorPlayerId })}
+              disabled={isSubmitting || isBotUntilLoading}
+              className="rounded-md border border-amber-300/70 bg-amber-500/20 px-4 py-2 text-sm font-semibold uppercase text-amber-100 transition hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? "Выполняю..." : lifecycleLabel}
+            </button>
+          ) : (
+            <div className="hidden lg:block" />
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function GameTableScreen({
@@ -281,9 +426,7 @@ export function GameTableScreen({
         if (!enterprise) {
           return renderable;
         }
-        const available = canAssignWorkersToEnterprise(selectedWorkers, enterprise);
-        const nextTone: BoardRenderable["tone"] = available ? "positive" : "danger";
-        return { ...renderable, tone: nextTone };
+        return { ...renderable, tone: canAssignWorkersToEnterprise(selectedWorkers, enterprise) ? "positive" : "danger" };
       }),
     };
   }, [boardViewModel, selectedWorkerIdsForAssignment, state.enterprises, state.workers]);
@@ -296,31 +439,20 @@ export function GameTableScreen({
     () => boardViewModel.zones.find((zone) => zone.id === selectedZoneId),
     [boardViewModel.zones, selectedZoneId],
   );
-
-  const availableInteractions = useMemo(
-    () =>
-      buildAvailableInteractions({
-        selectedEntity,
-        selectedZoneId,
-        legalMoves,
-        composerMetadata,
-      }),
-    [selectedEntity, selectedZoneId, legalMoves, composerMetadata],
-  );
-
   const selectedPolicyId = useMemo(() => {
     if (selectedEntity?.sourceRef?.sourceType === "policy") {
       return selectedEntity.sourceRef.sourceId as PolicyId;
     }
     return parsePolicyIdFromZone(selectedZoneId);
   }, [selectedEntity, selectedZoneId]);
+  const selectedPolicyCourse = pendingAction?.actionType === "PROPOSE_BILL"
+    ? pendingAction.parameters.targetCourse as PolicyCourse | undefined
+    : undefined;
 
-  const selectedPolicyCourse = useMemo(() => {
-    if (pendingAction?.actionType === "PROPOSE_BILL") {
-      return pendingAction.parameters.targetCourse as PolicyCourse | undefined;
-    }
-    return undefined;
-  }, [pendingAction]);
+  const availableInteractions = useMemo(
+    () => buildAvailableInteractions({ selectedEntity, selectedZoneId, legalMoves, composerMetadata }),
+    [selectedEntity, selectedZoneId, legalMoves, composerMetadata],
+  );
 
   useEffect(() => {
     if (lastCommandResult?.accepted) {
@@ -329,7 +461,9 @@ export function GameTableScreen({
       const nextState = lastCommandResult.gameState;
       const voteStage = nextState.currentVoteState?.votingStage;
       const nextActionType =
-        voteStage === "COMMIT_INFLUENCE"
+        voteStage === "DRAW_BAG_CUBES"
+          ? "DRAW_VOTING_CUBES"
+          : voteStage === "COMMIT_INFLUENCE"
           ? "COMMIT_VOTE_INFLUENCE"
           : voteStage === "DECLARE_STANCES"
             ? "DECLARE_VOTE_STANCE"
@@ -352,8 +486,8 @@ export function GameTableScreen({
     let nextLegalTargets: string[] = [];
 
     if (pendingAction?.actionType === "PROPOSE_BILL") {
-      const policyZoneId = selectedEntity?.sourceRef?.sourceType === "policy" ? `policy:${selectedEntity.sourceRef.sourceId}` : selectedZoneId;
       nextZones = ["policy_track", ...boardViewModel.policyTracks.map((track) => track.zoneId)];
+      const policyZoneId = selectedEntity?.sourceRef?.sourceType === "policy" ? `policy:${selectedEntity.sourceRef.sourceId}` : selectedZoneId;
       if (policyZoneId) {
         nextZones.push(policyZoneId);
         nextLegalTargets.push(policyZoneId);
@@ -364,6 +498,22 @@ export function GameTableScreen({
         .filter((entity) => entity.kind === "WORKER" || entity.kind === "ENTERPRISE")
         .map((entity) => entity.id);
       nextLegalTargets = ["private_capitalist", "private_middle_class", "public_sector"];
+    } else if (pendingAction?.actionType === "CONSUME_EDUCATION" || pendingAction?.parameters.consumeSelectedActionType === "CONSUME_EDUCATION") {
+      nextZones = ["unemployed", "private_capitalist", "private_middle_class", "public_sector"];
+      nextEntities = boardViewModel.renderables
+        .filter((entity) => {
+          if (entity.sourceRef?.sourceType !== "worker") {
+            return false;
+          }
+          const worker = state.workers.find((item) => item.id === entity.sourceRef?.sourceId);
+          return worker?.qualificationType === "UNSKILLED";
+        })
+        .map((entity) => entity.id);
+    } else if (pendingAction?.actionType === "PLACE_STRIKES") {
+      nextZones = ["private_capitalist", "private_middle_class", "public_sector"];
+      nextEntities = boardViewModel.renderables.filter((entity) => entity.kind === "ENTERPRISE").map((entity) => entity.id);
+    } else if (pendingAction?.actionType === "PLACE_DEMONSTRATION") {
+      nextZones = ["unemployed"];
     } else if (selectedEntity) {
       nextZones = [selectedEntity.zoneId];
       nextEntities = [selectedEntity.id];
@@ -383,6 +533,7 @@ export function GameTableScreen({
     selectedZoneId,
     boardViewModel.renderables,
     boardViewModel.policyTracks,
+    state.workers,
     highlightedZones,
     highlightedEntities,
     legalTargets,
@@ -390,20 +541,8 @@ export function GameTableScreen({
     setLegalTargets,
   ]);
 
-  const currentPlayerIndex = Number.isInteger(state.turnOrder?.currentPlayerIndex)
-    ? Number(state.turnOrder.currentPlayerIndex)
-    : 0;
-  const currentPlayer = Array.isArray(state.players) ? state.players[currentPlayerIndex] : undefined;
-  const turnOrderMeta = state.turnOrder as unknown as { actionsPerPlayer?: number; actionsTakenByPlayer?: unknown };
-  const actionsPerPlayer = Number.isInteger(turnOrderMeta.actionsPerPlayer) ? Number(turnOrderMeta.actionsPerPlayer) : 5;
-  const actionsTakenByPlayer = Array.isArray(turnOrderMeta.actionsTakenByPlayer)
-    ? turnOrderMeta.actionsTakenByPlayer.map((value) => (Number.isInteger(value) ? Number(value) : 0))
-    : [];
-  const actionsTakenCurrent = actionsTakenByPlayer[currentPlayerIndex] ?? 0;
-  const actionSlot = state.currentPhase === "ACTIONS" ? Math.min(actionsPerPlayer, actionsTakenCurrent + 1) : actionsTakenCurrent;
-  const lastEvent = Array.isArray(state.eventLog) && state.eventLog.length > 0 ? state.eventLog[state.eventLog.length - 1] : undefined;
-  const { index: phaseIndex, total: phaseTotal } = phaseProgress(state);
-  const victoryTrackPlayers = Array.isArray(state.players) ? state.players : [];
+  const currentPlayerIndex = Number.isInteger(state.turnOrder?.currentPlayerIndex) ? Number(state.turnOrder.currentPlayerIndex) : 0;
+  const currentPlayer = state.players[currentPlayerIndex];
 
   const startAction = (actionType: ActionType) => {
     setAssignError("");
@@ -444,28 +583,29 @@ export function GameTableScreen({
       setPendingActionStep(Math.max(2, pendingAction.step));
       return;
     }
-
     const actorPlayerId = composerMetadata.actorPlayerId || currentPlayer?.playerId || state.players[0]?.playerId || "";
     startPendingAction({
       actionType: "PROPOSE_BILL",
       sourceZoneId: zoneId,
-      parameters: {
-        actorPlayerId,
-        policyId,
-        targetCourse: course,
-      },
+      parameters: { actorPlayerId, policyId, targetCourse: course },
       step: 2,
     });
-  };
-
-  const undoSelection = () => {
-    clearSelection();
-    setAssignError("");
   };
 
   const selectEntityOnBoard = (entityId: string) => {
     const entity = boardViewModel.renderables.find((item) => item.id === entityId);
     if (!entity) {
+      if ((pendingAction?.actionType === "CONSUME_EDUCATION" || pendingAction?.parameters.consumeSelectedActionType === "CONSUME_EDUCATION") && entityId.startsWith("worker:")) {
+        const workerId = entityId.slice("worker:".length);
+        const worker = state.workers.find((item) => item.id === workerId);
+        const actorPlayerId = composerMetadata.actorPlayerId || currentPlayer?.playerId || state.players[0]?.playerId || "";
+        const actorClassType = state.players.find((player) => player.playerId === actorPlayerId)?.classType;
+        if (worker?.qualificationType === "UNSKILLED" && (!actorClassType || worker.classType === actorClassType)) {
+          patchPendingActionParameters({ workerId: worker.id });
+          setPendingActionStep(Math.max(2, pendingAction.step));
+          setAssignError("");
+        }
+      }
       selectEntity(entityId);
       return;
     }
@@ -475,10 +615,6 @@ export function GameTableScreen({
 
     if (!pendingAction && entity.sourceRef?.sourceType === "worker" && legalMoves.some((move) => move.actionType === "ASSIGN_WORKERS")) {
       const sourceRef = entity.sourceRef;
-      if (!sourceRef) {
-        selectEntity(entityId);
-        return;
-      }
       const worker = state.workers.find((item) => item.id === sourceRef.sourceId);
       if (worker && actorClassType && worker.classType !== actorClassType) {
         setAssignError("Недопустимо: можно назначать только рабочих текущего класса.");
@@ -512,10 +648,6 @@ export function GameTableScreen({
     if (pendingAction?.actionType === "ASSIGN_WORKERS") {
       if (entity.sourceRef?.sourceType === "worker") {
         const sourceRef = entity.sourceRef;
-        if (!sourceRef) {
-          selectEntity(entityId);
-          return;
-        }
         const worker = state.workers.find((item) => item.id === sourceRef.sourceId);
         if (worker && actorClassType && worker.classType !== actorClassType) {
           setAssignError("Недопустимо: можно назначать только рабочих текущего класса.");
@@ -529,11 +661,6 @@ export function GameTableScreen({
         }
         const selectedWorkerIds = collectSelectedWorkerIds(pendingAction.parameters);
         const alreadySelected = selectedWorkerIds.includes(sourceRef.sourceId);
-        if (!alreadySelected && selectedWorkerIds.length >= 3) {
-          setAssignError("Недопустимо: за одно действие можно выбрать максимум 3 рабочих.");
-          selectEntity(entityId);
-          return;
-        }
         const nextSelectedWorkerIds = alreadySelected
           ? selectedWorkerIds.filter((workerId) => workerId !== sourceRef.sourceId)
           : [...selectedWorkerIds, sourceRef.sourceId];
@@ -595,9 +722,8 @@ export function GameTableScreen({
             });
           }
 
-          const nextAssignments = [...retainedAssignments, ...newAssignments].slice(0, 3);
           patchPendingActionParameters({
-            assignments: nextAssignments,
+            assignments: [...retainedAssignments, ...newAssignments],
             selectedWorkerIds: [],
             selectedWorkerId: "",
           });
@@ -607,69 +733,57 @@ export function GameTableScreen({
       }
     }
 
+    if ((pendingAction?.actionType === "CONSUME_EDUCATION" || pendingAction?.parameters.consumeSelectedActionType === "CONSUME_EDUCATION") && entity.sourceRef?.sourceType === "worker") {
+      const worker = state.workers.find((item) => item.id === entity.sourceRef?.sourceId);
+      if (worker?.qualificationType !== "UNSKILLED") {
+        selectEntity(entityId);
+        return;
+      }
+      if (actorClassType && worker.classType !== actorClassType) {
+        selectEntity(entityId);
+        return;
+      }
+      patchPendingActionParameters({ workerId: worker.id });
+      setPendingActionStep(Math.max(2, pendingAction.step));
+      setAssignError("");
+      selectEntity(entityId);
+      return;
+    }
+
+    if (pendingAction?.actionType === "PLACE_STRIKES" && entity.sourceRef?.sourceType === "enterprise") {
+      const currentIds = Array.isArray(pendingAction.parameters.enterpriseIds)
+        ? pendingAction.parameters.enterpriseIds.map(String)
+        : [];
+      const enterpriseId = entity.sourceRef.sourceId;
+      const nextIds = currentIds.includes(enterpriseId)
+        ? currentIds.filter((id) => id !== enterpriseId)
+        : [...currentIds, enterpriseId];
+      patchPendingActionParameters({ enterpriseIds: nextIds });
+    }
+
     selectEntity(entityId);
+  };
+
+  const undoSelection = () => {
+    clearSelection();
+    setAssignError("");
   };
 
   return (
     <div className="space-y-3">
-      <Card className="border-zinc-700/80 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950">
-        <CardContent className="grid gap-2 p-3 sm:grid-cols-[1fr,1fr,1fr,1fr,2fr]">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">Раунд</p>
-            <p className="text-xl font-semibold text-zinc-100">
-              {state.currentRound}/{state.maxRounds}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">Фаза</p>
-            <p className="text-xl font-semibold text-zinc-100">
-              {phaseLabel(state.currentPhase)}{" "}
-              <span className="text-sm text-zinc-400">
-                {state.currentPhase === "ACTIONS" ? `(${Math.max(1, actionSlot)}/${actionsPerPlayer})` : `(${phaseIndex}/${phaseTotal})`}
-              </span>
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">Активный игрок</p>
-            <p className="text-lg font-semibold text-zinc-100">
-              {classLabel(currentPlayer?.classType)}
-              {currentPlayer ? ` (${currentPlayer.controlMode})` : ""}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">Налоги</p>
-            <p className="text-lg font-semibold text-zinc-100">
-              x{state.taxMultiplier}
-              <span className="text-sm text-zinc-400">
-                {" "}
-                (
-                {state.policies.find((policy) => policy.id === "POLICY_3_TAXATION")?.currentCourse ?? "B"})
-              </span>
-            </p>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-zinc-700/70 bg-black/25 px-3 py-2">
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">Последнее действие</p>
-              <p className="truncate text-sm text-zinc-200">{lastEvent?.message ?? "Действий пока не было"}</p>
-              {assignError && <p className="mt-1 text-xs text-red-300">{assignError}</p>}
-            </div>
-            <Badge tone="positive">Источник истины: бэкенд</Badge>
-          </div>
-          <div className="sm:col-span-5 rounded-lg border border-zinc-700/70 bg-black/25 px-3 py-2">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">Общий трек победных очков</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {victoryTrackPlayers.map((player) => (
-                <div key={player.playerId} className="rounded-md border border-zinc-700/70 bg-black/30 px-3 py-2">
-                  <p className="text-xs text-zinc-400">{classLabel(player.classType)}</p>
-                  <p className="text-sm font-semibold text-zinc-100">ПО: {player.victoryPoints ?? 0}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-[300px,minmax(0,1fr),360px] min-[2100px]:grid-cols-[300px,minmax(0,1fr),360px,390px]">
+      <TopHud
+        state={state}
+        legalMoves={legalMoves}
+        isSubmitting={isSubmitting}
+        isBotUntilLoading={isBotUntilLoading}
+        onSubmit={onSubmit}
+      />
+      {assignError && (
+        <div className="rounded-lg border border-red-500/45 bg-red-500/10 px-4 py-2 text-sm text-red-100">
+          {assignError}
+        </div>
+      )}
+      <div className="grid gap-4 xl:grid-cols-[300px,minmax(0,1fr),380px] min-[2200px]:grid-cols-[300px,minmax(0,1fr),380px,390px]">
         <div className="xl:sticky xl:top-3 xl:self-start">
           <ClassBoards
             state={state}
@@ -731,12 +845,12 @@ export function GameTableScreen({
             onReset={onReset}
             onUndo={undoSelection}
           />
-          <div className="min-[2100px]:hidden">
+          <div className="min-[2200px]:hidden">
             <TurnSummaryLogPanel state={state} />
           </div>
         </div>
 
-        <div className="hidden min-[2100px]:block">
+        <div className="hidden min-[2200px]:block">
           <TurnSummaryLogPanel state={state} />
         </div>
       </div>

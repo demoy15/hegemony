@@ -6,8 +6,8 @@ public enum WorkerSlotColor {
     GRAY,
     GREEN,
     BLUE,
-    WHITE,
     RED,
+    WHITE,
     ORANGE,
     PURPLE;
 
@@ -26,8 +26,8 @@ public enum WorkerSlotColor {
         return switch (this) {
             case GREEN -> WorkerSector.GREEN;
             case BLUE -> WorkerSector.BLUE;
+            case RED -> WorkerSector.WHITE;
             case WHITE -> WorkerSector.WHITE;
-            case RED -> WorkerSector.RED;
             case ORANGE -> WorkerSector.ORANGE;
             case PURPLE -> WorkerSector.PURPLE;
             case GRAY -> null;

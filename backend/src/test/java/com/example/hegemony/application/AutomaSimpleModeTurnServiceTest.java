@@ -110,6 +110,38 @@ class AutomaSimpleModeTurnServiceTest {
     }
 
     @Test
+    void reactsToStrikeByRaisingWagesWhenRevealedCardHasSpeechSymbol() {
+        GameState state = prepareCapitalistSimpleTurnState();
+        Enterprise target = state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)
+                .filter(enterprise -> enterprise.getSlots().stream().anyMatch(EnterpriseSlot::isOccupied))
+                .findFirst()
+                .orElseThrow();
+        target.setStrikeToken(true);
+        target.setWageLevel(1);
+
+        CapitalistAutomaActionCard card = card(
+                313,
+                List.of(CapitalistAutomaActionSymbol.REACT_TO_STRIKE, CapitalistAutomaActionSymbol.LOBBY_INTERESTS),
+                List.of(),
+                null,
+                null
+        );
+        AutomaSimpleModeTurnService service = serviceWithCards(List.of(card));
+
+        var result = service.resolveAndApply(state, state.currentPlayer()).orElseThrow();
+
+        Enterprise after = result.state().findEnterprise(target.getId()).orElseThrow();
+        assertThat(after.getWageLevel()).isEqualTo(3);
+        assertThat(after.isStrikeToken()).isTrue();
+        assertThat(result.state().getEventLog())
+                .anySatisfy(entry -> assertThat(entry.getType()).isEqualTo("AUTOMA_STRIKE_REACTION"));
+        assertThat(after.getSlots())
+                .filteredOn(EnterpriseSlot::isOccupied)
+                .allSatisfy(slot -> assertThat(result.state().findWorker(slot.getOccupiedWorkerId()).orElseThrow().isTiedContract()).isTrue());
+    }
+
+    @Test
     void uses_special_action_when_all_four_base_actions_unavailable() {
         GameState state = prepareCapitalistSimpleTurnState();
         var capitalist = state.findPlayerById("capitalist").orElseThrow();
@@ -390,6 +422,44 @@ class AutomaSimpleModeTurnServiceTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> resolvedTarget = (Map<String, Object>) result.summary().getAutomaTrace().get("resolvedTarget");
         assertThat(resolvedTarget.get("policyId")).isEqualTo("POLICY_6_FOREIGN_TRADE");
+    }
+
+    @Test
+    void simple_automa_draws_cards_from_state_deck_without_repeating_until_deck_exhausted() {
+        GameState state = prepareCapitalistSimpleTurnState();
+        state.findPlayerById("capitalist").orElseThrow().setInfluence(0);
+        state.findPlayerById("worker").orElseThrow().setInfluence(0);
+
+        AutomaSimpleModeTurnService service = serviceWithCards(List.of(
+                card(
+                        601,
+                        List.of(CapitalistAutomaActionSymbol.PROPOSE_BILL),
+                        List.of(CapitalistAutomaPolicyTag.POLICY_FOREIGN_TRADE),
+                        null,
+                        null
+                ),
+                card(
+                        602,
+                        List.of(CapitalistAutomaActionSymbol.PROPOSE_BILL),
+                        List.of(CapitalistAutomaPolicyTag.POLICY_TAX),
+                        null,
+                        null
+                )
+        ));
+
+        var first = service.resolveAndApply(state, state.currentPlayer()).orElseThrow();
+        String firstDrawn = first.state().getCapitalistAutomaDeck().getVisibleCardIds().getFirst();
+
+        GameState afterFirst = first.state();
+        int capitalistIndex = afterFirst.getTurnOrder().getActiveClasses().indexOf(ClassType.CAPITALIST);
+        afterFirst.getTurnOrder().setCurrentPlayerIndex(capitalistIndex);
+
+        var second = service.resolveAndApply(afterFirst, afterFirst.currentPlayer()).orElseThrow();
+        String secondDrawn = second.state().getCapitalistAutomaDeck().getVisibleCardIds().getFirst();
+
+        assertThat(second.state().getCapitalistAutomaDeck().getRefreshCount()).isEqualTo(2);
+        assertThat(second.state().getCapitalistAutomaDeck().getNextCardIndex()).isEqualTo(2);
+        assertThat(secondDrawn).isNotEqualTo(firstDrawn);
     }
 
     @Test

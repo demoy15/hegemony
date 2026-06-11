@@ -29,3 +29,21 @@ body {
   color: hsl(var(--foreground));
   font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
+
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(222, 184, 108, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(222, 184, 108, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px, 28px 28px;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}

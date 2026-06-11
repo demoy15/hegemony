@@ -89,11 +89,11 @@ public class Enterprise {
         if (slots.isEmpty()) {
             return false;
         }
-        return slots.stream().allMatch(EnterpriseSlot::isOccupied);
+        return slots.stream().filter(slot -> !slot.isOptional()).allMatch(EnterpriseSlot::isOccupied);
     }
 
     public boolean isFullyEmpty() {
-        return slots.stream().noneMatch(EnterpriseSlot::isOccupied);
+        return slots.stream().filter(slot -> !slot.isOptional()).noneMatch(EnterpriseSlot::isOccupied);
     }
 
     public boolean isPartiallyFilled() {

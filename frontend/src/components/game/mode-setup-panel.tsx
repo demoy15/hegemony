@@ -65,11 +65,11 @@ export function ModeSetupPanel({ state, isApplying, onApply }: ModeSetupPanelPro
 
   const apply = () => {
     const filteredControlModes = editableClasses.reduce<Record<string, PlayerControlMode>>((acc, classType) => {
-      acc[classType] = controlModes[classType] ?? "HUMAN";
+      acc[classType] = classType === "STATE" ? "HUMAN" : (controlModes[classType] ?? "HUMAN");
       return acc;
     }, {});
     const filteredStrategyModes = editableClasses.reduce<Record<string, BotStrategyMode>>((acc, classType) => {
-      acc[classType] = controlModes[classType] === "BOT" ? "CARD_DRIVEN_SIMPLE_AUTOMA" : "HEURISTIC_FALLBACK";
+      acc[classType] = classType !== "STATE" && controlModes[classType] === "BOT" ? "CARD_DRIVEN_SIMPLE_AUTOMA" : "HEURISTIC_FALLBACK";
       return acc;
     }, {});
 
@@ -97,12 +97,14 @@ export function ModeSetupPanel({ state, isApplying, onApply }: ModeSetupPanelPro
         </div>
         <div className="space-y-2">
           {editableClasses.map((classType) => {
-            const selectedControl = controlModes[classType] ?? "HUMAN";
+            const stateClass = classType === "STATE";
+            const selectedControl = stateClass ? "HUMAN" : (controlModes[classType] ?? "HUMAN");
             return (
               <div key={classType} className="grid grid-cols-[110px,1fr,1fr] items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-zinc-300">{classLabel(classType)}</span>
                 <Select
                   value={selectedControl}
+                  disabled={stateClass}
                   onChange={(e) => {
                     const nextControlMode = e.target.value as PlayerControlMode;
                     setControlModes((prev) => ({ ...prev, [classType]: nextControlMode }));
@@ -110,7 +112,7 @@ export function ModeSetupPanel({ state, isApplying, onApply }: ModeSetupPanelPro
                   }}
                 >
                   <option value="HUMAN">HUMAN</option>
-                  <option value="BOT">BOT</option>
+                  {!stateClass && <option value="BOT">BOT</option>}
                 </Select>
                 <Select
                   value={selectedControl === "BOT" ? "CARD_DRIVEN_SIMPLE_AUTOMA" : "HEURISTIC_FALLBACK"}

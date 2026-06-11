@@ -11,23 +11,35 @@ import com.example.hegemony.domain.model.PolicyId;
 import com.example.hegemony.domain.model.PolicyState;
 import com.example.hegemony.domain.model.ProductionPhaseState;
 import com.example.hegemony.domain.model.ResourceType;
+import com.example.hegemony.domain.model.SupplierType;
 import com.example.hegemony.domain.model.Worker;
 import com.example.hegemony.domain.model.WorkerLocation;
+import com.example.hegemony.domain.command.PurchaseItem;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ProductionResolver {
-    private static final int STATE_SERVICE_PRODUCTION_LIMIT_PER_ROUND = 6;
+    private static final int STATE_SERVICE_STORAGE_BUFFER = 6;
     private static final int CAPITALIST_DEFAULT_RESOURCE_STORAGE_LIMIT = 12;
     private static final int CAPITALIST_FOOD_STORAGE_LIMIT = 8;
+    private static final int MIDDLE_CLASS_RESOURCE_STORAGE_LIMIT = 8;
+    private static final int FOOD_EXTRA_STORAGE_TOKEN_CAPACITY = 8;
+    private static final int DEFAULT_EXTRA_STORAGE_TOKEN_CAPACITY = 12;
     private static final int STATE_LOAN_AMOUNT = 50;
+    private static final int PLAYER_LOAN_AMOUNT = 50;
+    private static final String LOAN_RESOURCE_ID = "loan";
 
     public void resolveGoodsAndServices(GameState state, ProductionPhaseState production) {
+        resolveGoodsAndServices(state, production, List.of());
+    }
+
+    public void resolveGoodsAndServices(GameState state, ProductionPhaseState production, List<PurchaseItem> workerFoodPurchases) {
         List<EnterpriseProductionResult> results = new ArrayList<>();
-        int stateServicesProducedThisRound = 0;
+        Map<String, Integer> stateServicesProducedThisRound = new HashMap<>();
         enforceStateEnterpriseWagePolicy(state);
         resolveDemonstrationToken(state);
 
@@ -56,7 +68,7 @@ public class ProductionResolver {
 
                 if (enterprise.isFunctioning()) {
                     payEnterpriseWages(state, ownerClass, enterprise, result);
-                    stateServicesProducedThisRound = produceEnterpriseResources(state, ownerClass, enterprise, result, stateServicesProducedThisRound);
+                    produceEnterpriseResources(state, ownerClass, enterprise, result, stateServicesProducedThisRound);
                 }
 
                 results.add(result);
@@ -66,7 +78,7 @@ public class ProductionResolver {
         releaseTiedContracts(state);
         grantWorkerUnionInfluence(state);
         production.setEnterpriseResults(results);
-        satisfyFoodNeeds(state, production);
+        satisfyFoodNeeds(state, production, workerFoodPurchases == null ? List.of() : workerFoodPurchases);
         checkImfIntervention(state);
         payProductionTaxes(state, production);
     }
@@ -219,31 +231,30 @@ public class ProductionResolver {
         }
     }
 
-    private int produceEnterpriseResources(
+    private void produceEnterpriseResources(
             GameState state,
             ClassType ownerClass,
             Enterprise enterprise,
             EnterpriseProductionResult result,
-            int stateServicesProducedThisRound
+            Map<String, Integer> stateServicesProducedThisRound
     ) {
-        int stateServicesProduced = stateServicesProducedThisRound;
         for (Map.Entry<String, Integer> produced : enterprise.getProducedResources().entrySet()) {
             if (produced.getValue() <= 0) {
                 continue;
             }
             PlayerState owner = findPlayerByClass(state, ownerClass).orElse(null);
             if (ownerClass == ClassType.STATE) {
-                int accepted = Math.min(
-                        produced.getValue(),
-                        Math.max(0, STATE_SERVICE_PRODUCTION_LIMIT_PER_ROUND - stateServicesProduced)
-                );
+                String resourceId = normalizedResourceId(produced.getKey());
+                int producedSoFar = stateServicesProducedThisRound.getOrDefault(resourceId, 0);
+                int limit = producedSoFar + produced.getValue() + STATE_SERVICE_STORAGE_BUFFER;
+                int accepted = Math.min(produced.getValue(), Math.max(0, limit - state.getPublicServiceAmount(resourceId)));
                 if (accepted > 0) {
-                    state.addPublicServiceAmount(produced.getKey(), accepted);
-                    result.getProducedResources().merge(produced.getKey(), accepted, Integer::sum);
-                    stateServicesProduced += accepted;
+                    state.addPublicServiceAmount(resourceId, accepted);
+                    result.getProducedResources().merge(resourceId, accepted, Integer::sum);
+                    stateServicesProducedThisRound.merge(resourceId, accepted, Integer::sum);
                     state.appendLog(
                             "ENTERPRISE_PRODUCED",
-                            ownerPlayerId(ownerClass) + " produced " + accepted + " " + produced.getKey()
+                            ownerPlayerId(ownerClass) + " produced " + accepted + " " + resourceId
                                     + " from " + enterprise.getId() + " into public services storage."
                     );
                 }
@@ -268,9 +279,9 @@ public class ProductionResolver {
                 );
                 continue;
             }
-            int accepted = capitalistAcceptedProduction(ownerClass, owner, produced.getKey(), produced.getValue());
+            StoredProduction stored = storeProducedResource(state, ownerClass, owner, produced.getKey(), produced.getValue());
+            int accepted = stored.standardStored();
             if (accepted > 0) {
-                owner.addProducedResource(produced.getKey(), accepted);
                 result.getProducedResources().merge(produced.getKey(), accepted, Integer::sum);
                 state.appendLog(
                         "ENTERPRISE_PRODUCED",
@@ -278,11 +289,16 @@ public class ProductionResolver {
                                 + " from " + enterprise.getId() + " into produced resource storage."
                 );
             }
-            int burned = produced.getValue() - accepted;
+            if (stored.freeTradeStored() > 0) {
+                result.getProducedResources().merge(produced.getKey(), stored.freeTradeStored(), Integer::sum);
+                state.appendLog(
+                        "FREE_TRADE_ZONE_STORED",
+                        owner.getPlayerId() + " stored " + stored.freeTradeStored() + " " + produced.getKey()
+                                + " from " + enterprise.getId() + " in the free trade zone."
+                );
+            }
+            int burned = stored.burned();
             if (burned > 0) {
-                if (ownerClass == ClassType.CAPITALIST && isFreeTradeOverflowCandidate(produced.getKey())) {
-                    addUnsupportedNote(state, "UNSUPPORTED_FREE_TRADE_ZONE_OVERFLOW: excess capitalist food/luxury storage is not tracked separately.");
-                }
                 state.appendLog("PRODUCTION_OVERFLOW", ownerClass + " production overflow burned "
                         + burned + " " + produced.getKey() + " from " + enterprise.getId() + ".");
             }
@@ -299,7 +315,6 @@ public class ProductionResolver {
                 );
             }
         }
-        return stateServicesProduced;
     }
 
     private void releaseTiedContracts(GameState state) {
@@ -330,12 +345,12 @@ public class ProductionResolver {
         }
     }
 
-    private void satisfyFoodNeeds(GameState state, ProductionPhaseState production) {
-        satisfyFoodNeedFor(state, production, ClassType.WORKER);
-        satisfyFoodNeedFor(state, production, ClassType.MIDDLE_CLASS);
+    private void satisfyFoodNeeds(GameState state, ProductionPhaseState production, List<PurchaseItem> workerFoodPurchases) {
+        satisfyFoodNeedFor(state, production, ClassType.WORKER, workerFoodPurchases);
+        satisfyFoodNeedFor(state, production, ClassType.MIDDLE_CLASS, List.of());
     }
 
-    private void satisfyFoodNeedFor(GameState state, ProductionPhaseState production, ClassType classType) {
+    private void satisfyFoodNeedFor(GameState state, ProductionPhaseState production, ClassType classType, List<PurchaseItem> foodPurchases) {
         PlayerState buyer = findPlayerByClass(state, classType).orElse(null);
         if (buyer == null) {
             return;
@@ -344,7 +359,7 @@ public class ProductionResolver {
         int consumed = buyer.consumeGoods(ResourceType.FOOD.id(), required);
         int missing = required - consumed;
         if (missing > 0) {
-            PurchaseResult purchased = buyFoodForNeed(state, buyer, missing);
+            PurchaseResult purchased = buyFoodForNeed(state, buyer, missing, foodPurchases);
             consumed += purchased.quantity();
             missing -= purchased.quantity();
         }
@@ -366,7 +381,14 @@ public class ProductionResolver {
         }
     }
 
-    private PurchaseResult buyFoodForNeed(GameState state, PlayerState buyer, int requested) {
+    private PurchaseResult buyFoodForNeed(GameState state, PlayerState buyer, int requested, List<PurchaseItem> foodPurchases) {
+        if (foodPurchases != null && !foodPurchases.isEmpty()) {
+            PurchaseResult planned = buyFoodForNeedFromPlan(state, buyer, requested, foodPurchases);
+            if (planned.quantity() > 0) {
+                state.appendLog("SATISFY_FOOD_NEED", buyer.getPlayerId() + " satisfied " + planned.quantity() + " food need for " + planned.cost() + ".");
+            }
+            return planned;
+        }
         int remaining = Math.max(0, requested);
         int bought = 0;
         int spent = 0;
@@ -419,6 +441,67 @@ public class ProductionResolver {
         return new PurchaseResult(bought, spent);
     }
 
+    private PurchaseResult buyFoodForNeedFromPlan(GameState state, PlayerState buyer, int requested, List<PurchaseItem> foodPurchases) {
+        int remaining = Math.max(0, requested);
+        int bought = 0;
+        int spent = 0;
+        for (PurchaseItem item : foodPurchases) {
+            if (remaining <= 0 || item == null || item.supplierType() == null || item.quantity() <= 0) {
+                continue;
+            }
+            int quantity = Math.min(remaining, item.quantity());
+            PurchaseResult purchase = buyFoodFromSupplier(state, buyer, item, quantity);
+            bought += purchase.quantity();
+            spent += purchase.cost();
+            remaining -= purchase.quantity();
+        }
+        return new PurchaseResult(bought, spent);
+    }
+
+    private PurchaseResult buyFoodFromSupplier(GameState state, PlayerState buyer, PurchaseItem item, int requested) {
+        if (item.supplierType() == SupplierType.EXTERNAL_MARKET) {
+            int unitPrice = item.unitPriceOverride() == null ? externalMarketFoodPrice(state) : Math.max(0, item.unitPriceOverride());
+            int quantity = Math.max(0, requested);
+            int cost = quantity * unitPrice;
+            debitWithLoanFallback(state, buyer, cost, "mandatory external food purchase");
+            state.appendLog(
+                    "FOOD_PURCHASE_PAID",
+                    buyer.getPlayerId() + " paid " + cost + " to external market for " + quantity
+                            + " food at price " + unitPrice + "."
+            );
+            return new PurchaseResult(quantity, cost);
+        }
+
+        ClassType sellerClass = item.supplierType() == SupplierType.CAPITALIST
+                ? ClassType.CAPITALIST
+                : item.supplierType() == SupplierType.MIDDLE_CLASS
+                ? ClassType.MIDDLE_CLASS
+                : null;
+        if (sellerClass == null || sellerClass == buyer.getClassType()) {
+            return new PurchaseResult(0, 0);
+        }
+        PlayerState seller = findPlayerByClass(state, sellerClass).orElse(null);
+        if (seller == null) {
+            return new PurchaseResult(0, 0);
+        }
+        int unitPrice = item.unitPriceOverride() == null ? Math.max(0, seller.getPrice(ResourceType.FOOD.id())) : Math.max(0, item.unitPriceOverride());
+        int available = Math.max(0, seller.getProducedResourceAmount(ResourceType.FOOD.id()));
+        int quantity = Math.min(Math.max(0, requested), available);
+        if (unitPrice <= 0 || quantity <= 0) {
+            return new PurchaseResult(0, 0);
+        }
+        int cost = quantity * unitPrice;
+        seller.consumeProducedResource(ResourceType.FOOD.id(), quantity);
+        debitWithLoanFallback(state, buyer, cost, "mandatory food purchase");
+        creditPlayerMoney(seller, cost);
+        state.appendLog(
+                "FOOD_PURCHASE_PAID",
+                buyer.getPlayerId() + " paid " + cost + " to " + seller.getPlayerId()
+                        + " for " + quantity + " food at price " + unitPrice + "."
+        );
+        return new PurchaseResult(quantity, cost);
+    }
+
     private int externalMarketFoodPrice(GameState state) {
         PolicyCourse course = policyCourse(state, PolicyId.POLICY_6_FOREIGN_TRADE, PolicyCourse.B);
         int surcharge = switch (course) {
@@ -430,8 +513,8 @@ public class ProductionResolver {
     }
 
     private void checkImfIntervention(GameState state) {
-        addUnsupportedNote(state, "UNSUPPORTED_IMF_INTERVENTION: loans and IMF thresholds are not modeled in current production slice.");
-        state.appendLog("IMF_CHECK_SKIPPED", "IMF intervention check skipped because loans are not modeled.");
+        addUnsupportedNote(state, "UNSUPPORTED_IMF_INTERVENTION: IMF thresholds are not modeled in current production slice.");
+        state.appendLog("IMF_CHECK_SKIPPED", "IMF intervention check skipped because IMF thresholds are not modeled.");
     }
 
     private void payProductionTaxes(GameState state, ProductionPhaseState production) {
@@ -625,21 +708,8 @@ public class ProductionResolver {
         if (player == null || amount <= 0) {
             return 0;
         }
-        int available = player.getClassType() == ClassType.CAPITALIST
-                ? Math.max(0, player.getRevenue())
-                : Math.max(0, player.getMoney());
-        int paidFromCash = Math.min(available, amount);
-        if (player.getClassType() == ClassType.CAPITALIST) {
-            player.setRevenue(available - paidFromCash);
-        } else {
-            player.setMoney(available - paidFromCash);
-        }
-        if (paidFromCash < amount) {
-            addUnsupportedNote(state, "UNSUPPORTED_LOANS: required loans are not persisted in current production slice.");
-            state.appendLog("LOAN_REQUIRED_UNSUPPORTED", player.getPlayerId() + " needed loan coverage "
-                    + (amount - paidFromCash) + " for " + reason + ".");
-        }
-        return paidFromCash;
+        ensurePlayerCanPayMandatory(state, player, amount, reason);
+        return consumePlayerFunds(player, amount);
     }
 
     private void addUnsupportedNote(GameState state, String note) {
@@ -649,32 +719,84 @@ public class ProductionResolver {
         state.getEconomyUnsupportedNotes().add(note);
     }
 
-    private int capitalistAcceptedProduction(ClassType ownerClass, PlayerState owner, String resourceId, int producedAmount) {
-        if (ownerClass != ClassType.CAPITALIST) {
-            return Math.max(0, producedAmount);
+    private StoredProduction storeProducedResource(GameState state, ClassType ownerClass, PlayerState owner, String rawResourceId, int producedAmount) {
+        String resourceId = normalizedResourceId(rawResourceId);
+        int remaining = Math.max(0, producedAmount);
+        if (remaining <= 0 || owner == null) {
+            return new StoredProduction(0, 0, 0);
         }
-        int limit = capitalistResourceStorageLimit(resourceId);
-        if (limit < 0) {
-            return Math.max(0, producedAmount);
+
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        if (resourceType == ResourceType.INFLUENCE || resourceType == ResourceType.MEDIA_INFLUENCE) {
+            if (ownerClass == ClassType.MIDDLE_CLASS) {
+                owner.addGoods(resourceId, remaining);
+            } else {
+                owner.addProducedResource(resourceId, remaining);
+            }
+            return new StoredProduction(remaining, 0, 0);
         }
-        int availableSpace = Math.max(0, limit - owner.getProducedResourceAmount(resourceId));
-        return Math.min(Math.max(0, producedAmount), availableSpace);
+
+        int standardLimit = storageLimitFor(ownerClass, owner, resourceId);
+        int standardStored;
+        if (standardLimit < 0) {
+            standardStored = remaining;
+        } else {
+            int availableSpace = Math.max(0, standardLimit - owner.getProducedResourceAmount(resourceId));
+            standardStored = Math.min(remaining, availableSpace);
+        }
+        if (standardStored > 0) {
+            owner.addProducedResource(resourceId, standardStored);
+            remaining -= standardStored;
+        }
+
+        int freeTradeStored = 0;
+        if (ownerClass == ClassType.CAPITALIST && isFreeTradeOverflowCandidate(resourceId) && remaining > 0) {
+            freeTradeStored = remaining;
+            owner.addFreeTradeZoneResource(resourceId, freeTradeStored);
+            remaining = 0;
+        }
+
+        return new StoredProduction(standardStored, freeTradeStored, remaining);
     }
 
-    private int capitalistResourceStorageLimit(String resourceId) {
+    private int storageLimitFor(ClassType ownerClass, PlayerState owner, String resourceId) {
+        if (ownerClass == ClassType.CAPITALIST) {
+            return capitalistResourceStorageLimit(owner, resourceId);
+        }
+        if (ownerClass == ClassType.MIDDLE_CLASS) {
+            return MIDDLE_CLASS_RESOURCE_STORAGE_LIMIT;
+        }
+        return -1;
+    }
+
+    private int capitalistResourceStorageLimit(PlayerState owner, String resourceId) {
         ResourceType resourceType = ResourceType.fromRaw(resourceId);
         if (resourceType == ResourceType.INFLUENCE || resourceType == ResourceType.MEDIA_INFLUENCE) {
             return -1;
         }
-        if (resourceType == ResourceType.FOOD) {
-            return CAPITALIST_FOOD_STORAGE_LIMIT;
-        }
-        return CAPITALIST_DEFAULT_RESOURCE_STORAGE_LIMIT;
+        int base = resourceType == ResourceType.FOOD
+                ? CAPITALIST_FOOD_STORAGE_LIMIT
+                : CAPITALIST_DEFAULT_RESOURCE_STORAGE_LIMIT;
+        return base + owner.getExtraStorageTokens(resourceId) * extraStorageTokenCapacity(resourceType);
+    }
+
+    private int extraStorageTokenCapacity(ResourceType resourceType) {
+        return resourceType == ResourceType.FOOD
+                ? FOOD_EXTRA_STORAGE_TOKEN_CAPACITY
+                : DEFAULT_EXTRA_STORAGE_TOKEN_CAPACITY;
     }
 
     private boolean isFreeTradeOverflowCandidate(String resourceId) {
         ResourceType resourceType = ResourceType.fromRaw(resourceId);
         return resourceType == ResourceType.FOOD || resourceType == ResourceType.LUXURY;
+    }
+
+    private String normalizedResourceId(String resourceId) {
+        ResourceType resourceType = ResourceType.fromRaw(resourceId);
+        return resourceType == null ? resourceId.toLowerCase() : resourceType.id();
+    }
+
+    private record StoredProduction(int standardStored, int freeTradeStored, int burned) {
     }
 
     private List<ClassType> orderedProductionClasses() {
@@ -701,15 +823,8 @@ public class ProductionResolver {
             return 0;
         }
 
-        if (ownerClass == ClassType.CAPITALIST) {
-            int paid = Math.min(Math.max(0, owner.getRevenue()), amount);
-            owner.setRevenue(owner.getRevenue() - paid);
-            return paid;
-        }
-
-        int paid = Math.min(Math.max(0, owner.getMoney()), amount);
-        owner.setMoney(owner.getMoney() - paid);
-        return paid;
+        ensurePlayerCanPayMandatory(state, owner, amount, "enterprise wages");
+        return consumePlayerFunds(owner, amount);
     }
 
     private void creditPlayerMoney(PlayerState player, int amount) {
@@ -721,6 +836,61 @@ public class ProductionResolver {
         } else {
             player.setMoney(player.getMoney() + amount);
         }
+    }
+
+    private void ensurePlayerCanPayMandatory(GameState state, PlayerState player, int amount, String reason) {
+        while (availablePlayerFunds(player) < amount) {
+            takePlayerLoan(state, player, reason);
+        }
+    }
+
+    private void takePlayerLoan(GameState state, PlayerState player, String reason) {
+        player.addResource(LOAN_RESOURCE_ID, 1);
+        if (player.getClassType() == ClassType.CAPITALIST) {
+            player.setCapital(player.getCapital() + PLAYER_LOAN_AMOUNT);
+        } else {
+            player.setMoney(player.getMoney() + PLAYER_LOAN_AMOUNT);
+        }
+        state.appendLog(
+                "PLAYER_LOAN_TAKEN",
+                player.getPlayerId() + " took a 50 loan for " + reason
+                        + "; active loans: " + player.getResourceAmount(LOAN_RESOURCE_ID) + "."
+        );
+    }
+
+    private int availablePlayerFunds(PlayerState player) {
+        if (player == null) {
+            return 0;
+        }
+        if (player.getClassType() == ClassType.CAPITALIST) {
+            return Math.max(0, player.getRevenue()) + Math.max(0, player.getCapital()) + Math.max(0, player.getMoney());
+        }
+        return Math.max(0, player.getMoney());
+    }
+
+    private int consumePlayerFunds(PlayerState player, int requested) {
+        if (player == null || requested <= 0) {
+            return 0;
+        }
+        if (player.getClassType() != ClassType.CAPITALIST) {
+            int paid = Math.min(Math.max(0, player.getMoney()), requested);
+            player.setMoney(player.getMoney() - paid);
+            return paid;
+        }
+
+        int remaining = requested;
+        int fromRevenue = Math.min(Math.max(0, player.getRevenue()), remaining);
+        player.setRevenue(player.getRevenue() - fromRevenue);
+        remaining -= fromRevenue;
+
+        int fromCapital = Math.min(Math.max(0, player.getCapital()), remaining);
+        player.setCapital(player.getCapital() - fromCapital);
+        remaining -= fromCapital;
+
+        int fromMoney = Math.min(Math.max(0, player.getMoney()), remaining);
+        player.setMoney(player.getMoney() - fromMoney);
+        remaining -= fromMoney;
+        return requested - remaining;
     }
 
     private int resolveWagePerEnterprise(GameState state, ClassType ownerClass, Enterprise enterprise) {

@@ -19,11 +19,29 @@ const ACTION_LABEL: Record<ActionType, string> = {
   ADVANCE_GAME_FLOW: "Следующий шаг",
   ADVANCE_ROUND: "Следующий раунд",
   DECLARE_VOTE_STANCE: "Позиция по голосованию",
+  DRAW_VOTING_CUBES: "Достать кубики",
   COMMIT_VOTE_INFLUENCE: "Вложить влияние",
   PROPOSE_BILL: "Предложить закон",
   ADD_VOTING_CUBES: "Добавить кубики",
   CALL_EXTRAORDINARY_VOTE: "Внеочередное голосование",
+  BUILD_ENTERPRISE: "Построить предприятие",
+  SELL_ENTERPRISE: "Продать предприятие",
+  SELL_ON_EXTERNAL_MARKET: "Продать на внешнем рынке",
+  MAKE_BUSINESS_DEAL: "Заключить сделку",
+  LOBBY_INTERESTS: "Лоббировать",
+  CHANGE_PRICES: "Изменить цены",
+  CHANGE_WAGES: "Изменить зарплаты",
+  PAY_BONUS: "Выплатить бонус",
+  BUY_STORAGE: "Купить хранилище",
+  TAKE_STATE_BENEFITS: "Получить льготы",
+  REPAY_LOAN: "Погасить заем",
+  RESPOND_TO_EVENT: "Отреагировать на событие",
+  MEET_DEPUTIES: "Встретиться с депутатами",
+  INTRODUCE_EXTRA_TAX: "Дополнительный налог",
+  RUN_CAMPAIGN: "Провести кампанию",
   ASSIGN_WORKERS: "Назначить рабочих",
+  PLACE_STRIKES: "Забастовка",
+  PLACE_DEMONSTRATION: "Демонстрация",
   BUY_GOODS_AND_SERVICES: "Покупка товаров",
   CONSUME_HEALTHCARE: "Потребить ресурс",
   CONSUME_EDUCATION: "Потребить ресурс",
@@ -46,11 +64,29 @@ const MANUAL_OVERRIDE_ACTIONS: ActionType[] = [
   "ADJUST_POLICY",
   "PLAY_CARD",
   "ASSIGN_WORKERS",
+  "PLACE_STRIKES",
+  "PLACE_DEMONSTRATION",
   "BUY_GOODS_AND_SERVICES",
   "PROPOSE_BILL",
   "ADD_VOTING_CUBES",
   "CALL_EXTRAORDINARY_VOTE",
+  "BUILD_ENTERPRISE",
+  "SELL_ENTERPRISE",
+  "SELL_ON_EXTERNAL_MARKET",
+  "MAKE_BUSINESS_DEAL",
+  "LOBBY_INTERESTS",
+  "CHANGE_PRICES",
+  "CHANGE_WAGES",
+  "PAY_BONUS",
+  "BUY_STORAGE",
+  "TAKE_STATE_BENEFITS",
+  "REPAY_LOAN",
+  "RESPOND_TO_EVENT",
+  "MEET_DEPUTIES",
+  "INTRODUCE_EXTRA_TAX",
+  "RUN_CAMPAIGN",
   "DECLARE_VOTE_STANCE",
+  "DRAW_VOTING_CUBES",
   "COMMIT_VOTE_INFLUENCE",
   "CONSUME_HEALTHCARE",
   "CONSUME_EDUCATION",
@@ -146,7 +182,10 @@ function actionPriority(actionType: ActionType): number {
   if (actionType === "PROPOSE_BILL" || actionType === "CALL_EXTRAORDINARY_VOTE" || actionType === "ADD_VOTING_CUBES" || actionType === "ASSIGN_WORKERS") {
     return 1;
   }
-  if (actionType === "DECLARE_VOTE_STANCE" || actionType === "COMMIT_VOTE_INFLUENCE") {
+  if (actionType === "PLACE_STRIKES" || actionType === "PLACE_DEMONSTRATION") {
+    return 1;
+  }
+  if (actionType === "DECLARE_VOTE_STANCE" || actionType === "DRAW_VOTING_CUBES" || actionType === "COMMIT_VOTE_INFLUENCE") {
     return 2;
   }
   if (actionType.startsWith("ADVANCE_") || actionType.startsWith("RESOLVE_")) {
@@ -170,11 +209,15 @@ function matchesSelectedContext(actionType: ActionType, selectedEntity?: BoardRe
   }
 
   if (selectedEntity?.sourceRef?.sourceType === "policy") {
-    return actionType === "PROPOSE_BILL" || actionType === "CALL_EXTRAORDINARY_VOTE" || actionType === "DECLARE_VOTE_STANCE" || actionType === "COMMIT_VOTE_INFLUENCE";
+    return actionType === "PROPOSE_BILL" || actionType === "CALL_EXTRAORDINARY_VOTE" || actionType === "DECLARE_VOTE_STANCE" || actionType === "DRAW_VOTING_CUBES" || actionType === "COMMIT_VOTE_INFLUENCE";
   }
 
   if (selectedEntity?.sourceRef?.sourceType === "businessDeal") {
     return actionType === "REFRESH_BUSINESS_DEALS";
+  }
+
+  if (selectedEntity?.sourceRef?.sourceType === "enterpriseMarket") {
+    return actionType === "BUILD_ENTERPRISE";
   }
 
   if (selectedEntity?.sourceRef?.sourceType === "exportCard") {
@@ -190,11 +233,11 @@ function matchesSelectedContext(actionType: ActionType, selectedEntity?: BoardRe
   }
 
   if (selectedZoneId === "unemployed") {
-    return actionType === "ASSIGN_WORKERS";
+    return actionType === "ASSIGN_WORKERS" || actionType === "PLACE_DEMONSTRATION";
   }
 
   if (selectedZoneId === "vote_results") {
-    return actionType === "ADD_VOTING_CUBES" || actionType === "DECLARE_VOTE_STANCE" || actionType === "COMMIT_VOTE_INFLUENCE" || actionType === "ADVANCE_TO_PRODUCTION";
+    return actionType === "ADD_VOTING_CUBES" || actionType === "DECLARE_VOTE_STANCE" || actionType === "DRAW_VOTING_CUBES" || actionType === "COMMIT_VOTE_INFLUENCE" || actionType === "ADVANCE_TO_PRODUCTION";
   }
 
   if (selectedZoneId === "round_track") {
@@ -360,7 +403,6 @@ export function buildActionSeedParameters(
         .filter((worker): worker is GameState["workers"][number] =>
           Boolean(worker && actor && worker.classType === actor.classType && worker.location === "ENTERPRISE_SLOT" && !worker.tiedContract),
         )
-        .slice(0, 3)
         .map((worker) => ({ workerId: worker.id, targetType: "UNEMPLOYED", targetId: "unemployed" })) ?? [];
       if (returnAssignments.length > 0) {
         return {
@@ -385,6 +427,21 @@ export function buildActionSeedParameters(
     };
   }
 
+  if (actionType === "BUILD_ENTERPRISE") {
+    const selectedMarketEnterprise =
+      selectedEntity?.sourceRef?.sourceType === "enterpriseMarket" && state
+        ? state.capitalistEnterpriseMarket.find((enterprise) => enterprise.id === selectedEntity.sourceRef?.sourceId)
+        : undefined;
+    const firstMarketEnterprise = state?.capitalistEnterpriseMarket?.[0];
+    const enterprise = selectedMarketEnterprise ?? firstMarketEnterprise;
+    return {
+      actorPlayerId,
+      enterpriseId: enterprise?.id ?? "",
+      cost: enterprise?.cost ?? 20,
+      wageLevel: 2,
+    };
+  }
+
   if (actionType === "DECLARE_VOTE_STANCE") {
     const voteActorPlayerId = firstMissingVoteActorPlayerId(state, "stance") ?? actorPlayerId;
     return {
@@ -402,6 +459,15 @@ export function buildActionSeedParameters(
     };
   }
 
+  if (actionType === "DRAW_VOTING_CUBES") {
+    const totalCubes =
+      (state?.votingBag.worker ?? 0) + (state?.votingBag.middleClass ?? 0) + (state?.votingBag.capitalist ?? 0);
+    return {
+      actorPlayerId,
+      count: Math.min(5, Math.max(1, totalCubes)),
+    };
+  }
+
   if (actionType === "BUY_GOODS_AND_SERVICES") {
     return {
       actorPlayerId,
@@ -413,11 +479,30 @@ export function buildActionSeedParameters(
     };
   }
 
+  if (actionType === "PLACE_STRIKES") {
+    return {
+      actorPlayerId,
+      enterpriseIds: [],
+    };
+  }
+
+  if (actionType === "PLACE_DEMONSTRATION") {
+    return {
+      actorPlayerId,
+      penaltyAllocation: {},
+    };
+  }
+
   if (actionType === "PLAY_CARD") {
+    const firstPendingPolicy = state?.policies.find((policy) => policy.occupyingProposalToken)?.id ?? "";
+    const victoryPointSeeds = Object.fromEntries(
+      (state?.players ?? []).map((player) => [`manualVictoryPointsDelta_${player.playerId}`, 0]),
+    );
     return {
       actorPlayerId,
       cardId: "",
       manualMode: false,
+      manualSection: "resources",
       manualStateToActorMoney: 0,
       manualCapitalistToActorMoney: 0,
       manualActorToStateMoney: 0,
@@ -425,11 +510,49 @@ export function buildActionSeedParameters(
       manualSourceToActorMoney: 0,
       manualMoneyTargetPlayerId: "",
       manualActorToPlayerMoney: 0,
+      manualTransferMoneySourceId: "TREASURY",
+      manualTransferMoneyTargetId: actorPlayerId,
+      manualTransferMoneyAmount: 0,
+      manualTransferResourceSourceId: "STATE_SERVICES",
+      manualTransferResourceTargetId: actorPlayerId,
+      manualTransferResourceType: "FOOD",
+      manualTransferResourceAmount: 0,
+      manualExchangeLeftId: "STATE",
+      manualExchangeRightId: actorPlayerId,
+      manualExchangeLeftToRightMoney: 0,
+      manualExchangeRightToLeftMoney: 0,
+      manualExchangeLeftToRightResourceType: "FOOD",
+      manualExchangeRightToLeftResourceType: "FOOD",
+      manualExchangeLeftToRightResourceAmount: 0,
+      manualExchangeRightToLeftResourceAmount: 0,
+      manualRemoveUnemployedWorkerIds: [],
+      manualTakeResourceSourceId: "STATE_SERVICES",
+      manualTakeResourceType: "FOOD",
+      manualTakeResourceAmount: 0,
+      manualGiveResourceTargetId: "STATE_SERVICES",
+      manualGiveResourceType: "FOOD",
+      manualGiveResourceAmount: 0,
+      manualVotePolicyId: firstPendingPolicy,
+      manualVoteReturnDrawn: false,
+      manualDiscardCubeOwner: "WORKER",
+      manualDiscardCubeCount: 0,
+      manualDiscardWorkerCubes: 0,
+      manualDiscardMiddleClassCubes: 0,
+      manualDiscardCapitalistCubes: 0,
+      manualAddWorkerCubes: 0,
+      manualAddMiddleClassCubes: 0,
+      manualAddCapitalistCubes: 0,
+      manualProposalTargetCourse: "",
+      manualVoteDrawCount: 0,
+      manualVoteWorkerCubes: 0,
+      manualVoteMiddleClassCubes: 0,
+      manualVoteCapitalistCubes: 0,
       manualActorMoneyDelta: 0,
       manualTreasuryDelta: 0,
       manualWelfareDelta: 0,
       manualWorkersColor: "GRAY",
       manualWorkersCount: 0,
+      ...victoryPointSeeds,
       ...(stateServiceResource ? { [`manualStateResource_${stateServiceResource}`]: 1 } : {}),
     };
   }

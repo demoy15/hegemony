@@ -56,11 +56,14 @@ const ACTION_LABEL: Partial<Record<ActionType, string>> = {
   ADVANCE_GAME_FLOW: "Продвинуть ход игры",
   ADVANCE_ROUND: "Продвинуть раунд",
   DECLARE_VOTE_STANCE: "Объявить позицию по голосованию",
+  DRAW_VOTING_CUBES: "Достать кубики из мешка",
   COMMIT_VOTE_INFLUENCE: "Вложить влияние",
   PROPOSE_BILL: "Предложить закон",
   ADD_VOTING_CUBES: "Добавить кубики в мешок",
   CALL_EXTRAORDINARY_VOTE: "Внеочередное голосование",
   ASSIGN_WORKERS: "Назначить рабочих",
+  PLACE_STRIKES: "Забастовка",
+  PLACE_DEMONSTRATION: "Демонстрация",
   BUY_GOODS_AND_SERVICES: "Купить товары и услуги",
   CONSUME_HEALTHCARE: "Потребить ресурс",
   CONSUME_EDUCATION: "Потребить ресурс",
@@ -80,7 +83,6 @@ const EDUCATION_TARGET_COLORS = [
   { value: "WHITE", label: "Белый" },
   { value: "GREEN", label: "Зеленый" },
   { value: "BLUE", label: "Синий" },
-  { value: "RED", label: "Красный" },
   { value: "ORANGE", label: "Оранжевый" },
   { value: "PURPLE", label: "Фиолетовый" },
 ];
@@ -522,20 +524,139 @@ function NumericAdjuster({
 }) {
   const clamped = Math.min(max, Math.max(min, value));
   return (
-    <div className="space-y-2 rounded-lg border border-zinc-700/70 bg-black/20 p-3">
-      <p className="text-xs text-zinc-300">{label}</p>
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={() => onChange(Math.max(min, clamped - step))}>
+    <div className="w-full min-w-0 max-w-full space-y-2 rounded-lg border border-zinc-700/70 bg-black/20 p-3">
+      <p className="break-words text-xs leading-snug text-zinc-300">{label}</p>
+      <div className="grid w-full min-w-0 grid-cols-[2.25rem_minmax(4.25rem,1fr)_2.25rem] items-center gap-2">
+        <Button type="button" variant="outline" size="sm" className="h-9 min-w-0 px-0" onClick={() => onChange(Math.max(min, clamped - step))}>
           -
         </Button>
         <Input
           type="number"
+          className="h-9 min-w-0 text-center tabular-nums"
           min={min}
           max={max}
           value={clamped}
           onChange={(event) => onChange(Math.min(max, Math.max(min, toInt(event.target.value, clamped))))}
         />
-        <Button type="button" variant="outline" size="sm" onClick={() => onChange(Math.min(max, clamped + step))}>
+        <Button type="button" variant="outline" size="sm" className="h-9 min-w-0 px-0" onClick={() => onChange(Math.min(max, clamped + step))}>
+          +
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function VotingCubeCounter({
+  label,
+  available,
+  value,
+  onChange,
+  maxValue,
+  metaLabel,
+}: {
+  label: string;
+  available: number;
+  value: number;
+  onChange: (nextValue: number) => void;
+  maxValue?: number;
+  metaLabel?: string;
+}) {
+  const max = Math.max(0, maxValue ?? available);
+  const clamped = Math.min(max, Math.max(0, value));
+  const setNext = (nextValue: number) => onChange(Math.min(max, Math.max(0, nextValue)));
+  return (
+    <div className="min-w-0 rounded-md border border-zinc-700/60 bg-black/25 p-2.5">
+      <div className="mb-2 flex min-w-0 items-baseline justify-between gap-2">
+        <p className="min-w-0 text-xs font-medium text-zinc-200">{label}</p>
+        <p className="shrink-0 text-[11px] text-zinc-500">{metaLabel ?? `в мешке ${available}`}</p>
+      </div>
+      <div className="grid grid-cols-[2rem_minmax(2.75rem,1fr)_2rem] items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 px-0"
+          onClick={() => setNext(clamped - 1)}
+          disabled={clamped <= 0}
+          aria-label={`Уменьшить: ${label}`}
+        >
+          -
+        </Button>
+        <div className="flex h-8 items-center justify-center rounded-md border border-zinc-700/70 bg-black/35 text-sm font-semibold tabular-nums text-zinc-50">
+          {clamped}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 px-0"
+          onClick={() => setNext(clamped + 1)}
+          disabled={clamped >= max}
+          aria-label={`Увеличить: ${label}`}
+        >
+          +
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PartyButtonPicker({
+  label,
+  parties,
+  selectedId,
+  onSelect,
+}: {
+  label: string;
+  parties: Array<{ id: string; label: string }>;
+  selectedId: string;
+  onSelect: (partyId: string) => void;
+}) {
+  return (
+    <div className="min-w-0 space-y-2">
+      <p className="text-xs text-zinc-400">{label}</p>
+      <div className="grid min-w-0 grid-cols-2 gap-2">
+        {parties.map((party) => (
+          <Button
+            key={`${label}-${party.id}`}
+            type="button"
+            variant={selectedId === party.id ? "secondary" : "outline"}
+            size="sm"
+            className="min-w-0 justify-start px-2 text-left text-xs"
+            onClick={() => onSelect(party.id)}
+          >
+            <span className="truncate">{party.label}</span>
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WorkerCountStepper({
+  value,
+  onChange,
+  min = 0,
+  max = 5,
+}: {
+  value: number;
+  onChange: (nextValue: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  const clamped = Math.min(max, Math.max(min, value));
+  const setNext = (nextValue: number) => onChange(Math.min(max, Math.max(min, nextValue)));
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-zinc-300">Сколько добавить работников</p>
+      <div className="grid grid-cols-[2.5rem_minmax(3rem,1fr)_2.5rem] items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => setNext(clamped - 1)} disabled={clamped <= min} aria-label="Уменьшить количество работников">
+          -
+        </Button>
+        <div className="flex h-10 items-center justify-center rounded-xl border border-zinc-700/80 bg-black/35 text-base font-semibold tabular-nums text-zinc-50">
+          {clamped}
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={() => setNext(clamped + 1)} disabled={clamped >= max} aria-label="Увеличить количество работников">
           +
         </Button>
       </div>
@@ -611,7 +732,38 @@ function collectManualResourceInstructions(
   });
 }
 
-function buildPlayCardPayload(parameters: Record<string, unknown>): Record<string, unknown> {
+function manualExchangeMoneyPartyId(partyId: string): string {
+  return partyId === "STATE" ? "TREASURY" : partyId;
+}
+
+function manualExchangeResourcePartyId(partyId: string): string {
+  return partyId === "STATE" ? "STATE_SERVICES" : partyId;
+}
+
+function manualVictoryPointParamKey(playerId: string): string {
+  return `manualVictoryPointsDelta_${playerId}`;
+}
+
+function pushManualExchangeInstructions(
+  instructions: string[],
+  fromPartyId: string,
+  toPartyId: string,
+  moneyAmount: number,
+  resourceType: string,
+  resourceAmount: number,
+) {
+  if (!fromPartyId || !toPartyId || fromPartyId === toPartyId) {
+    return;
+  }
+  if (moneyAmount > 0) {
+    instructions.push(`manual_money_transfer:${manualExchangeMoneyPartyId(fromPartyId)}:${manualExchangeMoneyPartyId(toPartyId)}:${moneyAmount}`);
+  }
+  if (resourceAmount > 0) {
+    instructions.push(`manual_resource_transfer:${manualExchangeResourcePartyId(fromPartyId)}:${manualExchangeResourcePartyId(toPartyId)}:${resourceType}:${resourceAmount}`);
+  }
+}
+
+function buildPlayCardPayload(parameters: Record<string, unknown>, state: GameState): Record<string, unknown> {
   const stateToActor = Math.max(0, toInt(parameters.manualStateToActorMoney, 0));
   const capitalistToActor = Math.max(0, toInt(parameters.manualCapitalistToActorMoney, 0));
   const actorToState = Math.max(0, toInt(parameters.manualActorToStateMoney, 0));
@@ -624,6 +776,41 @@ function buildPlayCardPayload(parameters: Record<string, unknown>): Record<strin
   const welfareDelta = toInt(parameters.manualWelfareDelta, 0);
   const workerColor = toString(parameters.manualWorkersColor, "GRAY").toUpperCase();
   const workerCount = Math.max(0, toInt(parameters.manualWorkersCount, 0));
+  const transferMoneySource = toString(parameters.manualTransferMoneySourceId);
+  const transferMoneyTarget = toString(parameters.manualTransferMoneyTargetId);
+  const transferMoneyAmount = Math.max(0, toInt(parameters.manualTransferMoneyAmount, 0));
+  const takeResourceSource = toString(parameters.manualTakeResourceSourceId);
+  const takeResourceType = toString(parameters.manualTakeResourceType, "FOOD").toUpperCase();
+  const takeResourceAmount = Math.max(0, toInt(parameters.manualTakeResourceAmount, 0));
+  const giveResourceTarget = toString(parameters.manualGiveResourceTargetId);
+  const giveResourceType = toString(parameters.manualGiveResourceType, "FOOD").toUpperCase();
+  const giveResourceAmount = Math.max(0, toInt(parameters.manualGiveResourceAmount, 0));
+  const exchangeLeftId = toString(parameters.manualExchangeLeftId, "STATE");
+  const exchangeRightId = toString(parameters.manualExchangeRightId, toString(parameters.actorPlayerId));
+  const leftToRightMoney = Math.max(0, toInt(parameters.manualExchangeLeftToRightMoney, 0));
+  const rightToLeftMoney = Math.max(0, toInt(parameters.manualExchangeRightToLeftMoney, 0));
+  const leftToRightResourceType = toString(parameters.manualExchangeLeftToRightResourceType, "FOOD").toUpperCase();
+  const rightToLeftResourceType = toString(parameters.manualExchangeRightToLeftResourceType, "FOOD").toUpperCase();
+  const leftToRightResourceAmount = Math.max(0, toInt(parameters.manualExchangeLeftToRightResourceAmount, 0));
+  const rightToLeftResourceAmount = Math.max(0, toInt(parameters.manualExchangeRightToLeftResourceAmount, 0));
+  const votePolicyId = toString(parameters.manualVotePolicyId);
+  const voteReturnDrawn = Boolean(parameters.manualVoteReturnDrawn);
+  const discardCubeOwner = toString(parameters.manualDiscardCubeOwner, "WORKER").toUpperCase();
+  const discardCubeCount = Math.max(0, toInt(parameters.manualDiscardCubeCount, 0));
+  const discardWorkerCubes = Math.max(0, toInt(parameters.manualDiscardWorkerCubes, 0));
+  const discardMiddleCubes = Math.max(0, toInt(parameters.manualDiscardMiddleClassCubes, 0));
+  const discardCapitalistCubes = Math.max(0, toInt(parameters.manualDiscardCapitalistCubes, 0));
+  const exactDiscardCubes = discardWorkerCubes + discardMiddleCubes + discardCapitalistCubes;
+  const addWorkerCubes = Math.max(0, toInt(parameters.manualAddWorkerCubes, 0));
+  const addMiddleCubes = Math.max(0, toInt(parameters.manualAddMiddleClassCubes, 0));
+  const addCapitalistCubes = Math.max(0, toInt(parameters.manualAddCapitalistCubes, 0));
+  const exactAddCubes = addWorkerCubes + addMiddleCubes + addCapitalistCubes;
+  const manualProposalTargetCourse = toString(parameters.manualProposalTargetCourse);
+  const voteDrawCount = Math.max(0, toInt(parameters.manualVoteDrawCount, 0));
+  const exactWorkerCubes = Math.max(0, toInt(parameters.manualVoteWorkerCubes, 0));
+  const exactMiddleCubes = Math.max(0, toInt(parameters.manualVoteMiddleClassCubes, 0));
+  const exactCapitalistCubes = Math.max(0, toInt(parameters.manualVoteCapitalistCubes, 0));
+  const exactVoteCubes = exactWorkerCubes + exactMiddleCubes + exactCapitalistCubes;
 
   const instructions: string[] = [];
   if (stateToActor > 0) {
@@ -653,9 +840,62 @@ function buildPlayCardPayload(parameters: Record<string, unknown>): Record<strin
   if (workerCount > 0) {
     instructions.push(`add_workers_color:${workerColor}:${workerCount}`);
   }
-  instructions.push(...collectManualResourceInstructions(parameters, "STATE"));
-  instructions.push(...collectManualResourceInstructions(parameters, "CAPITALIST"));
-
+  if (transferMoneyAmount > 0 && transferMoneySource.length > 0 && transferMoneyTarget.length > 0) {
+    instructions.push(`manual_money_transfer:${transferMoneySource}:${transferMoneyTarget}:${transferMoneyAmount}`);
+  }
+  if (takeResourceAmount > 0 && takeResourceSource.length > 0) {
+    instructions.push(`manual_resource_transfer:${takeResourceSource}:${toString(parameters.actorPlayerId)}:${takeResourceType}:${takeResourceAmount}`);
+  }
+  if (giveResourceAmount > 0 && giveResourceTarget.length > 0) {
+    instructions.push(`manual_resource_transfer:${toString(parameters.actorPlayerId)}:${giveResourceTarget}:${giveResourceType}:${giveResourceAmount}`);
+  }
+  pushManualExchangeInstructions(
+    instructions,
+    exchangeLeftId,
+    exchangeRightId,
+    leftToRightMoney,
+    leftToRightResourceType,
+    leftToRightResourceAmount,
+  );
+  pushManualExchangeInstructions(
+    instructions,
+    exchangeRightId,
+    exchangeLeftId,
+    rightToLeftMoney,
+    rightToLeftResourceType,
+    rightToLeftResourceAmount,
+  );
+  for (const player of state.players) {
+    const delta = toInt(parameters[manualVictoryPointParamKey(player.playerId)], 0);
+    if (delta !== 0) {
+      instructions.push(`manual_victory_points_delta:${player.playerId}:${delta}`);
+    }
+  }
+  if (Array.isArray(parameters.manualRemoveUnemployedWorkerIds)) {
+    for (const workerId of parameters.manualRemoveUnemployedWorkerIds.map(String).filter((value) => value.length > 0)) {
+      instructions.push(`manual_remove_unemployed_worker:${workerId}`);
+    }
+  }
+  if (voteReturnDrawn) {
+    instructions.push("manual_vote_return_drawn");
+  }
+  if (exactAddCubes > 0) {
+    instructions.push(`manual_voting_bag_add_exact:${addWorkerCubes}:${addMiddleCubes}:${addCapitalistCubes}`);
+  }
+  if (exactDiscardCubes > 0) {
+    instructions.push(`manual_voting_bag_discard_exact:${discardWorkerCubes}:${discardMiddleCubes}:${discardCapitalistCubes}`);
+  }
+  if (exactDiscardCubes === 0 && discardCubeCount > 0) {
+    instructions.push(`manual_voting_bag_discard:${discardCubeOwner}:${discardCubeCount}`);
+  }
+  if (votePolicyId.length > 0 && ["A", "B", "C"].includes(manualProposalTargetCourse)) {
+    instructions.push(`manual_policy_target:${votePolicyId}:${manualProposalTargetCourse}`);
+  }
+  if (votePolicyId.length > 0 && exactVoteCubes > 0) {
+    instructions.push(`manual_extraordinary_vote_exact:${votePolicyId}:${exactWorkerCubes}:${exactMiddleCubes}:${exactCapitalistCubes}`);
+  } else if (votePolicyId.length > 0 && voteDrawCount > 0) {
+    instructions.push(`manual_extraordinary_vote_draw:${votePolicyId}:${voteDrawCount}`);
+  }
   return { cardId: `manual:${instructions.join(";")}` };
 }
 
@@ -688,6 +928,40 @@ function buildPayload(draft: PendingActionDraft, state: GameState): Record<strin
         actorPlayerId: toString(parameters.actorPlayerId),
         assignments: Array.isArray(parameters.assignments) ? parameters.assignments : [],
       };
+    case "PLACE_STRIKES":
+      return {
+        actorPlayerId: toString(parameters.actorPlayerId),
+        enterpriseIds: Array.isArray(parameters.enterpriseIds) ? parameters.enterpriseIds : [],
+      };
+    case "PLACE_DEMONSTRATION":
+      return {
+        actorPlayerId: toString(parameters.actorPlayerId),
+        penaltyAllocation: normalizeNonnegativeNumberMap(parameters.penaltyAllocation),
+      };
+    case "RESOLVE_PRODUCTION_PHASE": {
+      const actorPlayerId = toString(parameters.actorPlayerId);
+      const worker = state.players.find((player) => player.classType === "WORKER");
+      const quantityBySupplier = normalizeQuantityMap(parameters.workerFoodQuantityBySupplier);
+      const priceBySupplier = normalizeNonnegativeNumberMap(parameters.workerFoodPriceBySupplier);
+      const supplierOptions = resolveSupplierOptions(state, worker, "FOOD");
+      const workerFoodPurchases = supplierOptions
+        .map((option) => {
+          const requested = Math.max(0, toInt(quantityBySupplier[option.key], 0));
+          const maxAllowed = Math.min(Math.max(0, worker?.population ?? 0), option.available);
+          const quantity = Math.min(requested, maxAllowed);
+          return {
+            supplierType: option.supplierType,
+            supplierPlayerId: option.supplierPlayerId || undefined,
+            quantity,
+            unitPriceOverride: priceBySupplier[option.key] ?? option.unitPrice,
+          };
+        })
+        .filter((item) => item.quantity > 0);
+      return {
+        actorPlayerId,
+        workerFoodPurchases,
+      };
+    }
     case "BUY_GOODS_AND_SERVICES": {
       const actorPlayerId = toString(parameters.actorPlayerId);
       const actor = state.players.find((player) => player.playerId === actorPlayerId);
@@ -720,6 +994,11 @@ function buildPayload(draft: PendingActionDraft, state: GameState): Record<strin
         policyId: toString(parameters.policyId, state.currentVoteState?.activeProposalPolicyId ?? ""),
         stance: toString(parameters.stance, "FOR"),
       };
+    case "DRAW_VOTING_CUBES":
+      return {
+        actorPlayerId: toString(parameters.actorPlayerId),
+        count: Math.max(1, toInt(parameters.count, 1)),
+      };
     case "CONSUME_HEALTHCARE":
     case "CONSUME_EDUCATION":
     case "CONSUME_LUXURY":
@@ -744,7 +1023,7 @@ function buildPayload(draft: PendingActionDraft, state: GameState): Record<strin
         delta: toInt(parameters.delta, 1),
       };
     case "PLAY_CARD":
-      return buildPlayCardPayload(parameters);
+      return buildPlayCardPayload(parameters, state);
     default:
       return parameters;
   }
@@ -762,113 +1041,158 @@ function ManualPlayCardControls({
   onPatch: (patch: Record<string, unknown>) => void;
 }) {
   const capitalist = state.players.find((player) => player.classType === "CAPITALIST");
-  const selectablePlayers = state.players.filter((player) => player.playerId !== actor?.playerId);
-  const stateToActor = Math.max(0, toInt(parameters.manualStateToActorMoney, 0));
-  const capitalistToActor = Math.max(0, toInt(parameters.manualCapitalistToActorMoney, 0));
-  const actorToState = Math.max(0, toInt(parameters.manualActorToStateMoney, 0));
-  const sourcePlayerId = toString(parameters.manualMoneySourcePlayerId, selectablePlayers[0]?.playerId ?? "");
-  const sourceToActor = Math.max(0, toInt(parameters.manualSourceToActorMoney, 0));
-  const targetPlayerId = toString(parameters.manualMoneyTargetPlayerId, selectablePlayers[0]?.playerId ?? "");
-  const actorToPlayer = Math.max(0, toInt(parameters.manualActorToPlayerMoney, 0));
   const actorMoneyDelta = toInt(parameters.manualActorMoneyDelta, 0);
   const treasuryDelta = toInt(parameters.manualTreasuryDelta, 0);
   const welfareDelta = toInt(parameters.manualWelfareDelta, 0);
   const workersCount = Math.max(0, toInt(parameters.manualWorkersCount, 0));
   const workersColor = toString(parameters.manualWorkersColor, "GRAY").toUpperCase();
+  const manualSection = toString(parameters.manualSection, "resources");
+  const exchangeParties = [
+    { id: "STATE", label: "Государство" },
+    ...state.players.map((player) => ({ id: player.playerId, label: playerLabel(player) })),
+  ];
+  const exchangeLeftId = toString(parameters.manualExchangeLeftId, "STATE");
+  const exchangeRightId = toString(parameters.manualExchangeRightId, actor?.playerId ?? state.players[0]?.playerId ?? "");
+  const exchangeLeftLabel = exchangeParties.find((party) => party.id === exchangeLeftId)?.label ?? "Слева";
+  const exchangeRightLabel = exchangeParties.find((party) => party.id === exchangeRightId)?.label ?? "Справа";
+  const pendingVotePolicies = state.policies.filter((policy) => policy.occupyingProposalToken);
+  const manualVotePolicyId = toString(parameters.manualVotePolicyId, pendingVotePolicies[0]?.id ?? "");
+  const selectedManualVotePolicy = pendingVotePolicies.find((policy) => policy.id === manualVotePolicyId);
+  const manualVoteDrawCount = Math.max(0, toInt(parameters.manualVoteDrawCount, 0));
+  const manualRemoveUnemployedWorkerIds = Array.isArray(parameters.manualRemoveUnemployedWorkerIds)
+    ? parameters.manualRemoveUnemployedWorkerIds.map(String)
+    : [];
+  const unemployedWorkers = state.workers.filter((worker) => worker.location === "UNEMPLOYED");
 
   return (
-    <div className="space-y-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3">
+    <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3">
       <p className="text-xs text-emerald-200">Ручная настройка: применится только для игрока-человека.</p>
       <p className="text-xs text-zinc-300">
         Балансы: игрок {actor?.classType === "CAPITALIST" ? actor.revenue : actor?.money ?? 0} | казна {state.treasury} | капиталист{" "}
         {capitalist?.revenue ?? 0}
       </p>
-      <NumericAdjuster label="Взять деньги у государства" value={stateToActor} min={0} max={999} onChange={(value) => onPatch({ manualStateToActorMoney: value })} />
-      <div className="grid gap-3 rounded-lg border border-zinc-700/70 bg-black/20 p-3 sm:grid-cols-[1fr,1fr]">
-        <div className="space-y-2">
-          <p className="text-xs text-zinc-400">Взять деньги у фракции</p>
-          <Select value={sourcePlayerId} onChange={(event) => onPatch({ manualMoneySourcePlayerId: event.target.value })}>
-            {selectablePlayers.map((player) => (
-              <option key={`source-${player.playerId}`} value={player.playerId}>
-                {player.playerId} ({player.classType})
-              </option>
-            ))}
-          </Select>
-        </div>
-        <NumericAdjuster label="Сумма" value={sourceToActor} min={0} max={999} onChange={(value) => onPatch({ manualSourceToActorMoney: value })} />
+      <div className="grid min-w-0 grid-cols-2 gap-2 rounded-lg border border-zinc-700/70 bg-black/20 p-1">
+        <Button type="button" variant={manualSection === "resources" ? "secondary" : "ghost"} size="sm" className="min-w-0 whitespace-normal px-2 leading-tight" onClick={() => onPatch({ manualSection: "resources" })}>
+          Производство и ресурсы
+        </Button>
+        <Button type="button" variant={manualSection === "voting" ? "secondary" : "ghost"} size="sm" className="min-w-0 whitespace-normal px-2 leading-tight" onClick={() => onPatch({ manualSection: "voting" })}>
+          Голосование
+        </Button>
       </div>
-      <NumericAdjuster
-        label="Взять деньги у капиталиста"
-        value={capitalistToActor}
-        min={0}
-        max={999}
-        onChange={(value) => onPatch({ manualCapitalistToActorMoney: value })}
-      />
-      <NumericAdjuster label="Передать деньги государству" value={actorToState} min={0} max={999} onChange={(value) => onPatch({ manualActorToStateMoney: value })} />
-      <div className="grid gap-3 rounded-lg border border-zinc-700/70 bg-black/20 p-3 sm:grid-cols-[1fr,1fr]">
-        <div className="space-y-2">
-          <p className="text-xs text-zinc-400">Передать деньги фракции</p>
-          <Select value={targetPlayerId} onChange={(event) => onPatch({ manualMoneyTargetPlayerId: event.target.value })}>
-            {selectablePlayers.map((player) => (
-              <option key={`target-${player.playerId}`} value={player.playerId}>
-                {player.playerId} ({player.classType})
-              </option>
-            ))}
-          </Select>
-        </div>
-        <NumericAdjuster label="Сумма" value={actorToPlayer} min={0} max={999} onChange={(value) => onPatch({ manualActorToPlayerMoney: value })} />
-      </div>
-      <NumericAdjuster label="Изменение денег актера (+/-)" value={actorMoneyDelta} min={-999} max={999} onChange={(value) => onPatch({ manualActorMoneyDelta: value })} />
-      <NumericAdjuster label="Изменение казны (+/-)" value={treasuryDelta} min={-999} max={999} onChange={(value) => onPatch({ manualTreasuryDelta: value })} />
-      <NumericAdjuster label="Изменение благосостояния (+/-)" value={welfareDelta} min={-10} max={10} onChange={(value) => onPatch({ manualWelfareDelta: value })} />
 
-      <div className="space-y-2 rounded-lg border border-zinc-700/70 bg-black/20 p-4">
-        <p className="text-xs uppercase tracking-wide text-zinc-300">Государственные предприятия</p>
-        <p className="text-xs text-zinc-500">
-          Три равных типа госпредприятий. Здесь сразу видны количество предприятий и доступный ресурс по каждому типу.
-        </p>
-        <div className="overflow-x-auto">
-          <div className="grid min-w-[720px] grid-cols-3 gap-3">
-          {STATE_ENTERPRISE_RESOURCE_BLOCKS.map((block) => {
-            const enterpriseCount = state.enterprises.filter((enterprise) => enterprise.id.startsWith(block.enterpriseIdPrefix)).length;
-            const availableResource = stateStorageAmount(state, block.storageKeys);
-            const selectedAmount = Math.max(0, toInt(parameters[manualResourceParamKey("STATE", block.resourceType)], 0));
-            return (
-              <div key={block.enterpriseIdPrefix} className="space-y-2 rounded-lg border border-zinc-700/70 bg-zinc-950/40 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-200">{block.enterpriseLabel}</p>
-                <p className="text-xs text-zinc-400">Предприятий: {enterpriseCount}</p>
-                <p className="text-xs text-zinc-400">
-                  {block.resourceLabel}: {availableResource}
-                </p>
-                <NumericAdjuster
-                  label={`Забрать ${block.resourceLabel.toLowerCase()}`}
-                  value={selectedAmount}
-                  min={0}
-                  max={availableResource}
-                  onChange={(value) => onPatch({ [manualResourceParamKey("STATE", block.resourceType)]: value })}
-                />
+      {manualSection === "resources" && (
+        <>
+      <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden rounded-lg border border-zinc-700/70 bg-black/20 p-3">
+        <div className="grid min-w-0 grid-cols-1 gap-3">
+          <PartyButtonPicker
+            label="Сторона слева"
+            parties={exchangeParties}
+            selectedId={exchangeLeftId}
+            onSelect={(partyId) => onPatch({ manualExchangeLeftId: partyId })}
+          />
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 w-full max-w-[8rem] px-3"
+              onClick={() => onPatch({ manualExchangeLeftId: exchangeRightId, manualExchangeRightId: exchangeLeftId })}
+              aria-label="Поменять стороны обмена"
+            >
+              ⇄
+            </Button>
+          </div>
+          <PartyButtonPicker
+            label="Сторона справа"
+            parties={exchangeParties}
+            selectedId={exchangeRightId}
+            onSelect={(partyId) => onPatch({ manualExchangeRightId: partyId })}
+          />
+        </div>
+
+        <div className="grid min-w-0 grid-cols-1 gap-3">
+          <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden rounded-md border border-zinc-700/60 bg-black/25 p-3">
+            <p className="break-words text-xs font-semibold leading-snug text-zinc-200">{exchangeLeftLabel} → {exchangeRightLabel}</p>
+            <NumericAdjuster label="Деньги" value={Math.max(0, toInt(parameters.manualExchangeLeftToRightMoney, 0))} min={0} max={999} onChange={(value) => onPatch({ manualExchangeLeftToRightMoney: value })} />
+            <div className="grid min-w-0 grid-cols-1 gap-2">
+              <div className="min-w-0 space-y-2">
+                <p className="text-xs text-zinc-400">Ресурс</p>
+                <Select value={toString(parameters.manualExchangeLeftToRightResourceType, "FOOD")} onChange={(event) => onPatch({ manualExchangeLeftToRightResourceType: event.target.value })}>
+                  {MANUAL_RESOURCE_OPTIONS.map((resource) => (
+                    <option key={`left-to-right-resource-${resource.id}`} value={resource.id}>
+                      {resource.label}
+                    </option>
+                  ))}
+                </Select>
               </div>
-            );
-          })}
+              <NumericAdjuster label="Кол-во" value={Math.max(0, toInt(parameters.manualExchangeLeftToRightResourceAmount, 0))} min={0} max={999} onChange={(value) => onPatch({ manualExchangeLeftToRightResourceAmount: value })} />
+            </div>
+          </div>
+
+          <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden rounded-md border border-zinc-700/60 bg-black/25 p-3">
+            <p className="break-words text-xs font-semibold leading-snug text-zinc-200">{exchangeRightLabel} → {exchangeLeftLabel}</p>
+            <NumericAdjuster label="Деньги" value={Math.max(0, toInt(parameters.manualExchangeRightToLeftMoney, 0))} min={0} max={999} onChange={(value) => onPatch({ manualExchangeRightToLeftMoney: value })} />
+            <div className="grid min-w-0 grid-cols-1 gap-2">
+              <div className="min-w-0 space-y-2">
+                <p className="text-xs text-zinc-400">Ресурс</p>
+                <Select value={toString(parameters.manualExchangeRightToLeftResourceType, "FOOD")} onChange={(event) => onPatch({ manualExchangeRightToLeftResourceType: event.target.value })}>
+                  {MANUAL_RESOURCE_OPTIONS.map((resource) => (
+                    <option key={`right-to-left-resource-${resource.id}`} value={resource.id}>
+                      {resource.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <NumericAdjuster label="Кол-во" value={Math.max(0, toInt(parameters.manualExchangeRightToLeftResourceAmount, 0))} min={0} max={999} onChange={(value) => onPatch({ manualExchangeRightToLeftResourceAmount: value })} />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-2 rounded-lg border border-zinc-700/70 bg-black/20 p-3">
-        <p className="text-xs uppercase tracking-wide text-zinc-300">Взять ресурсы у капиталиста</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {MANUAL_RESOURCE_OPTIONS.map((resource) => (
-            <NumericAdjuster
-              key={`capitalist-resource-${resource.id}`}
-              label={resource.label}
-              value={Math.max(0, toInt(parameters[manualResourceParamKey("CAPITALIST", resource.id)], 0))}
-              min={0}
-              max={99}
-              onChange={(value) => onPatch({ [manualResourceParamKey("CAPITALIST", resource.id)]: value })}
-            />
-          ))}
-        </div>
+      <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden rounded-lg border border-zinc-700/70 bg-black/20 p-3">
+        <p className="text-xs font-semibold text-zinc-200">Очки победы</p>
+        {state.players.map((player) => (
+          <NumericAdjuster
+            key={`manual-vp-${player.playerId}`}
+            label={`${playerLabel(player)}: сейчас ${player.victoryPoints}`}
+            value={toInt(parameters[manualVictoryPointParamKey(player.playerId)], 0)}
+            min={-999}
+            max={999}
+            onChange={(value) => onPatch({ [manualVictoryPointParamKey(player.playerId)]: value })}
+          />
+        ))}
       </div>
+
+      <div className="space-y-3 rounded-lg border border-zinc-700/70 bg-black/20 p-3">
+        <p className="text-xs font-semibold text-zinc-200">Убрать рабочих с безработицы</p>
+        {unemployedWorkers.length === 0 && <p className="text-xs text-zinc-500">На клетке безработных нет рабочих.</p>}
+        {unemployedWorkers.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {unemployedWorkers.map((worker) => {
+              const selected = manualRemoveUnemployedWorkerIds.includes(worker.id);
+              const nextIds = selected
+                ? manualRemoveUnemployedWorkerIds.filter((workerId) => workerId !== worker.id)
+                : [...manualRemoveUnemployedWorkerIds, worker.id];
+              return (
+                <Button
+                  key={`manual-remove-unemployed-${worker.id}`}
+                  type="button"
+                  variant={selected ? "secondary" : "outline"}
+                  size="sm"
+                  className="px-2 text-xs"
+                  onClick={() => onPatch({ manualRemoveUnemployedWorkerIds: nextIds })}
+                >
+                  {workerLabel(worker)}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <NumericAdjuster label="Изменение денег актера (+/-)" value={actorMoneyDelta} min={-999} max={999} onChange={(value) => onPatch({ manualActorMoneyDelta: value })} />
+      <NumericAdjuster label="Изменение казны (+/-)" value={treasuryDelta} min={-999} max={999} onChange={(value) => onPatch({ manualTreasuryDelta: value })} />
+      <NumericAdjuster label="Изменение благосостояния (+/-)" value={welfareDelta} min={-10} max={10} onChange={(value) => onPatch({ manualWelfareDelta: value })} />
 
       <div className="grid gap-3 rounded-lg border border-zinc-700/70 bg-black/20 p-3 sm:grid-cols-2">
         <div className="space-y-2">
@@ -878,13 +1202,131 @@ function ManualPlayCardControls({
             <option value="GREEN">Зеленый</option>
             <option value="BLUE">Синий</option>
             <option value="WHITE">Белый</option>
-            <option value="RED">Красный</option>
             <option value="ORANGE">Оранжевый</option>
             <option value="PURPLE">Фиолетовый</option>
           </Select>
         </div>
-        <NumericAdjuster label="Сколько добавить работников" value={workersCount} min={0} max={5} onChange={(value) => onPatch({ manualWorkersCount: value })} />
+        <WorkerCountStepper value={workersCount} min={0} max={5} onChange={(value) => onPatch({ manualWorkersCount: value })} />
       </div>
+        </>
+      )}
+
+      {manualSection === "voting" && (
+        <div className="space-y-3 rounded-lg border border-zinc-700/70 bg-black/20 p-3">
+          <div className="rounded-lg border border-zinc-700/60 bg-black/30 p-3 text-xs text-zinc-300">
+            В мешке сейчас: рабочие {state.votingBag.worker ?? 0}, средний класс {state.votingBag.middleClass ?? 0}, капиталисты {state.votingBag.capitalist ?? 0}.
+            Предпросмотр достанет кубики без сохранения; “Подтвердить” примет результат и запустит внеочередное голосование.
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-zinc-200">Добавить в мешок</p>
+            <VotingCubeCounter
+              label="Рабочие"
+              available={state.votingBag.worker ?? 0}
+              maxValue={99}
+              metaLabel={`сейчас ${state.votingBag.worker ?? 0}`}
+              value={Math.max(0, toInt(parameters.manualAddWorkerCubes, 0))}
+              onChange={(value) => onPatch({ manualAddWorkerCubes: value })}
+            />
+            <VotingCubeCounter
+              label="Средний класс"
+              available={state.votingBag.middleClass ?? 0}
+              maxValue={99}
+              metaLabel={`сейчас ${state.votingBag.middleClass ?? 0}`}
+              value={Math.max(0, toInt(parameters.manualAddMiddleClassCubes, 0))}
+              onChange={(value) => onPatch({ manualAddMiddleClassCubes: value })}
+            />
+            <VotingCubeCounter
+              label="Капиталисты"
+              available={state.votingBag.capitalist ?? 0}
+              maxValue={99}
+              metaLabel={`сейчас ${state.votingBag.capitalist ?? 0}`}
+              value={Math.max(0, toInt(parameters.manualAddCapitalistCubes, 0))}
+              onChange={(value) => onPatch({ manualAddCapitalistCubes: value })}
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-[1fr,160px]">
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400">Законопроект</p>
+              <Select value={manualVotePolicyId} onChange={(event) => onPatch({ manualVotePolicyId: event.target.value })}>
+                {pendingVotePolicies.map((policy) => (
+                  <option key={`manual-vote-${policy.id}`} value={policy.id}>
+                    {POLICY_LABEL[policy.id] ?? policy.id}
+                  </option>
+                ))}
+              </Select>
+              {pendingVotePolicies.length === 0 && <p className="text-xs text-rose-300">Нет внесенных законопроектов для внеочередного голосования.</p>}
+            </div>
+            <NumericAdjuster label="Случайно достать" value={manualVoteDrawCount} min={0} max={999} onChange={(value) => onPatch({ manualVoteDrawCount: value })} />
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400">Подвинуть предложенный курс</p>
+              <Select
+                value={toString(parameters.manualProposalTargetCourse, selectedManualVotePolicy?.occupyingProposalToken?.targetCourse ?? "")}
+                onChange={(event) => onPatch({ manualProposalTargetCourse: event.target.value })}
+              >
+                <option value="">Не менять</option>
+                <option value="A">Курс A</option>
+                <option value="B">Курс B</option>
+                <option value="C">Курс C</option>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-zinc-200">Выкинуть из мешка</p>
+              <VotingCubeCounter
+                label="Рабочие"
+                available={state.votingBag.worker ?? 0}
+                value={Math.max(0, toInt(parameters.manualDiscardWorkerCubes, 0))}
+                onChange={(value) => onPatch({ manualDiscardWorkerCubes: value })}
+              />
+              <VotingCubeCounter
+                label="Средний класс"
+                available={state.votingBag.middleClass ?? 0}
+                value={Math.max(0, toInt(parameters.manualDiscardMiddleClassCubes, 0))}
+                onChange={(value) => onPatch({ manualDiscardMiddleClassCubes: value })}
+              />
+              <VotingCubeCounter
+                label="Капиталисты"
+                available={state.votingBag.capitalist ?? 0}
+                value={Math.max(0, toInt(parameters.manualDiscardCapitalistCubes, 0))}
+                onChange={(value) => onPatch({ manualDiscardCapitalistCubes: value })}
+              />
+            </div>
+          </div>
+          <p className="text-xs font-semibold text-zinc-200">Достать из мешка вручную</p>
+          <div className="space-y-2">
+            <VotingCubeCounter
+              label="Рабочие"
+              available={state.votingBag.worker ?? 0}
+              value={Math.max(0, toInt(parameters.manualVoteWorkerCubes, 0))}
+              onChange={(value) => onPatch({ manualVoteWorkerCubes: value })}
+            />
+            <VotingCubeCounter
+              label="Средний класс"
+              available={state.votingBag.middleClass ?? 0}
+              value={Math.max(0, toInt(parameters.manualVoteMiddleClassCubes, 0))}
+              onChange={(value) => onPatch({ manualVoteMiddleClassCubes: value })}
+            />
+            <VotingCubeCounter
+              label="Капиталисты"
+              available={state.votingBag.capitalist ?? 0}
+              value={Math.max(0, toInt(parameters.manualVoteCapitalistCubes, 0))}
+              onChange={(value) => onPatch({ manualVoteCapitalistCubes: value })}
+            />
+          </div>
+          <p className="text-xs text-zinc-400">
+            Эти кубики будут вынуты из мешка точным составом вместо случайной вытяжки. При необходимости включите возврат уже вытянутых кубиков перед новой ручной вытяжкой.
+          </p>
+          <Button
+            type="button"
+            variant={parameters.manualVoteReturnDrawn ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => onPatch({ manualVoteReturnDrawn: !parameters.manualVoteReturnDrawn })}
+          >
+            {parameters.manualVoteReturnDrawn ? "Кубики будут возвращены" : "Вернуть уже вытянутые кубики в мешок"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -919,6 +1361,10 @@ export function PendingActionPanel({
   );
   const stanceSubmittedPlayers = new Set(Object.keys(voteSession?.stanceByPlayer ?? {}));
   const influenceCommittedPlayers = new Set(Object.keys(voteSession?.influenceCommitments ?? {}));
+  const votingBagTotal = Math.max(
+    0,
+    (state.votingBag.worker ?? 0) + (state.votingBag.middleClass ?? 0) + (state.votingBag.capitalist ?? 0),
+  );
   const stancePlayerOptions = voteSession
     ? state.players.filter((player) => !stanceSubmittedPlayers.has(player.playerId))
     : state.players;
@@ -932,13 +1378,22 @@ export function PendingActionPanel({
   const extraordinaryProposalOptions = state.policies.filter(
     (policy) => policy.occupyingProposalToken && proposalOwnerPlayerId(policy, state) === actorPlayerId,
   );
+  const capitalistEnterpriseMarket = Array.isArray(state.capitalistEnterpriseMarket) ? state.capitalistEnterpriseMarket : [];
 
   const buyResourceType = toString(parameters.resourceType, "FOOD").toUpperCase();
+  const workerPlayer = state.players.find((player) => player.classType === "WORKER");
+  const isProductionResolve = actionType === "RESOLVE_PRODUCTION_PHASE";
   const buyQuantityBySupplier = actionType === "BUY_GOODS_AND_SERVICES" ? normalizeQuantityMap(parameters.buyQuantityBySupplier) : {};
   const buyPriceBySupplier = actionType === "BUY_GOODS_AND_SERVICES" ? normalizeNonnegativeNumberMap(parameters.buyPriceBySupplier) : {};
+  const workerFoodQuantityBySupplier = isProductionResolve ? normalizeQuantityMap(parameters.workerFoodQuantityBySupplier) : {};
+  const workerFoodPriceBySupplier = isProductionResolve ? normalizeNonnegativeNumberMap(parameters.workerFoodPriceBySupplier) : {};
   const supplierOptions = useMemo(
     () => (actionType === "BUY_GOODS_AND_SERVICES" ? resolveSupplierOptions(state, actor, buyResourceType) : []),
     [actionType, state, actor, buyResourceType],
+  );
+  const workerFoodSupplierOptions = useMemo(
+    () => (isProductionResolve ? resolveSupplierOptions(state, workerPlayer, "FOOD") : []),
+    [isProductionResolve, state, workerPlayer],
   );
   const buyPlan = useMemo(
     () =>
@@ -953,6 +1408,19 @@ export function PendingActionPanel({
     [supplierOptions, actor?.population, buyQuantityBySupplier, buyPriceBySupplier],
   );
   const buyTotalCost = useMemo(() => buyPlan.reduce((sum, item) => sum + item.cost, 0), [buyPlan]);
+  const workerFoodPlan = useMemo(
+    () =>
+      workerFoodSupplierOptions
+        .map((option) => {
+          const maxAllowed = Math.min(Math.max(0, workerPlayer?.population ?? 0), option.available);
+          const quantity = Math.min(maxAllowed, Math.max(0, toInt(workerFoodQuantityBySupplier[option.key], 0)));
+          const unitPrice = workerFoodPriceBySupplier[option.key] ?? option.unitPrice;
+          return { option, quantity, unitPrice, cost: quantity * unitPrice };
+        })
+        .filter((item) => item.quantity > 0),
+    [workerFoodSupplierOptions, workerPlayer?.population, workerFoodQuantityBySupplier, workerFoodPriceBySupplier],
+  );
+  const workerFoodTotalCost = useMemo(() => workerFoodPlan.reduce((sum, item) => sum + item.cost, 0), [workerFoodPlan]);
   const selectedWorkerIds = actionType === "ASSIGN_WORKERS" ? collectSelectedWorkerIds(parameters) : [];
   const selectedWorkers = useMemo(
     () =>
@@ -1021,6 +1489,18 @@ export function PendingActionPanel({
     }
     onPatchParameters({ buyQuantityBySupplier: next });
   };
+  const setWorkerFoodQuantity = (supplierKey: string, value: number) => {
+    const option = workerFoodSupplierOptions.find((item) => item.key === supplierKey);
+    const maxAllowed = option ? Math.min(Math.max(0, workerPlayer?.population ?? 0), option.available) : 0;
+    const clamped = Math.max(0, Math.min(maxAllowed, value));
+    const next = { ...workerFoodQuantityBySupplier };
+    if (clamped > 0) {
+      next[supplierKey] = clamped;
+    } else {
+      delete next[supplierKey];
+    }
+    onPatchParameters({ workerFoodQuantityBySupplier: next });
+  };
 
   const removeSelectedWorker = (workerId: string) => {
     const nextIds = selectedWorkerIds.filter((id) => id !== workerId);
@@ -1031,16 +1511,7 @@ export function PendingActionPanel({
   };
 
   if (!draft) {
-    return (
-      <Card className="border-zinc-700/80 bg-zinc-950/80">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm uppercase tracking-[0.18em] text-zinc-300">Ожидающее действие</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-zinc-400">Выберите действие слева. Все параметры настраиваются через UI, без JSON.</p>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   const payload = buildPayload(draft, state);
@@ -1049,15 +1520,15 @@ export function PendingActionPanel({
   const effectiveSubmitActionType: ActionType = submitActionType ?? draft.actionType;
 
   return (
-    <Card className="border-zinc-700/80 bg-zinc-950/80">
-      <CardHeader className="pb-2">
+    <Card className="border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))]">
+      <CardHeader className="border-b border-[#9b7338]/35 px-3 pb-2 pt-3">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm uppercase tracking-[0.18em] text-zinc-300">Ожидающее действие</CardTitle>
+          <CardTitle className="text-sm uppercase text-[#d8b56b]">Ожидающее действие</CardTitle>
           <Badge tone="warning">{actionLabel}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between rounded-lg border border-zinc-700/70 bg-black/20 p-2 text-xs text-zinc-300">
+      <CardContent className="space-y-3 p-3">
+        <div className="flex items-center justify-between rounded-md border border-[#8f6b35]/55 bg-black/25 p-2 text-xs text-zinc-300">
           <span>Шаг сценария</span>
           <div className="flex items-center gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => onSetStep(Math.max(1, step - 1))}>
@@ -1138,7 +1609,7 @@ export function PendingActionPanel({
         {actionType === "ASSIGN_WORKERS" && (
           <div className="space-y-3 rounded-lg border border-zinc-700/70 bg-black/20 p-3">
             <p className="text-sm text-zinc-300">
-              1) Кликните рабочих на поле. 2) Кликните предприятие. Назначение произойдет автоматически.
+              1) Кликните рабочих на поле. 2) Кликните предприятие. Назначение произойдет автоматически, подходящие слоты подбираются по цвету.
             </p>
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wide text-zinc-400">Выбранные рабочие</p>
@@ -1182,6 +1653,150 @@ export function PendingActionPanel({
                 {currentAssignments.map((assignment, index) => (
                   <p key={`${assignment.workerId}-${assignment.targetId}-${index}`} className="text-xs text-zinc-300">
                     Рабочий #{workerNo(assignment.workerId)} {"->"} {assignmentTargetLabel(assignment.targetId)}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {actionType === "PLACE_STRIKES" && (
+          <div className="space-y-3 rounded-lg border border-amber-500/35 bg-amber-500/10 p-3">
+            <p className="text-sm text-zinc-200">
+              Выберите предприятия, где заняты рабочие Рабочего класса, нет трудового договора и зарплата ниже 3 уровня.
+            </p>
+            <div className="grid gap-2">
+              {state.enterprises
+                .filter((enterprise) => {
+                  const hasWorker = enterprise.slots.some((slot) => {
+                    const worker = state.workers.find((candidate) => candidate.id === slot.occupiedWorkerId);
+                    return worker?.classType === "WORKER" && !worker.tiedContract;
+                  });
+                  return hasWorker && enterprise.wageLevel < 3 && !(enterprise as typeof enterprise & { strikeToken?: boolean }).strikeToken;
+                })
+                .map((enterprise) => {
+                  const selected = Array.isArray(parameters.enterpriseIds)
+                    ? parameters.enterpriseIds.map(String).includes(enterprise.id)
+                    : false;
+                  const currentIds = Array.isArray(parameters.enterpriseIds) ? parameters.enterpriseIds.map(String) : [];
+                  return (
+                    <button
+                      key={enterprise.id}
+                      type="button"
+                      onClick={() => {
+                        const next = selected
+                          ? currentIds.filter((id) => id !== enterprise.id)
+                          : [...currentIds, enterprise.id];
+                        onPatchParameters({ enterpriseIds: next });
+                      }}
+                      className={`rounded-md border px-3 py-2 text-left text-sm transition ${
+                        selected
+                          ? "border-amber-300/75 bg-amber-400/20 text-amber-100"
+                          : "border-zinc-700/70 bg-black/25 text-zinc-300 hover:border-amber-400/50"
+                      }`}
+                    >
+                      {compactEntityLabel(enterprise.id)} • зарплата L{enterprise.wageLevel}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {actionType === "PLACE_DEMONSTRATION" && (
+          <div className="space-y-3 rounded-lg border border-sky-500/35 bg-sky-500/10 p-3">
+            <p className="text-sm text-zinc-200">
+              Жетон демонстрации ставится на клетку безработных. Если он доживет до производства, Рабочий класс получит влияние, а соперники потеряют ПО.
+            </p>
+            <div className="grid gap-2">
+              {state.players
+                .filter((player) => player.classType !== "WORKER")
+                .map((player) => {
+                  const allocation = normalizeNonnegativeNumberMap(parameters.penaltyAllocation);
+                  return (
+                    <NumericAdjuster
+                      key={player.playerId}
+                      label={`Штраф ПО: ${playerLabel(player)}`}
+                      value={allocation[player.playerId] ?? 0}
+                      min={0}
+                      max={20}
+                      onChange={(value) =>
+                        onPatchParameters({
+                          penaltyAllocation: {
+                            ...allocation,
+                            [player.playerId]: value,
+                          },
+                        })
+                      }
+                    />
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {actionType === "RESOLVE_PRODUCTION_PHASE" && workerPlayer && (
+          <div className="space-y-3 rounded-xl border border-emerald-500/35 bg-emerald-500/10 p-3">
+            <div>
+              <p className="text-sm font-semibold text-emerald-100">Покупка еды для Рабочего класса</p>
+              <p className="text-xs text-zinc-400">
+                Население: {workerPlayer.population}. Если указать план, движок купит еду именно у выбранных поставщиков.
+              </p>
+            </div>
+            <div className="rounded-lg border border-zinc-700/60 bg-black/30 p-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-400">Итого по выбранному плану</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-200">{workerFoodTotalCost}</p>
+            </div>
+            {workerFoodSupplierOptions.map((option) => {
+              const maxAllowed = Math.min(Math.max(0, workerPlayer.population), option.available);
+              const quantity = Math.min(maxAllowed, Math.max(0, toInt(workerFoodQuantityBySupplier[option.key], 0)));
+              return (
+                <div key={`worker-food-${option.key}`} className="grid gap-2 rounded-lg border border-zinc-700/60 p-3 sm:grid-cols-[1fr,150px]">
+                  <div className="space-y-1">
+                    <p className="text-sm text-zinc-100">{option.label}</p>
+                    <p className="text-xs text-zinc-400">
+                      Доступно: {option.available} | Цена: {option.unitPrice} | Максимум: {maxAllowed}
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setWorkerFoodQuantity(option.key, quantity - 1)}>
+                        -
+                      </Button>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={maxAllowed}
+                        value={quantity}
+                        onChange={(event) => setWorkerFoodQuantity(option.key, toInt(event.target.value, quantity))}
+                      />
+                      <Button type="button" variant="outline" size="sm" onClick={() => setWorkerFoodQuantity(option.key, quantity + 1)}>
+                        +
+                      </Button>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={workerFoodPriceBySupplier[option.key] ?? option.unitPrice}
+                      onChange={(event) =>
+                        onPatchParameters({
+                          workerFoodPriceBySupplier: {
+                            ...workerFoodPriceBySupplier,
+                            [option.key]: Math.max(0, toInt(event.target.value, option.unitPrice)),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            {workerFoodPlan.length > 0 && (
+              <div className="rounded-lg border border-zinc-700/60 bg-black/20 p-3">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">План кормления</p>
+                {workerFoodPlan.map((item) => (
+                  <p key={`worker-food-plan-${item.option.key}`} className="text-xs text-zinc-200">
+                    Еда: {item.quantity} у {item.option.label} (цена: {item.unitPrice}, стоимость: {item.cost})
                   </p>
                 ))}
               </div>
@@ -1379,6 +1994,37 @@ export function PendingActionPanel({
           </div>
         )}
 
+        {actionType === "BUILD_ENTERPRISE" && capitalistEnterpriseMarket.length > 0 && (
+          <div className="grid gap-3">
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400">Предприятие из рынка капиталиста</p>
+              <Select
+                value={toString(parameters.enterpriseId, capitalistEnterpriseMarket[0]?.id ?? "")}
+                onChange={(event) => {
+                  const enterprise = capitalistEnterpriseMarket.find((candidate) => candidate.id === event.target.value);
+                  onPatchParameters({ enterpriseId: event.target.value, cost: enterprise?.cost ?? 20 });
+                }}
+              >
+                {capitalistEnterpriseMarket.map((enterprise) => (
+                  <option key={enterprise.id} value={enterprise.id}>
+                    {(enterprise.name ?? enterprise.id)} — {enterprise.cost} монет
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <NumericAdjuster
+              label="Уровень зарплаты при найме"
+              value={Math.max(1, toInt(parameters.wageLevel, 2))}
+              min={1}
+              max={3}
+              onChange={(value) => onPatchParameters({ wageLevel: value })}
+            />
+            <p className="text-xs text-zinc-400">
+              После постройки выбранная карточка уйдет с рынка; новые карточки добираются в фазе подготовки следующего раунда.
+            </p>
+          </div>
+        )}
+
         {actionType === "COMMIT_VOTE_INFLUENCE" && (
           <div className="grid gap-3">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -1402,6 +2048,25 @@ export function PendingActionPanel({
             />
             <p className="text-xs text-zinc-400">
               Каждый потраченный жетон влияния добавляет 1 голос к выбранной стороне игрока. После последнего подтверждения движок покажет результат.
+            </p>
+          </div>
+        )}
+
+        {actionType === "DRAW_VOTING_CUBES" && (
+          <div className="grid gap-3">
+            <div className="rounded-lg border border-zinc-700/60 bg-black/30 p-3 text-xs text-zinc-300">
+              В мешке сейчас: рабочие {state.votingBag.worker ?? 0}, средний класс {state.votingBag.middleClass ?? 0}, капиталисты{" "}
+              {state.votingBag.capitalist ?? 0}.
+            </div>
+            <NumericAdjuster
+              label="Сколько кубиков достать"
+              value={Math.max(1, toInt(parameters.count, Math.min(5, Math.max(1, votingBagTotal))))}
+              min={1}
+              max={Math.max(1, votingBagTotal)}
+              onChange={(value) => onPatchParameters({ count: value })}
+            />
+            <p className="text-xs text-zinc-400">
+              Движок случайно достанет выбранное количество кубиков и сразу переведет голосование к вложению влияния.
             </p>
           </div>
         )}
@@ -1459,6 +2124,7 @@ export function PendingActionPanel({
                 <p>Дельта денег: {stringifyUnknown(lastPreviewResult.delta.moneyDeltaByPlayer)}</p>
                 <p>Дельта ресурсов: {stringifyUnknown(lastPreviewResult.delta.resourceDeltaByPlayer)}</p>
                 <p>Движение рабочих: {stringifyUnknown(lastPreviewResult.delta.workerMovement)}</p>
+                {lastPreviewResult.delta.notes.length > 0 && <p>Заметки: {lastPreviewResult.delta.notes.join(" | ")}</p>}
               </div>
             )}
           </div>

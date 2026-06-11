@@ -281,9 +281,9 @@ class GameApiIntegrationTest {
     @Test
     void getStateShowsBusinessDealAndExportCardSetup() {
         JsonNode state = restTemplate.getForEntity(baseUrl, JsonNode.class).getBody().path("gameState");
-        assertThat(state.path("businessDealDeck").path("visibleCardIds").toString()).contains("business-deal-01");
-        assertThat(state.path("businessDealDeck").path("visibleCardIds").toString()).doesNotContain("business-deal-02");
-        assertThat(state.path("activeExportCard").path("cardId").asText()).isEqualTo("export-card-01");
+        assertThat(state.path("businessDealDeck").path("visibleCardIds").isArray()).isTrue();
+        assertThat(state.path("businessDealDeck").path("visibleCardIds").size()).isEqualTo(1);
+        assertThat(state.path("activeExportCard").path("cardId").asText()).startsWith("export-card-");
         assertThat(state.path("activeExportCard").path("offers").isArray()).isTrue();
         assertThat(state.path("activeExportCard").path("offers").size()).isEqualTo(8);
     }

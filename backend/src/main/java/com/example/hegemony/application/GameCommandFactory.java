@@ -12,11 +12,13 @@ import com.example.hegemony.domain.command.AssignWorkersCommand;
 import com.example.hegemony.domain.command.AssignmentTargetType;
 import com.example.hegemony.domain.command.BuyGoodsAndServicesCommand;
 import com.example.hegemony.domain.command.CallExtraordinaryVoteCommand;
+import com.example.hegemony.domain.command.CapitalistActionCommand;
 import com.example.hegemony.domain.command.CommitVoteInfluenceCommand;
 import com.example.hegemony.domain.command.ConsumeEducationCommand;
 import com.example.hegemony.domain.command.ConsumeHealthcareCommand;
 import com.example.hegemony.domain.command.ConsumeLuxuryCommand;
 import com.example.hegemony.domain.command.DeclareVoteStanceCommand;
+import com.example.hegemony.domain.command.DrawVotingCubesCommand;
 import com.example.hegemony.domain.command.EndTurnCommand;
 import com.example.hegemony.domain.command.GameCommand;
 import com.example.hegemony.domain.command.HireWorkerCommand;
@@ -50,7 +52,10 @@ public class GameCommandFactory {
         return switch (type) {
             case ADVANCE_TO_VOTING -> new AdvanceToVotingCommand(stringParam(params, "actorPlayerId", ""));
             case ADVANCE_TO_PRODUCTION -> new AdvanceToProductionCommand(stringParam(params, "actorPlayerId", ""));
-            case RESOLVE_PRODUCTION_PHASE -> new ResolveProductionPhaseCommand(stringParam(params, "actorPlayerId", ""));
+            case RESOLVE_PRODUCTION_PHASE -> new ResolveProductionPhaseCommand(
+                    stringParam(params, "actorPlayerId", ""),
+                    purchaseItems(params.get("workerFoodPurchases"))
+            );
             case ADVANCE_TO_SCORING -> new AdvanceToScoringCommand(stringParam(params, "actorPlayerId", ""));
             case RESOLVE_SCORING_PHASE -> new ResolveScoringPhaseCommand(stringParam(params, "actorPlayerId", ""));
             case ADVANCE_TO_NEXT_ROUND -> new AdvanceToNextRoundCommand(stringParam(params, "actorPlayerId", ""));
@@ -62,6 +67,10 @@ public class GameCommandFactory {
                     PolicyId.valueOf(stringParam(params, "policyId", "").toUpperCase()),
                     stringParam(params, "stance", "")
             );
+            case DRAW_VOTING_CUBES -> new DrawVotingCubesCommand(
+                    stringParam(params, "actorPlayerId", ""),
+                    intParam(params, "count", 5)
+            );
             case COMMIT_VOTE_INFLUENCE -> new CommitVoteInfluenceCommand(
                     stringParam(params, "actorPlayerId", ""),
                     intParam(params, "influenceAmount", 0)
@@ -72,6 +81,25 @@ public class GameCommandFactory {
                     PolicyCourse.valueOf(stringParam(params, "targetCourse", "").toUpperCase())
             );
             case ADD_VOTING_CUBES -> new AddVotingCubesCommand(stringParam(params, "actorPlayerId", ""));
+            case BUILD_ENTERPRISE,
+                 SELL_ENTERPRISE,
+                 SELL_ON_EXTERNAL_MARKET,
+                 MAKE_BUSINESS_DEAL,
+                 LOBBY_INTERESTS,
+                 CHANGE_PRICES,
+                 CHANGE_WAGES,
+                 PAY_BONUS,
+                 BUY_STORAGE,
+                 TAKE_STATE_BENEFITS,
+                 REPAY_LOAN,
+                 RESPOND_TO_EVENT,
+                 MEET_DEPUTIES,
+                 INTRODUCE_EXTRA_TAX,
+                 RUN_CAMPAIGN -> new CapitalistActionCommand(
+                    type,
+                    stringParam(params, "actorPlayerId", ""),
+                    params == null ? Map.of() : Map.copyOf(params)
+            );
             case CALL_EXTRAORDINARY_VOTE -> new CallExtraordinaryVoteCommand(
                     stringParam(params, "actorPlayerId", ""),
                     PolicyId.valueOf(stringParam(params, "policyId", "").toUpperCase())
@@ -123,21 +151,7 @@ public class GameCommandFactory {
             case BUY_GOODS_AND_SERVICES -> {
                 String actorPlayerId = stringParam(params, "actorPlayerId", "");
                 String resourceType = stringParam(params, "resourceType", "");
-                Object raw = params.get("purchases");
-                List<PurchaseItem> purchases = new ArrayList<>();
-                if (raw instanceof List<?> list) {
-                    for (Object item : list) {
-                        if (item instanceof Map<?, ?> row) {
-                            Map<String, Object> cast = (Map<String, Object>) row;
-                            purchases.add(new PurchaseItem(
-                                    supplierTypeParam(cast, "supplierType"),
-                                    nullableStringParam(cast, "supplierPlayerId"),
-                                    intParam(cast, "quantity", 0),
-                                    nullableIntParam(cast, "unitPriceOverride")
-                            ));
-                        }
-                    }
-                }
+                List<PurchaseItem> purchases = purchaseItems(params.get("purchases"));
                 yield new BuyGoodsAndServicesCommand(actorPlayerId, resourceType, purchases);
             }
             case CONSUME_HEALTHCARE -> new ConsumeHealthcareCommand(stringParam(params, "actorPlayerId", ""));
@@ -162,6 +176,25 @@ public class GameCommandFactory {
             }
             case PLAY_CARD -> new PlayCardCommand(stringParam(params, "cardId", ""));
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<PurchaseItem> purchaseItems(Object raw) {
+        List<PurchaseItem> purchases = new ArrayList<>();
+        if (raw instanceof List<?> list) {
+            for (Object item : list) {
+                if (item instanceof Map<?, ?> row) {
+                    Map<String, Object> cast = (Map<String, Object>) row;
+                    purchases.add(new PurchaseItem(
+                            supplierTypeParam(cast, "supplierType"),
+                            nullableStringParam(cast, "supplierPlayerId"),
+                            intParam(cast, "quantity", 0),
+                            nullableIntParam(cast, "unitPriceOverride")
+                    ));
+                }
+            }
+        }
+        return purchases;
     }
 
     private int intParam(Map<String, Object> params, String key, int defaultValue) {

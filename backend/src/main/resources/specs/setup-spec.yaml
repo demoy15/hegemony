@@ -59,7 +59,11 @@ enterprise_registry:
       workers:
         slots:
           - kind: worker
-            count: 2
+            count: 1
+            qualification: skilled
+            color: green
+          - kind: worker
+            count: 1
             qualification: unskilled
             color: gray
       wages:
@@ -70,7 +74,7 @@ enterprise_registry:
     - id: college
       name: "Колледж"
       category: education
-      cost: 19
+      cost: 16
       is_starting: true
       production:
         output: education
@@ -92,9 +96,9 @@ enterprise_registry:
         high: 30
 
     - id: polyclinic
-      name: "Поликлиника"
+      name: "Клиника"
       category: healthcare
-      cost: 19
+      cost: 16
       is_starting: true
       production:
         output: healthcare
@@ -140,7 +144,7 @@ enterprise_registry:
         high: 25
 
     - id: automobile_factory
-      name: "Завод автомобилей"
+      name: "Автопроизводитель"
       category: luxury
       cost: 45
       is_starting: false
@@ -185,7 +189,6 @@ enterprise_registry:
       production:
         output: food
         amount: 5
-        per_workers: 1
       workers:
         slots:
           - kind: worker
@@ -198,7 +201,30 @@ enterprise_registry:
         high: 30
 
     - id: hospital
-      name: "Медицинский комплекс"
+      name: "Больница"
+      category: healthcare
+      cost: 20
+      is_starting: false
+      production:
+        output: healthcare
+        amount: 7
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: red
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 20
+        high: 30
+
+    - id: medical_village
+      name: "Медицинский городок"
       category: healthcare
       cost: 24
       is_starting: false
@@ -221,23 +247,132 @@ enterprise_registry:
         medium: 30
         high: 40
 
+    - id: pharmaceutical_company
+      name: "Фармацевтическая компания"
+      category: healthcare
+      cost: 20
+      is_starting: false
+      production:
+        output: healthcare
+        amount: 8
+        per_workers: 3
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: red
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 30
+        high: 40
+
+    - id: academy
+      name: "Академия"
+      category: education
+      cost: 20
+      is_starting: false
+      production:
+        output: education
+        amount: 7
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: orange
+          - kind: worker
+            count: 1
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 20
+        high: 30
+
+    - id: university
+      name: "Университет"
+      category: education
+      cost: 24
+      is_starting: false
+      production:
+        output: education
+        amount: 9
+        per_workers: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: orange
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 30
+        high: 40
+
+    - id: institute_of_technology
+      name: "Технологический институт"
+      category: education
+      cost: 20
+      is_starting: false
+      production:
+        output: education
+        amount: 8
+        per_workers: 3
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: orange
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 20
+        medium: 30
+        high: 40
+
+    - id: radio_station
+      name: "Радиостанция"
+      category: media
+      cost: 8
+      is_starting: false
+      production:
+        output: influence
+        amount: 2
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 15
+        high: 20
+
     - id: telecom_company
-      name: "Телекомпания"
+      name: "ТВ-станция"
       category: media
       cost: 24
       is_starting: false
       production:
         output: influence
         amount: 4
-        per_workers: 2
       workers:
         slots:
           - kind: worker
-            count: 2
-            qualification: skilled
-            color: purple
-          - kind: worker
-            count: 1
+            count: 3
             qualification: unskilled
             color: gray
       wages:
@@ -253,35 +388,67 @@ enterprise_registry:
       production:
         output: influence
         amount: 3
-        per_workers: 1
       workers:
         slots:
           - kind: worker
             count: 3
-            qualification: skilled
-            color: purple
+            qualification: unskilled
+            color: gray
       wages:
         low: 20
         medium: 25
         high: 30
 
-    - id: shopping_center
-      name: "Торговый центр"
+    - id: lobbying_firm
+      name: "Лоббистская фирма"
+      category: media
+      cost: 16
+      is_starting: false
+      production:
+        output: influence
+        amount: 3
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 20
+        high: 30
+
+    - id: fast_food_chain
+      name: "Сеть фастфуда"
+      category: food
+      cost: 8
+      is_starting: false
+      production:
+        output: food
+        amount: 3
+      workers:
+        slots:
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 10
+        medium: 15
+        high: 20
+
+    - id: hotel
+      name: "Отель"
       category: luxury
-      cost: 24
+      cost: 15
       is_starting: false
       production:
         output: luxury
-        amount: 6
-        per_workers: 2
+        amount: 7
       workers:
         slots:
           - kind: worker
-            count: 2
-            qualification: skilled
-            color: blue
-          - kind: worker
-            count: 1
+            count: 3
             qualification: unskilled
             color: gray
       wages:
@@ -289,29 +456,91 @@ enterprise_registry:
         medium: 25
         high: 30
 
-    - id: university
-      name: "Университет"
-      category: education
-      cost: 16
-      is_starting: true
+    - id: stadium
+      name: "Стадион"
+      category: luxury
+      cost: 20
+      is_starting: false
       production:
-        output: education
-        amount: 6
+        output: luxury
+        amount: 8
+        per_workers: 3
+      workers:
+        slots:
+          - kind: worker
+            count: 1
+            qualification: skilled
+            color: blue
+          - kind: worker
+            count: 2
+            qualification: unskilled
+            color: gray
+      wages:
+        low: 25
+        medium: 30
+        high: 35
+
+    - id: electronics_manufacturer
+      name: "Производитель электроники"
+      category: luxury
+      cost: 25
+      is_starting: false
+      production:
+        output: luxury
+        amount: 3
+      workers:
+        slots: []
+      automation:
+        automated: true
+      wages: null
+
+    - id: fashion_company
+      name: "Модная компания"
+      category: luxury
+      cost: 8
+      is_starting: false
+      production:
+        output: luxury
+        amount: 4
         per_workers: 2
       workers:
         slots:
           - kind: worker
             count: 2
-            qualification: skilled
-            color: orange
-          - kind: worker
-            count: 1
             qualification: unskilled
             color: gray
       wages:
-        low: 15
-        medium: 20
-        high: 25
+        low: 10
+        medium: 15
+        high: 20
+
+    - id: automated_grain_farm
+      name: "Автоматизированная зерновая ферма"
+      category: food
+      cost: 25
+      is_starting: false
+      production:
+        output: food
+        amount: 2
+      workers:
+        slots: []
+      automation:
+        automated: true
+      wages: null
+
+    - id: automated_dairy_farm
+      name: "Автоматизированная молочная ферма"
+      category: food
+      cost: 45
+      is_starting: false
+      production:
+        output: food
+        amount: 3
+      workers:
+        slots: []
+      automation:
+        automated: true
+      wages: null
 
 initial_board_state:
   source_document: [hegemony_base_rules, hegemony_crisis_and_control_expansion]

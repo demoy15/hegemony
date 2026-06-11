@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
@@ -55,7 +56,7 @@ public class MigrationCardManager {
             OrderedCardDeckState initialized = new OrderedCardDeckState();
             initialized.setDeckId(DECK_ID);
             initialized.setVisibleWindowSize(0);
-            initialized.setOrderedCardIds(state.getMigrationCards().stream().map(MigrationCardState::getCardId).toList());
+            initialized.setOrderedCardIds(shuffledCardIds(state.getMigrationCards().stream().map(MigrationCardState::getCardId).toList()));
             initialized.setVisibleCardIds(List.of());
             initialized.setNextCardIndex(0);
             initialized.setRefreshCount(0);
@@ -86,7 +87,7 @@ public class MigrationCardManager {
         Map<ClassType, List<String>> arrivalsByClass = new EnumMap<>(ClassType.class);
         int totalAddedPopulation = 0;
 
-        for (ClassType classType : List.of(ClassType.WORKER)) {
+        for (ClassType classType : List.of(ClassType.WORKER, ClassType.MIDDLE_CLASS)) {
             PlayerState player = state.getPlayers().stream()
                     .filter(candidate -> candidate.getClassType() == classType)
                     .findFirst()
@@ -204,6 +205,12 @@ public class MigrationCardManager {
             return "UNSKILLED/GRAY";
         }
         return "SKILLED/" + (entry.getSector() == null ? "GENERAL" : entry.getSector().name());
+    }
+
+    private List<String> shuffledCardIds(List<String> cardIds) {
+        List<String> shuffled = new ArrayList<>(cardIds == null ? List.of() : cardIds);
+        Collections.shuffle(shuffled);
+        return shuffled;
     }
 
     private List<MigrationCardState> loadCatalog(ObjectMapper objectMapper) {

@@ -165,4 +165,25 @@ class VotingResolutionTest {
         assertThat(state.findPlayerById("capitalist").orElseThrow().getVictoryPoints()).isEqualTo(1);
         assertThat(state.findPlayerById("middle_class").orElseThrow().getVictoryPoints()).isEqualTo(0);
     }
+
+    @Test
+    void stateSupporterReceivesVpWhenPassedProposalUsesStateInfluence() {
+        GameRulesEngine engine = CoreTestSupport.engine();
+        GameState state = CoreTestSupport.stateWithPendingVote(4, PolicyId.POLICY_3_TAXATION, PolicyCourse.B);
+        state.getVotingBag().setWorker(5);
+        state.getVotingBag().setMiddleClass(0);
+        state.getVotingBag().setCapitalist(0);
+
+        state = engine.apply(state, new DeclareVoteStanceCommand("middle_class", PolicyId.POLICY_3_TAXATION, "AGAINST")).resultingState();
+        state = engine.apply(state, new DeclareVoteStanceCommand("capitalist", PolicyId.POLICY_3_TAXATION, "AGAINST")).resultingState();
+        state = engine.apply(state, new DeclareVoteStanceCommand("state", PolicyId.POLICY_3_TAXATION, "FOR")).resultingState();
+        state = engine.apply(state, new CommitVoteInfluenceCommand("worker", 0)).resultingState();
+        state = engine.apply(state, new CommitVoteInfluenceCommand("middle_class", 0)).resultingState();
+        state = engine.apply(state, new CommitVoteInfluenceCommand("capitalist", 0)).resultingState();
+        state = engine.apply(state, new CommitVoteInfluenceCommand("state", 1)).resultingState();
+
+        assertThat(state.getLastProposalResolution()).isNotNull();
+        assertThat(state.getLastProposalResolution().getResult()).isEqualTo(VoteResolutionResult.PASSED);
+        assertThat(state.findPlayerById("state").orElseThrow().getVictoryPoints()).isEqualTo(1);
+    }
 }

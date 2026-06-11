@@ -73,6 +73,21 @@ public class CapitalistBotPlanner implements ClassBotPlanner {
             case BUY_GOODS_AND_SERVICES -> 260;
             case ASSIGN_WORKERS -> 240;
             case PROPOSE_BILL -> 220;
+            case BUILD_ENTERPRISE,
+                 SELL_ENTERPRISE,
+                 SELL_ON_EXTERNAL_MARKET,
+                 MAKE_BUSINESS_DEAL,
+                 LOBBY_INTERESTS,
+                 CHANGE_PRICES,
+                 CHANGE_WAGES,
+                 PAY_BONUS,
+                 BUY_STORAGE,
+                 TAKE_STATE_BENEFITS,
+                 REPAY_LOAN,
+                 RESPOND_TO_EVENT,
+                 MEET_DEPUTIES,
+                 INTRODUCE_EXTRA_TAX,
+                 RUN_CAMPAIGN -> 210;
             case ADVANCE_GAME_FLOW -> 180;
             case ADVANCE_TO_VOTING -> 160;
             case ADVANCE_TO_PRODUCTION -> 150;
@@ -81,6 +96,7 @@ public class CapitalistBotPlanner implements ClassBotPlanner {
             case RESOLVE_SCORING_PHASE -> 120;
             case ADVANCE_TO_NEXT_ROUND -> 110;
             case DECLARE_VOTE_STANCE -> 100;
+            case DRAW_VOTING_CUBES -> 95;
             case COMMIT_VOTE_INFLUENCE -> 90;
             case ADD_VOTING_CUBES, CALL_EXTRAORDINARY_VOTE -> 85;
             case PLACE_STRIKES, PLACE_DEMONSTRATION -> 82;

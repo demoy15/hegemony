@@ -1,19 +1,137 @@
 automa_action_cards_partial:
-  - card_no: 13
+  - card_no: 1
     automa: CAPITALISTS
     checks:
       - BUILD_ENTERPRISE
       - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
       - LOBBY_INTERESTS
     policy_tags:
-      - POLICY_TAX
-      - POLICY_EDUCATION
+      - POLICY_LABOR_MARKET
+      - POLICY_FISCAL
     bonus:
       trigger: built_enterprise_this_turn
       effect:
-        type: money_discount
-        amount: 10
-      raw_text_ru: "Если вы строите предприятие в этот ход, заплатите на 10 ₩ меньше."
+        type: build_two_enterprises_and_refill_market
+        amount: 2
+      raw_text_ru: "Если вы строите предприятие в этот ход, вместо этого постройте 2 предприятия, если возможно. Затем добавьте на рынок 2 новых предприятия."
+    special_action:
+      type: STATE_PAYS_PER_OWN_ENTERPRISE_IF_POLICY_1A_OR_1B
+      params:
+        amount_per_enterprise: 5
+      conditions:
+        - policy_1_a_or_b
+      raw_text_ru: "1А/1Б: получите от государства по 5 ₩ за каждое своё предприятие."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-59.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №1.
+      Проверки: строить предприятие, предложить законопроект, продать на внешнем рынке, заключить сделку.
+
+  - card_no: 2
+    automa: CAPITALISTS
+    checks:
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_FISCAL
+      - POLICY_TAX
+    bonus:
+      trigger: sold_enterprise_this_turn
+      effect:
+        type: double_non_automated_enterprise_sale_value
+      raw_text_ru: "Если вы продаёте 1 из своих предприятий без автоматизации в этот ход, получите его удвоенную стоимость."
+    special_action:
+      type: PRODUCE_WITH_ONE_NON_AUTOMATED_ENTERPRISE
+      params: {}
+      conditions: []
+      raw_text_ru: "Выберите 1 из своих неавтоматизированных предприятий. Выплатите зарплату работникам и выполните производство."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-46.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №2.
+      Проверки: строить предприятие, предложить законопроект, продать на внешнем рынке, заключить сделку.
+
+  - card_no: 3
+    automa: CAPITALISTS
+    checks:
+      - REACT_TO_STRIKE
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+    policy_tags:
+      - POLICY_FISCAL
+      - POLICY_FOREIGN_TRADE
+    bonus:
+      trigger: equipment_ready
+      effect:
+        type: priority_bonus
+        priority_code: OD
+        amount: 1
+      raw_text_ru: "Если у вас есть предприятия, которые могут получить автоматизацию: ОД +1. Если также осталось не менее 2 фаз производства: ОД +1."
+    special_action:
+      type: BUY_EQUIPMENT_BEFORE_ROUND_5
+      params:
+        first_equipment_cost: 20
+        second_equipment_cost: 25
+      conditions:
+        - not_round_5
+      raw_text_ru: "Если это не 5-й раунд, заплатите 20 ₩, чтобы получить автоматизацию. Если возможно, заплатите ещё 25 ₩ и получите дополнительную автоматизацию."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-08.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №3.
+      Проверки: реакция на забастовку, продать на внешнем рынке, строить предприятие, предложить законопроект.
+
+  - card_no: 4
+    automa: CAPITALISTS
+    checks:
+      - SELL_ON_EXTERNAL_MARKET
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_TAX
+      - POLICY_HEALTHCARE
+    bonus:
+      trigger: sold_on_external_market_this_turn
+      effect:
+        type: make_deal_before_export_if_possible
+      raw_text_ru: "6Б/6В: если вы продаёте на внешнем рынке, сначала заключите сделку, если возможно."
+    special_action:
+      type: REPLACE_NON_CAPITALIST_VOTE_CUBES_WITH_CAPITALIST
+      params:
+        cubes_to_replace: 3
+      conditions: []
+      raw_text_ru: "Берите из мешочка кубики для голосования, пока не возьмёте 3 кубика других классов. Замените их своими и верните все взятые кубики, кроме заменённых, в мешочек."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-39.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №4.
+      Проверки: продать на внешнем рынке, предложить законопроект, строить предприятие, заключить сделку.
+
+  - card_no: 5
+    automa: CAPITALISTS
+    checks:
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+      - SELL_ON_EXTERNAL_MARKET
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_LABOR_MARKET
+      - POLICY_HEALTHCARE
+    bonus:
+      trigger: proposed_bill_this_turn
+      effect:
+        type: add_capitalist_vote_cubes_to_bag
+        amount: 2
+      raw_text_ru: "Если вы вносите законопроект в этот ход, сначала добавьте в мешочек 2 кубика для голосования."
     special_action:
       type: DRAW_AND_FILTER_CAPITALIST_VOTE_CUBES_FROM_BAG
       params:
@@ -21,37 +139,461 @@ automa_action_cards_partial:
         keep_capitalist_cubes_in_bag: true
         discard_others: true
       conditions: []
-      raw_text_ru: "Возьмите из мешочка 6 кубиков..."
+      raw_text_ru: "Возьмите из мешочка 6 кубиков для голосования. Верните все взятые кубики капиталистов обратно в мешочек, остальные сбросьте."
     source:
-      image_ref: ""
-      transcription_confidence: medium
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-42.jpg"
+      transcription_confidence: high
     raw_text_ru: |
-      Пример частично размеченной карты автомы капиталистов №13.
-      Проверки: строить предприятие, предложить законопроект, лоббировать интересы.
+      Карта простой автомы капиталистов №5.
+      Проверки: предложить законопроект, строить предприятие, продать на внешнем рынке, заключить сделку.
 
-  - card_no: 22
+  - card_no: 6
+    automa: CAPITALISTS
+    checks:
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_LABOR_MARKET
+      - POLICY_FOREIGN_TRADE
+    bonus:
+      trigger: proposed_bill_this_turn
+      effect:
+        type: place_token_on_preferred_policy_even_non_adjacent
+      raw_text_ru: "Если вы вносите законопроект в этот ход, поместите фишку на свой предпочтительный курс, даже если он не соседний с действующим курсом. Вы сможете объявить внеочередное голосование, только если поместили фишку на соседний с действующим курс."
+    special_action:
+      type: MAKE_DEAL
+      params: {}
+      conditions: []
+      raw_text_ru: "Заключите сделку."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-29.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №6.
+      Проверки: предложить законопроект, продать на внешнем рынке, строить предприятие, заключить сделку.
+
+  - card_no: 7
+    automa: CAPITALISTS
+    checks:
+      - BUILD_ENTERPRISE
+      - SELL_ON_EXTERNAL_MARKET
+      - PROPOSE_BILL
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_LABOR_MARKET
+      - POLICY_EDUCATION
+    bonus:
+      trigger: built_enterprise_this_turn
+      effect:
+        type: state_pays_half_build_cost
+        sectors:
+          - luxury
+          - food
+      raw_text_ru: "1А/1Б: если вы строите предприятие в отрасли люкс-сегмента или сельского хозяйства в этот ход, государство оплачивает 1/2 его стоимости (округляя вниз)."
+    special_action:
+      type: PAY_CAPITAL_FOR_VICTORY_POINTS
+      params:
+        capital_cost: 50
+        victory_points: 7
+      conditions: []
+      raw_text_ru: "Заплатите государству 50 ₩ из своего капитала, чтобы получить 7 ПО."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-50.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №7.
+      Проверки: строить предприятие, продать на внешнем рынке, предложить законопроект, заключить сделку.
+
+  - card_no: 8
+    automa: CAPITALISTS
+    checks:
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_LABOR_MARKET
+      - POLICY_MIGRATION
+    bonus:
+      trigger: built_enterprise_this_turn
+      effect:
+        type: money_discount
+        amount: 10
+      raw_text_ru: "Если вы строите предприятие в этот ход, заплатите на 10 ₩ меньше."
+    special_action:
+      type: STAFF_NON_FUNCTIONING_ENTERPRISE_FROM_RESERVE_IF_POLICY_7B_OR_7V
+      params:
+        cost: 10
+      conditions:
+        - policy_7_b_or_c
+      raw_text_ru: "7Б/7В: выберите 1 из своих нефункционирующих предприятий. Заплатите 10 ₩ и назначьте туда подходящих работников из запаса."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-12.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №8.
+      Проверки: строить предприятие, предложить законопроект, продать на внешнем рынке, заключить сделку.
+
+  - card_no: 9
+    automa: CAPITALISTS
+    checks:
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_TAX
+      - POLICY_FISCAL
+    bonus:
+      trigger: sold_on_external_market_this_turn
+      effect:
+        type: make_deal_before_export_if_possible
+      raw_text_ru: "6Б/6В: если вы продаёте на внешнем рынке, сначала заключите сделку, если возможно."
+    special_action:
+      type: ASSIGN_UNEMPLOYED_TO_NON_FUNCTIONING_ENTERPRISES_FOR_STATE_SUBSIDY
+      params:
+        amount_per_worker: 5
+      conditions:
+        - policy_4_a_or_b
+      raw_text_ru: "4А/4Б: назначьте безработных на 1 из своих нефункционирующих предприятий. Получите от государства по 5 ₩ за каждого работника, назначенного таким образом."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-53.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №9.
+      Проверки: продать на внешнем рынке, строить предприятие, предложить законопроект, заключить сделку.
+
+  - card_no: 10
     automa: CAPITALISTS
     checks:
       - SELL_ON_EXTERNAL_MARKET
       - PROPOSE_BILL
-      - ASSIGN_WORKERS
+      - BUILD_ENTERPRISE
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_FOREIGN_TRADE
+      - POLICY_FISCAL
+    bonus:
+      trigger: sold_on_external_market_this_turn
+      effect:
+        type: sell_extra_food_before_export
+        resource: food
+        quantity: 4
+        amount_per_unit: 15
+      raw_text_ru: "Если вы продаёте на внешнем рынке, сначала продайте не более 4 еды по 15 ₩ за каждую (считается дополнительной операцией)."
+    special_action:
+      type: HIRE_FROM_NON_FUNCTIONING_STATE_ENTERPRISE_IF_2B_OR_2V
+      params:
+        wage_level: 3
+      conditions:
+        - policy_2_b_or_c
+      raw_text_ru: "2Б/2В: если на функционирующем госпредприятии заняты такие же работники, какие требуются на ваше нефункционирующее предприятие, назначьте их на своё предприятие. Затем установите на нём зарплату на 3-й уровень."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-15.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №10.
+      Проверки: продать на внешнем рынке, предложить законопроект, строить предприятие, заключить сделку.
+
+  - card_no: 11
+    automa: CAPITALISTS
+    checks:
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+      - SELL_ON_EXTERNAL_MARKET
+      - LOBBY_INTERESTS
     policy_tags:
       - POLICY_TAX
+      - POLICY_LABOR_MARKET
+    bonus:
+      trigger: proposed_bill_this_turn
+      effect:
+        type: pay_to_propose_two_bills
+        cost: 25
+        bill_count: 2
+      raw_text_ru: "Если вы вносите законопроект в этот ход, заплатите 25 ₩, если возможно, чтобы вместо этого внести 2 законопроекта."
+    special_action:
+      type: PRODUCE_WITH_ONE_NON_AUTOMATED_ENTERPRISE
+      params: {}
+      conditions: []
+      raw_text_ru: "Выберите 1 из своих неавтоматизированных предприятий. Выплатите зарплату работникам и выполните производство."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-07-05.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №11.
+      Проверки: предложить законопроект, строить предприятие, продать на внешнем рынке, заключить сделку.
+
+  - card_no: 12
+    automa: CAPITALISTS
+    checks:
+      - REACT_TO_STRIKE
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+    policy_tags:
+      - POLICY_EDUCATION
+      - POLICY_MIGRATION
+    bonus:
+      trigger: agricultural_or_luxury_enterprises
+      effect:
+        type: priority_bonus
+        priority_code: OD
+        amount_per_enterprise: 1
+      raw_text_ru: "6А/6Б: если у вас есть сельскохозяйственные предприятия: ОД +1 за предприятие. 6А: если у вас есть предприятия в люкс-сегменте: ОД +1 за предприятие."
+    special_action:
+      type: ADD_VOTE_CUBES_FOR_AGRICULTURAL_AND_LUXURY_ENTERPRISES
+      params:
+        cubes_per_enterprise: 2
+      conditions:
+        - policy_6_a_or_b
+      raw_text_ru: "6А/6Б: добавьте в мешок по 2 кубика для голосования за каждое своё сельскохозяйственное предприятие. Если действует курс 6А, также учтите предприятия в люкс-сегменте."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-07-08.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №12.
+      Проверки: реакция на забастовку, предложить законопроект, продать на внешнем рынке, строить предприятие.
+
+  - card_no: 23
+    automa: CAPITALISTS
+    checks:
+      - REACT_TO_STRIKE
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+      - SELL_ON_EXTERNAL_MARKET
+    policy_tags:
+      - POLICY_HEALTHCARE
+      - POLICY_MIGRATION
+    bonus:
+      trigger: revenue_at_least_150
+      effect:
+        type: priority_bonus
+        priority_code: OD
+        amount_per_money: 100
+      raw_text_ru: "Если у вас не менее 150 ₩ выручки: ОД +1 за каждые 100 ₩. Если также действует курс 3А налоговой политики: ОД +2; если 3Б: ОД +1."
+    special_action:
+      type: MOVE_HALF_REVENUE_TO_CAPITAL
+      params:
+        minimum_revenue: 150
+      conditions:
+        - revenue_at_least_150
+      raw_text_ru: "Если у вас не менее 150 ₩ выручки, переместите 1/2 своей выручки (округляя вниз) на клетку капитала."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-34.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №23.
+      Проверки: реакция на забастовку, предложить законопроект, строить предприятие, продать на внешнем рынке.
+
+  - card_no: 24
+    automa: CAPITALISTS
+    checks:
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_TAX
+      - POLICY_LABOR_MARKET
+    bonus:
+      trigger: proposed_bill_this_turn
+      effect:
+        type: free_extraordinary_vote
+      raw_text_ru: "Если вы вносите законопроект в этот ход, объявите внеочередное голосование, не тратя влияние."
+    special_action:
+      type: MAKE_DEAL
+      params: {}
+      conditions: []
+      raw_text_ru: "Заключите сделку."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-56.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №24.
+      Проверки: предложить законопроект, продать на внешнем рынке, строить предприятие, заключить сделку.
+
+  - card_no: 25
+    automa: CAPITALISTS
+    checks:
+      - REACT_TO_STRIKE
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+      - SELL_ON_EXTERNAL_MARKET
+    policy_tags:
+      - POLICY_MIGRATION
+      - POLICY_FISCAL
+    bonus:
+      trigger: migration_or_lobby_state
+      effect:
+        type: priority_bonus
+        priority_code: OD
+        amount: 1
+      raw_text_ru: "Если у вас не менее 3 работников/населения: ОД +1 за каждые 3. Если у вас также нет фишки сделки: ОД +1."
+    special_action:
+      type: SELL_STATE_MEDIA_TO_GAIN_DEAL_TOKEN
+      params:
+        max_quantity: 6
+        amount_per_unit: 10
+      conditions: []
+      raw_text_ru: "Продайте государству не более 6 медиа/влияния по 10 ₩ за каждый. Затем получите 1 фишку сделки."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-31.jpg"
+      transcription_confidence: medium
+    raw_text_ru: |
+      Карта простой автомы капиталистов №25.
+      Проверки: реакция на забастовку, предложить законопроект, строить предприятие, продать на внешнем рынке.
+
+  - card_no: 26
+    automa: CAPITALISTS
+    checks:
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_FOREIGN_TRADE
+      - POLICY_HEALTHCARE
+    bonus:
+      trigger: built_enterprise_this_turn
+      effect:
+        type: build_two_enterprises_and_refill_market
+        amount: 2
+      raw_text_ru: "Если вы строите предприятие в этот ход, вместо этого постройте 2 предприятия, если возможно. Затем добавьте на рынок 2 новых предприятия."
+    special_action:
+      type: ASSIGN_UNEMPLOYED_TO_NON_FUNCTIONING_ENTERPRISES_FOR_STATE_SUBSIDY
+      params:
+        amount_per_worker: 5
+      conditions:
+        - policy_4_a_or_b
+      raw_text_ru: "4А/4Б: назначьте безработных на 1 из своих нефункционирующих предприятий. Получите от государства по 5 ₩ за каждого работника, назначенного таким образом."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-07-02.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №26.
+      Проверки: строить предприятие, предложить законопроект, продать на внешнем рынке, заключить сделку.
+
+  - card_no: 27
+    automa: CAPITALISTS
+    checks:
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+      - PROPOSE_BILL
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_FOREIGN_TRADE
       - POLICY_EDUCATION
     bonus:
       trigger: sold_on_external_market_this_turn
       effect:
         type: money_per_export_operation
         amount: 5
-      raw_text_ru: "Если вы продаёте на внешнем рынке, дополнительно получите по 5 ₩ за операцию."
+      raw_text_ru: "Если вы продаёте на внешнем рынке, дополнительно получите по 5 ₩ за каждую совершённую вами операцию."
     special_action:
-      type: HIRE_FROM_NON_FUNCTIONING_STATE_ENTERPRISE_IF_2B_OR_2V
-      params: {}
-      conditions: []
-      raw_text_ru: "2Б/2В: если на нефункционирующем госпредприятии..."
+      type: STAFF_NON_FUNCTIONING_ENTERPRISE_FROM_RESERVE_IF_POLICY_7B_OR_7V
+      params:
+        cost: 10
+      conditions:
+        - policy_7_b_or_c
+      raw_text_ru: "7Б/7В: выберите 1 из своих нефункционирующих предприятий. Заплатите 10 ₩ и назначьте туда подходящих работников из запаса."
     source:
-      image_ref: ""
-      transcription_confidence: low
+      image_ref: "R:/d.i/photo_2026-05-09_11-05-41.jpg"
+      transcription_confidence: high
     raw_text_ru: |
-      Пример частично размеченной карты автомы капиталистов №22.
-      Проверки: продажа на внешнем рынке, законопроект, назначение работников.
+      Карта простой автомы капиталистов №27.
+      Проверки: продать на внешнем рынке, строить предприятие, предложить законопроект, заключить сделку.
+
+  - card_no: 28
+    automa: CAPITALISTS
+    checks:
+      - REACT_TO_STRIKE
+      - SELL_ON_EXTERNAL_MARKET
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+    policy_tags:
+      - POLICY_FOREIGN_TRADE
+      - POLICY_MIGRATION
+    bonus:
+      trigger: revenue_at_least_150
+      effect:
+        type: priority_bonus
+        priority_code: OD
+        amount_per_money: 100
+      raw_text_ru: "Если у вас не менее 150 ₩ выручки: ОД +1 за каждые 100 ₩. Если также действует курс 3А налоговой политики: ОД +2; если 3Б: ОД +1."
+    special_action:
+      type: MOVE_HALF_REVENUE_TO_CAPITAL
+      params:
+        minimum_revenue: 150
+      conditions:
+        - revenue_at_least_150
+      raw_text_ru: "Если у вас не менее 150 ₩ выручки, переместите 1/2 своей выручки (округляя вниз) на клетку капитала."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-21.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №28.
+      Проверки: реакция на забастовку, продать на внешнем рынке, предложить законопроект, строить предприятие.
+
+  - card_no: 29
+    automa: CAPITALISTS
+    checks:
+      - SELL_ON_EXTERNAL_MARKET
+      - PROPOSE_BILL
+      - BUILD_ENTERPRISE
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_FOREIGN_TRADE
+      - POLICY_TAX
+    bonus:
+      trigger: proposed_bill_this_turn
+      effect:
+        type: place_token_on_preferred_policy_even_non_adjacent
+      raw_text_ru: "Если вы вносите законопроект в этот ход, поместите фишку на свой предпочтительный курс, даже если он не соседний с действующим курсом. Вы сможете объявить внеочередное голосование, только если поместили фишку на соседний с действующим курс."
+    special_action:
+      type: SELL_STATE_HEALTHCARE
+      params:
+        max_quantity: 9
+        amount_per_unit: 10
+        influence_per_quantity: 3
+      conditions: []
+      raw_text_ru: "Продайте государству не более 9 здравоохранения по 10 ₩ за каждый. Получите +1 влияние за каждые 3 проданные единицы."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-24.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №29.
+      Проверки: продать на внешнем рынке, предложить законопроект, строить предприятие, заключить сделку.
+
+  - card_no: 30
+    automa: CAPITALISTS
+    checks:
+      - PROPOSE_BILL
+      - SELL_ON_EXTERNAL_MARKET
+      - BUILD_ENTERPRISE
+      - LOBBY_INTERESTS
+    policy_tags:
+      - POLICY_TAX
+      - POLICY_FOREIGN_TRADE
+    bonus:
+      trigger: proposed_bill_this_turn
+      effect:
+        type: add_capitalist_vote_cubes_to_bag
+        amount: 2
+      raw_text_ru: "Если вы вносите законопроект в этот ход, сначала добавьте в мешочек 2 кубика для голосования."
+    special_action:
+      type: SELL_STATE_EDUCATION
+      params:
+        max_quantity: 9
+        amount_per_unit: 10
+        influence_per_quantity: 3
+      conditions: []
+      raw_text_ru: "Продайте государству не более 9 образования по 10 ₩ за каждый. Получите +1 влияние за каждые 3 проданные единицы."
+    source:
+      image_ref: "R:/d.i/photo_2026-05-09_11-06-18.jpg"
+      transcription_confidence: high
+    raw_text_ru: |
+      Карта простой автомы капиталистов №30.
+      Проверки: предложить законопроект, продать на внешнем рынке, строить предприятие, заключить сделку.

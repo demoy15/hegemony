@@ -2,6 +2,7 @@ package com.example.hegemony.domain;
 
 import com.example.hegemony.domain.command.CommitVoteInfluenceCommand;
 import com.example.hegemony.domain.command.DeclareVoteStanceCommand;
+import com.example.hegemony.domain.command.DrawVotingCubesCommand;
 import com.example.hegemony.domain.engine.GameRulesEngine;
 import com.example.hegemony.domain.model.InterpretedVote;
 import com.example.hegemony.domain.model.PolicyCourse;
@@ -22,6 +23,7 @@ class VotingTwoPlayerSpecialRuleTest {
         state.getVotingBag().setCapitalist(0);
 
         state = engine.apply(state, new DeclareVoteStanceCommand("capitalist", PolicyId.POLICY_3_TAXATION, "AGAINST")).resultingState();
+        state = engine.apply(state, new DrawVotingCubesCommand("worker", 5)).resultingState();
 
         assertThat(state.getCurrentVoteState()).isNotNull();
         assertThat(state.getCurrentVoteState().getDrawnVotingCubes())
@@ -45,6 +47,7 @@ class VotingTwoPlayerSpecialRuleTest {
         state.getVotingBag().setCapitalist(0);
 
         state = engine.apply(state, new DeclareVoteStanceCommand("capitalist", PolicyId.POLICY_3_TAXATION, "AGAINST")).resultingState();
+        state = engine.apply(state, new DrawVotingCubesCommand("worker", 5)).resultingState();
         state = engine.apply(state, new CommitVoteInfluenceCommand("worker", 0)).resultingState();
         state = engine.apply(state, new CommitVoteInfluenceCommand("capitalist", 0)).resultingState();
 
@@ -52,4 +55,3 @@ class VotingTwoPlayerSpecialRuleTest {
         assertThat(state.getLastProposalResolution().getResult()).isEqualTo(VoteResolutionResult.PASSED);
     }
 }
-

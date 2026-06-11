@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardReadinessPanel } from "@/components/game/card-readiness-panel";
 import { ModeSetupPanel } from "@/components/game/mode-setup-panel";
-import { SaveLoadControls } from "@/components/game/save-load-controls";
+import { ActionIcon, classMeepleColor, MeepleIcon } from "@/features/board/components/board-visual-primitives";
 import { PendingActionPanel } from "@/features/board/components/pending-action-panel";
 import { buildPublicGameLog } from "@/features/board/model/public-game-log";
 import type { AvailableInteraction, BoardRenderable, BoardZoneView } from "@/features/board/model/types";
@@ -79,6 +79,67 @@ const CLASS_LABEL: Record<string, string> = {
   NONE: "Система",
 };
 const CONSUME_ACTIONS: ActionType[] = ["CONSUME_LUXURY", "CONSUME_EDUCATION", "CONSUME_HEALTHCARE"];
+const CAPITALIST_BASIC_ACTIONS: ActionType[] = [
+  "PROPOSE_BILL",
+  "BUILD_ENTERPRISE",
+  "SELL_ENTERPRISE",
+  "SELL_ON_EXTERNAL_MARKET",
+  "MAKE_BUSINESS_DEAL",
+  "LOBBY_INTERESTS",
+  "ADD_VOTING_CUBES",
+];
+const CAPITALIST_FREE_ACTIONS: ActionType[] = [
+  "CHANGE_PRICES",
+  "CHANGE_WAGES",
+  "PAY_BONUS",
+  "BUY_STORAGE",
+  "TAKE_STATE_BENEFITS",
+  "REPAY_LOAN",
+];
+const WORKER_BASIC_ACTIONS: ActionType[] = [
+  "PROPOSE_BILL",
+  "ASSIGN_WORKERS",
+  "BUY_GOODS_AND_SERVICES",
+  "PLACE_STRIKES",
+  "PLACE_DEMONSTRATION",
+  "ADD_VOTING_CUBES",
+];
+const WORKER_FREE_ACTIONS: ActionType[] = [
+  "CONSUME_HEALTHCARE",
+  "CONSUME_EDUCATION",
+  "CONSUME_LUXURY",
+  "HIRE_WORKER",
+  "CALL_EXTRAORDINARY_VOTE",
+];
+const MIDDLE_CLASS_BASIC_ACTIONS: ActionType[] = [
+  "PROPOSE_BILL",
+  "BUILD_ENTERPRISE",
+  "ASSIGN_WORKERS",
+  "SELL_ENTERPRISE",
+  "SELL_ON_EXTERNAL_MARKET",
+  "BUY_GOODS_AND_SERVICES",
+  "ADD_VOTING_CUBES",
+];
+const MIDDLE_CLASS_FREE_ACTIONS: ActionType[] = [
+  "CONSUME_HEALTHCARE",
+  "CONSUME_EDUCATION",
+  "CONSUME_LUXURY",
+  "CHANGE_PRICES",
+  "CHANGE_WAGES",
+  "TAKE_STATE_BENEFITS",
+  "REPAY_LOAN",
+  "CALL_EXTRAORDINARY_VOTE",
+];
+const STATE_BASIC_ACTIONS: ActionType[] = [
+  "PROPOSE_BILL",
+  "RESPOND_TO_EVENT",
+  "SELL_ON_EXTERNAL_MARKET",
+  "MEET_DEPUTIES",
+  "INTRODUCE_EXTRA_TAX",
+  "RUN_CAMPAIGN",
+];
+const STATE_FREE_ACTIONS: ActionType[] = ["CHANGE_WAGES", "REPAY_LOAN", "CALL_EXTRAORDINARY_VOTE"];
+const VOTING_ACTIONS: ActionType[] = ["DECLARE_VOTE_STANCE", "DRAW_VOTING_CUBES", "COMMIT_VOTE_INFLUENCE"];
 
 function resourceName(resourceId: string): string {
   const normalized = resourceId.toLowerCase();
@@ -259,6 +320,11 @@ function EntityContextPanel({
   const selectedBusinessDeal = selectedBusinessDealId
     ? (Array.isArray(state.businessDealCards) ? state.businessDealCards : []).find((deal) => deal.id === selectedBusinessDealId)
     : undefined;
+  const selectedEnterpriseMarketId =
+    selectedEntity?.sourceRef?.sourceType === "enterpriseMarket" ? selectedEntity.sourceRef.sourceId : undefined;
+  const selectedEnterpriseMarketCard = selectedEnterpriseMarketId
+    ? (Array.isArray(state.capitalistEnterpriseMarket) ? state.capitalistEnterpriseMarket : []).find((enterprise) => enterprise.id === selectedEnterpriseMarketId)
+    : undefined;
   const selectedExportCard =
     selectedEntity?.sourceRef?.sourceType === "exportCard" ? state.activeExportCard : selectedZone?.id === "export" ? state.activeExportCard : undefined;
   const visibleBusinessDeals = (Array.isArray(state.businessDealDeck?.visibleCardIds) ? state.businessDealDeck.visibleCardIds : [])
@@ -374,6 +440,22 @@ function EntityContextPanel({
           </div>
         )}
 
+        {selectedEnterpriseMarketCard && (
+          <div className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 p-3">
+            <p className="font-semibold text-emerald-100">{selectedEnterpriseMarketCard.name ?? selectedEnterpriseMarketCard.id}</p>
+            <p className="mt-1 text-xs text-zinc-300">
+              Стоимость: {selectedEnterpriseMarketCard.cost} | Категория: {selectedEnterpriseMarketCard.category ?? "н/д"}
+            </p>
+            <p className="text-xs text-zinc-300">
+              Выпуск: {Object.entries(selectedEnterpriseMarketCard.producedResources ?? {}).map(([resource, amount]) => `${resource}:${amount}`).join(", ") || "нет"}
+            </p>
+            <p className="text-xs text-zinc-300">Слоты: {selectedEnterpriseMarketCard.slots.length}</p>
+            <Button type="button" size="sm" className="mt-3" onClick={() => onStartAction("BUILD_ENTERPRISE")} disabled={!isHumanActor}>
+              Построить
+            </Button>
+          </div>
+        )}
+
         {selectedExportCard?.cardId && (
           <div className="rounded-lg border border-cyan-500/35 bg-cyan-500/10 p-3">
             <p className="font-semibold text-cyan-100">{selectedExportCard.title}</p>
@@ -407,7 +489,7 @@ function EntityContextPanel({
           </div>
         )}
 
-        {selectedEntity && !selectedPolicy && !selectedEnterprise && !selectedBusinessDeal && !selectedExportCard?.cardId && !stateServiceSelection && (
+        {selectedEntity && !selectedPolicy && !selectedEnterprise && !selectedBusinessDeal && !selectedEnterpriseMarketCard && !selectedExportCard?.cardId && !stateServiceSelection && (
           <div className="rounded-lg border border-zinc-700/70 bg-black/20 p-3">
             <p className="font-semibold text-zinc-100">{selectedEntity.label}</p>
             <p className="text-xs text-zinc-400">{selectedEntity.kind}</p>
@@ -449,24 +531,80 @@ function EntityContextPanel({
 }
 
 function AvailableActionsPanel({
+  state,
   availableInteractions,
   pendingActionType,
   onUndo,
   onStartAction,
 }: {
+  state: GameState;
   availableInteractions: AvailableInteraction[];
   pendingActionType?: ActionType;
   onUndo: () => void;
   onStartAction: (actionType: ActionType) => void;
 }) {
+  const currentPlayerIndex = Number.isInteger(state.turnOrder?.currentPlayerIndex)
+    ? Number(state.turnOrder.currentPlayerIndex)
+    : 0;
+  const currentPlayer = state.players[currentPlayerIndex];
   const isConsumeAction = (actionType: ActionType) => CONSUME_ACTIONS.includes(actionType);
-  const standardActions = availableInteractions.filter(
-    (interaction) => Boolean(interaction.legalMove) && interaction.actionType !== "PLAY_CARD" && !isConsumeAction(interaction.actionType),
+  const isHumanTurn = currentPlayer?.controlMode === "HUMAN";
+  const basicActionOrder =
+    currentPlayer?.classType === "CAPITALIST"
+      ? CAPITALIST_BASIC_ACTIONS
+      : currentPlayer?.classType === "MIDDLE_CLASS"
+        ? MIDDLE_CLASS_BASIC_ACTIONS
+        : currentPlayer?.classType === "STATE"
+          ? STATE_BASIC_ACTIONS
+          : WORKER_BASIC_ACTIONS;
+  const freeActionOrder =
+    currentPlayer?.classType === "CAPITALIST"
+      ? CAPITALIST_FREE_ACTIONS
+      : currentPlayer?.classType === "MIDDLE_CLASS"
+        ? MIDDLE_CLASS_FREE_ACTIONS
+        : currentPlayer?.classType === "STATE"
+          ? STATE_FREE_ACTIONS
+          : WORKER_FREE_ACTIONS;
+  const allowedActionTypes = new Set<ActionType>([
+    ...basicActionOrder,
+    ...freeActionOrder,
+    ...(state.currentPhase === "VOTING" ? VOTING_ACTIONS : []),
+    "PLAY_CARD",
+  ]);
+  const hiddenActionTypes = new Set<ActionType>([
+    "START_TURN",
+    "PRODUCE_GOODS",
+    "SELL_GOODS",
+    "RESOLVE_PREPARATION_PHASE",
+    "ADVANCE_TO_PRODUCTION",
+    "RESOLVE_PRODUCTION_PHASE",
+    "ADVANCE_TO_VOTING",
+    "ADVANCE_TO_SCORING",
+    "RESOLVE_SCORING_PHASE",
+    "ADVANCE_TO_NEXT_ROUND",
+    "ADVANCE_GAME_FLOW",
+    "ADVANCE_ROUND",
+    ...(state.currentPhase === "VOTING" ? [] : (["DECLARE_VOTE_STANCE", "DRAW_VOTING_CUBES", "COMMIT_VOTE_INFLUENCE"] as ActionType[])),
+  ]);
+  const visibleInteractions = isHumanTurn
+    ? availableInteractions.filter(
+        (interaction) =>
+          !hiddenActionTypes.has(interaction.actionType) &&
+          allowedActionTypes.has(interaction.actionType),
+      )
+    : [];
+  const orderedBy = (items: AvailableInteraction[], order: ActionType[]) =>
+    [...items].sort((left, right) => order.indexOf(left.actionType) - order.indexOf(right.actionType));
+  const baseActions = orderedBy(visibleInteractions.filter((interaction) => basicActionOrder.includes(interaction.actionType)), basicActionOrder);
+  const freeActions = orderedBy(visibleInteractions.filter((interaction) => freeActionOrder.includes(interaction.actionType) || isConsumeAction(interaction.actionType)), freeActionOrder);
+  const groupedActionIds = new Set([...baseActions, ...freeActions].map((interaction) => interaction.id));
+  const otherActions = visibleInteractions.filter(
+    (interaction) =>
+      !groupedActionIds.has(interaction.id) &&
+      interaction.actionType !== "PLAY_CARD" &&
+      VOTING_ACTIONS.includes(interaction.actionType),
   );
-  const freeRuleActions = availableInteractions.filter(
-    (interaction) => interaction.actionType !== "PLAY_CARD" && (isConsumeAction(interaction.actionType) || !interaction.legalMove),
-  );
-  const nonStandardActions = availableInteractions.filter((interaction) => interaction.actionType === "PLAY_CARD");
+  const nonStandardActions = visibleInteractions.filter((interaction) => interaction.actionType === "PLAY_CARD");
 
   const renderActionButton = (interaction: AvailableInteraction) => (
     <button
@@ -474,14 +612,17 @@ function AvailableActionsPanel({
       type="button"
       onClick={() => interaction.enabled && onStartAction(interaction.actionType)}
       disabled={!interaction.enabled}
-      className="w-full rounded-lg border border-zinc-700/70 bg-black/20 px-3 py-2 text-left transition-colors hover:border-zinc-500/80 hover:bg-black/35 disabled:cursor-not-allowed disabled:opacity-50"
+      className="min-h-[86px] w-full rounded-md border border-[#8f6b35]/60 bg-black/25 px-2.5 py-2 text-center transition-colors hover:border-[#d8b56b]/80 hover:bg-[#241b0b]/45 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-zinc-100">{interaction.label}</span>
+      <div className="mb-2 flex justify-center">
+        <ActionIcon actionType={interaction.actionType} className="h-9 w-9 drop-shadow-[0_5px_7px_rgba(0,0,0,0.5)]" />
+      </div>
+      <div className="flex min-h-7 items-center justify-center gap-2">
+        <span className="text-xs font-semibold leading-tight text-zinc-100">{interaction.label}</span>
         {pendingActionType === interaction.actionType && <Badge tone="positive">выбрано</Badge>}
         {!interaction.enabled && <Badge tone="warning">заблокировано</Badge>}
       </div>
-      <p className="mt-1 text-xs text-zinc-400">{interaction.enabled ? interaction.summary : interaction.disabledReason ?? interaction.summary}</p>
+      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-zinc-400">{interaction.enabled ? interaction.summary : interaction.disabledReason ?? interaction.summary}</p>
     </button>
   );
 
@@ -498,42 +639,45 @@ function AvailableActionsPanel({
         <p className="text-xs text-zinc-400">{subtitle}</p>
       </div>
       {items.length === 0 && <p className="text-xs text-zinc-500">{emptyText}</p>}
-      {items.map((interaction) => renderActionButton(interaction))}
+      <div className="grid grid-cols-2 gap-2">{items.map((interaction) => renderActionButton(interaction))}</div>
     </div>
   );
 
   return (
-    <Card className="border-zinc-700/80 bg-zinc-950/80">
-      <CardHeader className="pb-2">
+    <Card className="border-[#9b7338]/65 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))]">
+      <CardHeader className="border-b border-[#9b7338]/35 px-3 pb-2 pt-3">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm uppercase tracking-[0.18em] text-zinc-300">Доступные действия</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-sm uppercase text-[#d8b56b]">
+            <MeepleIcon color={classMeepleColor(currentPlayer?.classType)} className="h-7 w-7" />
+            Действия {CLASS_LABEL[currentPlayer?.classType ?? "NONE"] ?? ""}
+          </CardTitle>
           <Button type="button" variant="outline" size="sm" onClick={onUndo}>
             Отмена выбора
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 p-3">
         {availableInteractions.length === 0 && <p className="text-sm text-muted-foreground">Для этого выбора нет действий.</p>}
         {renderGroup(
-          "Стандартные базовые действия",
-          "Строго легальные варианты, подтвержденные движком правил.",
-          "border-emerald-500/35 bg-emerald-500/5",
-          standardActions,
+          "Базовые действия",
+          "Основные действия текущего класса.",
+          "border-emerald-500/30 bg-emerald-500/5",
+          baseActions,
           "Сейчас нет базовых легальных действий.",
         )}
         {renderGroup(
-          "Свободные действия (в рамках правил)",
-          "Ручной выбор из поддерживаемых шаблонов без выхода за рамки движка.",
-          "border-sky-500/35 bg-sky-500/5",
-          freeRuleActions,
+          "Свободные действия",
+          "Дополнительные действия, доступные в текущем состоянии.",
+          "border-cyan-500/30 bg-cyan-500/5",
+          freeActions,
           "Сейчас нет свободных действий в рамках правил.",
         )}
         {renderGroup(
-          "Полностью свободные нештатные действия",
-          "Экстренные ручные корректировки для тестовых и нестандартных ситуаций.",
+          "Прочие действия",
+          "Служебные переходы, ручные корректировки и редкие варианты.",
           "border-rose-500/40 bg-rose-500/10",
-          nonStandardActions,
-          "Нештатные действия сейчас недоступны.",
+          [...otherActions, ...nonStandardActions],
+          "Прочих действий сейчас нет.",
         )}
       </CardContent>
     </Card>
@@ -556,7 +700,6 @@ function TurnControlsPanel({
     ? Number(state.turnOrder.currentPlayerIndex)
     : 0;
   const currentPlayer = Array.isArray(state.players) ? state.players[currentPlayerIndex] : undefined;
-  const { index: phaseIndex, total: phaseTotal } = phaseProgress(state);
   const isHumanActor = currentPlayer?.controlMode === "HUMAN";
   const currentClassLabel = CLASS_LABEL[currentPlayer?.classType ?? "NONE"] ?? currentPlayer?.classType ?? "н/д";
 
@@ -569,9 +712,6 @@ function TurnControlsPanel({
         <div className="rounded-lg border border-zinc-700/70 bg-black/20 p-3 text-sm">
           <p className="font-semibold text-zinc-100">
             {currentClassLabel} <span className="text-zinc-400">({currentPlayer?.controlMode ?? "н/д"})</span>
-          </p>
-          <p className="mt-1 text-xs text-zinc-400">
-            Раунд {state.currentRound}/{state.maxRounds} - Фаза {phaseLabel(state.currentPhase)} ({phaseIndex}/{phaseTotal}) - Позиция {currentPlayerIndex + 1}/{state.turnOrder.activeClasses.length || 1}
           </p>
         </div>
         <Button
@@ -696,12 +836,22 @@ export function TurnSummaryLogPanel({ state }: { state: GameState }) {
           const faction = turn.actorClass;
           const actorLabel = turn.actorDisplayName;
           return (
-            <div key={turn.id} className={`rounded-xl border px-3 py-3 ${logToneClasses(faction)}`}>
+            <div key={turn.id} className={`rounded-lg border px-3 py-3 ${logToneClasses(faction)}`}>
               <div className="mb-1 flex items-center justify-between gap-2">
                 <p className={`text-xs font-semibold uppercase tracking-[0.16em] ${logToneBadge(faction)}`}>
                   {`Раунд ${turn.round}, ход ${turn.turnNumber} — ${actorLabel}`}
                 </p>
-                <Badge tone={turn.severity === "WARNING" ? "warning" : "neutral"}>{turn.category === "VOTE" ? "голосование" : turn.category === "REJECTION" ? "отказ" : "событие"}</Badge>
+                <Badge tone={turn.severity === "WARNING" ? "warning" : "neutral"}>
+                  {turn.category === "VOTE"
+                    ? "голосование"
+                    : turn.category === "PRODUCTION"
+                      ? "производство"
+                      : turn.category === "SCORING"
+                        ? "очки"
+                        : turn.category === "REJECTION"
+                          ? "отказ"
+                          : "событие"}
+                </Badge>
               </div>
               <div className="space-y-1">
                 <p className="text-sm leading-5 text-zinc-100">{turn.title}</p>
@@ -793,14 +943,6 @@ export function InteractionSidebar({
         onSubmit={onSubmit}
       />
 
-      <EntityContextPanel
-        state={state}
-        selectedEntity={selectedEntity}
-        selectedZone={selectedZone}
-        availableInteractions={availableInteractions}
-        onStartAction={onStartAction}
-      />
-
       <TurnControlsPanel
         state={state}
         canEndTurn={canEndTurn}
@@ -810,6 +952,7 @@ export function InteractionSidebar({
       />
 
       <AvailableActionsPanel
+        state={state}
         availableInteractions={availableInteractions}
         pendingActionType={pendingAction?.actionType}
         onUndo={onUndo}
@@ -823,16 +966,6 @@ export function InteractionSidebar({
         isUntilLoading={isBotUntilLoading}
         onPlayTurn={onPlayBotTurn}
         onPlayUntilHuman={onPlayBotUntilHuman}
-      />
-      <SaveLoadControls
-        fileName={saveFileName}
-        setFileName={setSaveFileName}
-        onSave={onSave}
-        onLoad={onLoad}
-        onReset={handleReset}
-        isSaving={isSaving}
-        isLoading={isLoading}
-        isResetting={isResetting}
       />
       <CardReadinessPanel readiness={state.cardReadiness} />
     </aside>

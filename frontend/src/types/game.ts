@@ -26,11 +26,29 @@ export type ActionType =
   | "ADVANCE_GAME_FLOW"
   | "ADVANCE_ROUND"
   | "DECLARE_VOTE_STANCE"
+  | "DRAW_VOTING_CUBES"
   | "COMMIT_VOTE_INFLUENCE"
   | "PROPOSE_BILL"
   | "ADD_VOTING_CUBES"
   | "CALL_EXTRAORDINARY_VOTE"
+  | "BUILD_ENTERPRISE"
+  | "SELL_ENTERPRISE"
+  | "SELL_ON_EXTERNAL_MARKET"
+  | "MAKE_BUSINESS_DEAL"
+  | "LOBBY_INTERESTS"
+  | "CHANGE_PRICES"
+  | "CHANGE_WAGES"
+  | "PAY_BONUS"
+  | "BUY_STORAGE"
+  | "TAKE_STATE_BENEFITS"
+  | "REPAY_LOAN"
+  | "RESPOND_TO_EVENT"
+  | "MEET_DEPUTIES"
+  | "INTRODUCE_EXTRA_TAX"
+  | "RUN_CAMPAIGN"
   | "ASSIGN_WORKERS"
+  | "PLACE_STRIKES"
+  | "PLACE_DEMONSTRATION"
   | "BUY_GOODS_AND_SERVICES"
   | "CONSUME_HEALTHCARE"
   | "CONSUME_EDUCATION"
@@ -72,6 +90,8 @@ export interface PlayerState {
   resources: Record<string, number>;
   goodsAndServicesArea: Record<string, number>;
   producedResourceStorage: Record<string, number>;
+  freeTradeZoneStorage: Record<string, number>;
+  extraStorageTokens: Record<string, number>;
   prices: Record<string, number>;
   proposalTokens: ProposalToken[];
   handCards: string[];
@@ -94,6 +114,7 @@ export interface EnterpriseSlot {
   requiredColor?: "GRAY" | "GREEN" | "BLUE" | "RED" | "ORANGE" | "PURPLE" | "WHITE";
   requiredSector?: string;
   occupiedWorkerId?: string;
+  optional?: boolean;
 }
 
 export interface Enterprise {
@@ -107,6 +128,7 @@ export interface Enterprise {
   automated?: boolean;
   productionAmount?: number;
   productionPerWorkers?: number;
+  strikeToken?: boolean;
   wageTrack?: Record<string, number>;
   producedResources: Record<string, number>;
   slots: EnterpriseSlot[];
@@ -214,6 +236,20 @@ export interface MigrationCardState {
   middleClassEntry: MigrationCardEntry;
 }
 
+export interface StateEventOption {
+  targetClass: ClassType;
+  variant: string;
+  summary: string;
+}
+
+export interface StateEventCard {
+  id: string;
+  title: string;
+  instruction: string;
+  noActionPenaltyClasses: ClassType[];
+  options: StateEventOption[];
+}
+
 export interface GameState {
   players: PlayerState[];
   policies: PolicyState[];
@@ -250,11 +286,19 @@ export interface GameState {
   exportCardDeck: OrderedCardDeckState;
   migrationCards: MigrationCardState[];
   migrationDeck: OrderedCardDeckState;
+  stateEventCards: StateEventCard[];
+  stateEventDeck: OrderedCardDeckState;
   activeExportCard: ExportCardState;
+  capitalistEnterpriseDeck: Enterprise[];
+  capitalistEnterpriseMarket: Enterprise[];
+  middleClassEnterpriseDeck: Enterprise[];
+  middleClassEnterpriseMarket: Enterprise[];
   roundMarker: number;
   taxMultiplier: number;
   eventLog: EventLogEntry[];
   demoMode: boolean;
+  demonstrationToken?: boolean;
+  demonstrationPenaltyAllocation?: Record<string, number>;
 }
 
 export interface DrawnVotingCube {

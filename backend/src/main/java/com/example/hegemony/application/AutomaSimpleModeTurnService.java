@@ -49,6 +49,7 @@ import com.example.hegemony.domain.model.WorkerSlotColor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -63,8 +64,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class AutomaSimpleModeTurnService {
+    private static final String CAPITALIST_AUTOMA_DECK_ID = "capitalist-automa-action-cards";
     private static final int POLITICAL_PRESSURE_CUBES = 3;
-    private static final int LOAN_REPAYMENT_COST = 55;
+    private static final int LOAN_REPAYMENT_COST = 50;
     private static final int SELL_ENTERPRISE_FALLBACK_VALUE = 20;
     private static final int REGULAR_STORAGE_DEFAULT_CAPACITY_PER_RESOURCE = 20;
     private static final int FREE_TRADE_ZONE_CAPACITY_PER_DEAL = 2;
@@ -267,8 +269,55 @@ public class AutomaSimpleModeTurnService {
 
     private CapitalistAutomaActionCard drawAutomaCard(GameState state) {
         List<CapitalistAutomaActionCard> cards = cardRegistry.actionCards();
-        int cardIndex = Math.floorMod(state.getEventLog().size() + state.getCurrentRound(), cards.size());
-        return cards.get(cardIndex);
+        OrderedCardDeckState deck = state.getCapitalistAutomaDeck();
+        if (deck == null || deck.getOrderedCardIds().isEmpty() || !deckMatchesCards(deck, cards)) {
+            deck = new OrderedCardDeckState();
+            deck.setDeckId(CAPITALIST_AUTOMA_DECK_ID);
+            deck.setVisibleWindowSize(1);
+            deck.setOrderedCardIds(shuffledAutomaCardIds(cards));
+            deck.setVisibleCardIds(List.of());
+            deck.setNextCardIndex(0);
+            deck.setRefreshCount(0);
+        }
+
+        List<String> order = new ArrayList<>(deck.getOrderedCardIds());
+        if (deck.getNextCardIndex() >= order.size()) {
+            order = shuffledAutomaCardIds(cards);
+            deck.setOrderedCardIds(order);
+            deck.setNextCardIndex(0);
+        }
+
+        int cardIndex = Math.max(0, deck.getNextCardIndex());
+        String cardId = order.get(cardIndex);
+        deck.setVisibleCardIds(List.of(cardId));
+        deck.setNextCardIndex(cardIndex + 1);
+        deck.setRefreshCount(deck.getRefreshCount() + 1);
+        deck.setLastRefreshedRound(state.getCurrentRound());
+        deck.setLastRefreshReason("AUTOMA_TURN");
+        state.setCapitalistAutomaDeck(deck);
+
+        return cards.stream()
+                .filter(card -> cardId.equals(automaCardId(card)))
+                .findFirst()
+                .orElseGet(cards::getFirst);
+    }
+
+    private boolean deckMatchesCards(OrderedCardDeckState deck, List<CapitalistAutomaActionCard> cards) {
+        Set<String> deckIds = new LinkedHashSet<>(deck.getOrderedCardIds() == null ? List.of() : deck.getOrderedCardIds());
+        Set<String> currentIds = cards.stream()
+                .map(this::automaCardId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return deckIds.equals(currentIds);
+    }
+
+    private List<String> shuffledAutomaCardIds(List<CapitalistAutomaActionCard> cards) {
+        List<String> ids = cards.stream().map(this::automaCardId).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        Collections.shuffle(ids);
+        return ids;
+    }
+
+    private String automaCardId(CapitalistAutomaActionCard card) {
+        return "capitalist-" + card.cardNo();
     }
 
     private List<Map<String, Object>> runStartOfTurnAutoFreeActions(GameState state, PlayerState actor) {
@@ -409,7 +458,7 @@ public class AutomaSimpleModeTurnService {
             case MAKE_DEAL -> evaluateMakeDeal(candidate, state, actor, symbol);
             case SELL_ENTERPRISE -> evaluateSellEnterprise(candidate, state, actor, symbol);
             case RECONFIGURE_EQUIPMENT -> unsupported(candidate, "UNSUPPORTED_RECONFIGURE_EQUIPMENT_EXECUTION_PATH");
-            case REACT_TO_STRIKE -> unsupported(candidate, "UNSUPPORTED_REACT_TO_STRIKE_EXECUTION_PATH");
+            case REACT_TO_STRIKE -> evaluateReactToStrike(candidate, state);
             default -> unsupported(candidate, "UNSUPPORTED_ACTION_TYPE");
         };
     }
@@ -859,6 +908,48 @@ public class AutomaSimpleModeTurnService {
         );
     }
 
+    private AutomaActionEvaluation evaluateReactToStrike(AutomaActionCandidate candidate, GameState state) {
+        Enterprise target = state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)
+                .filter(Enterprise::isStrikeToken)
+                .max(Comparator.comparingInt(Enterprise::getCost))
+                .orElse(null);
+        if (target == null) {
+            return new AutomaActionEvaluation(
+                    candidate,
+                    false,
+                    List.of("NO_CAPITALIST_STRIKE_TO_REACT_TO"),
+                    List.of(),
+                    null,
+                    false,
+                    Map.of(),
+                    List.of("no_struck_capitalist_enterprise")
+            );
+        }
+
+        int revealCount = isOnlyFunctioningEnterpriseInIndustry(state, target) ? 2 : 1;
+        List<CapitalistAutomaActionCard> revealed = revealReactionCards(state, revealCount);
+        boolean speech = revealed.stream()
+                .flatMap(card -> card.checks().stream())
+                .anyMatch(symbol -> symbol == CapitalistAutomaActionSymbol.LOBBY_INTERESTS);
+        Map<String, Object> resolvedTarget = new LinkedHashMap<>();
+        resolvedTarget.put("enterpriseId", target.getId());
+        resolvedTarget.put("revealCount", revealCount);
+        resolvedTarget.put("revealedCardNos", revealed.stream().map(CapitalistAutomaActionCard::cardNo).toList());
+        resolvedTarget.put("speechSymbolFound", speech);
+
+        return new AutomaActionEvaluation(
+                candidate,
+                true,
+                List.of(),
+                List.of("AUTOMA_REACT_TO_STRIKE:" + target.getId()),
+                null,
+                false,
+                resolvedTarget,
+                speech ? List.of("reaction_card_speech_symbol_found") : List.of("reaction_cards_no_speech_symbol")
+        );
+    }
+
     private ActionMutationResult executeResolvedAutomaAction(
             GameState state,
             String actorPlayerId,
@@ -874,6 +965,7 @@ public class AutomaSimpleModeTurnService {
             case SELL_ENTERPRISE -> executeSellEnterprise(state, actor, evaluation);
             case SELL_TO_FOREIGN_MARKET -> executeSellToForeignMarket(state, actor, card, evaluation);
             case MAKE_DEAL -> executeMakeDeal(state, actor, evaluation);
+            case REACT_TO_STRIKE -> executeReactToStrike(state, actor, evaluation);
             default -> ActionMutationResult.failed("UNSUPPORTED_MUTATION_ACTION");
         };
     }
@@ -1085,6 +1177,51 @@ public class AutomaSimpleModeTurnService {
                 true,
                 List.of("Automa made deal " + dealId + "."),
                 resolvedTarget,
+                evaluation.reasonPath(),
+                ""
+        );
+    }
+
+    private ActionMutationResult executeReactToStrike(
+            GameState state,
+            PlayerState actor,
+            AutomaActionEvaluation evaluation
+    ) {
+        String enterpriseId = String.valueOf(evaluation.resolvedTarget().getOrDefault("enterpriseId", ""));
+        Enterprise enterprise = state.findEnterprise(enterpriseId).orElse(null);
+        if (enterprise == null || enterprise.getOwnerClass() != ClassType.CAPITALIST || !enterprise.isStrikeToken()) {
+            return ActionMutationResult.failed("STRIKE_REACTION_TARGET_NOT_FOUND");
+        }
+
+        boolean speech = Boolean.TRUE.equals(evaluation.resolvedTarget().get("speechSymbolFound"));
+        if (speech) {
+            int before = enterprise.getWageLevel();
+            enterprise.setWageLevel(3);
+            tieOccupiedWorkers(state, enterprise);
+            state.appendLog(
+                    "AUTOMA_STRIKE_REACTION",
+                    actor.getPlayerId() + " reacted to strike on " + enterprise.getId()
+                            + ": revealed speech symbol and raised wage level from L" + before
+                            + " to L3; occupied workers were tied by labor contract."
+            );
+            return new ActionMutationResult(
+                    true,
+                    List.of("Automa reacted to strike on " + enterprise.getId() + " by raising wages to L3."),
+                    evaluation.resolvedTarget(),
+                    evaluation.reasonPath(),
+                    ""
+            );
+        }
+
+        state.appendLog(
+                "AUTOMA_STRIKE_REACTION",
+                actor.getPlayerId() + " reacted to strike on " + enterprise.getId()
+                        + ": no speech symbol was revealed, so wages were unchanged."
+        );
+        return new ActionMutationResult(
+                true,
+                List.of("Automa reacted to strike on " + enterprise.getId() + " and left wages unchanged."),
+                evaluation.resolvedTarget(),
                 evaluation.reasonPath(),
                 ""
         );
@@ -1302,6 +1439,7 @@ public class AutomaSimpleModeTurnService {
             return null;
         }
         return switch (policyTag) {
+            case POLICY_FISCAL -> PolicyId.POLICY_1_FISCAL;
             case POLICY_LABOR_MARKET -> PolicyId.POLICY_2_LABOR_MARKET;
             case POLICY_TAX -> PolicyId.POLICY_3_TAXATION;
             case POLICY_HEALTHCARE -> PolicyId.POLICY_4_HEALTHCARE_AND_BENEFITS;
@@ -2153,6 +2291,39 @@ public class AutomaSimpleModeTurnService {
 
     private AutomaActionEvaluation unsupported(AutomaActionCandidate candidate, String reason) {
         return new AutomaActionEvaluation(candidate, false, List.of(reason), List.of(), null, false, Map.of(), List.of("unsupported"));
+    }
+
+    private boolean isOnlyFunctioningEnterpriseInIndustry(GameState state, Enterprise target) {
+        String category = target.getCategory() == null ? "" : target.getCategory();
+        WorkerSector sector = target.getSector();
+        long functioningInIndustry = state.getEnterprises().stream()
+                .filter(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)
+                .filter(Enterprise::isFunctioning)
+                .filter(enterprise -> Objects.equals(enterprise.getCategory(), category) || enterprise.getSector() == sector)
+                .count();
+        return functioningInIndustry <= 1;
+    }
+
+    private List<CapitalistAutomaActionCard> revealReactionCards(GameState state, int count) {
+        List<CapitalistAutomaActionCard> cards = cardRegistry.actionCards();
+        if (cards.isEmpty() || count <= 0) {
+            return List.of();
+        }
+        List<CapitalistAutomaActionCard> revealed = new ArrayList<>();
+        int baseIndex = Math.floorMod(state.getEventLog().size() + state.getCurrentRound(), cards.size());
+        for (int offset = 1; offset <= count; offset++) {
+            revealed.add(cards.get(Math.floorMod(baseIndex + offset, cards.size())));
+        }
+        return revealed;
+    }
+
+    private void tieOccupiedWorkers(GameState state, Enterprise enterprise) {
+        for (EnterpriseSlot slot : enterprise.getSlots()) {
+            if (!slot.isOccupied()) {
+                continue;
+            }
+            state.findWorker(slot.getOccupiedWorkerId()).ifPresent(worker -> worker.setTiedContract(true));
+        }
     }
 
     public record ResolvedTurn(GameState state, BotTurnSummary summary, List<DomainEvent> events) {

@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BoardEntityChip } from "@/features/board/components/board-entity-chip";
 import { BoardZone } from "@/features/board/components/board-zone";
+import { ResourceAmount, ResourceIcon } from "@/features/board/components/board-visual-primitives";
 import { PolicyTrackList } from "@/features/board/components/policy-track-list";
-import type { BoardViewModel } from "@/features/board/model/types";
+import type { BoardViewModel, BoardZoneView } from "@/features/board/model/types";
 import type { PolicyCourse, PolicyId } from "@/types/game";
 
 interface GameBoardProps {
@@ -19,6 +20,45 @@ interface GameBoardProps {
   onSelectPolicyCourse: (policyId: PolicyId, course: PolicyCourse) => void;
 }
 
+function numberFromStat(stats: string[], prefix: string): string {
+  const stat = stats.find((line) => line.toLowerCase().startsWith(prefix.toLowerCase()));
+  return stat?.match(/-?\d+/)?.[0] ?? "0";
+}
+
+function ZoneDecoration({ zone, boardHeight }: { zone: BoardZoneView; boardHeight: number }) {
+  const yScale = 100 / boardHeight;
+  const style = {
+    left: `${zone.x + zone.width * 0.08}%`,
+    top: `${(zone.y + zone.height * 0.32) * yScale}%`,
+    width: `${zone.width * 0.84}%`,
+    height: `${zone.height * 0.58 * yScale}%`,
+  };
+
+  if (zone.id === "treasury") {
+    return (
+      <div className="pointer-events-none absolute flex flex-col items-center justify-center gap-1 rounded-md border border-emerald-300/70 bg-emerald-950/45 px-2 py-1.5" style={style}>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#f7dc98]">Казна</span>
+        <div className="flex items-center justify-center gap-2">
+          <ResourceIcon kind="money" className="h-8 w-8" />
+          <span className="font-serif text-2xl leading-none text-[#f1d38a]">{numberFromStat(zone.stats, "Казна")}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (zone.id === "state_services") {
+    return (
+      <div className="pointer-events-none absolute grid grid-cols-3 gap-1" style={style}>
+        <ResourceAmount kind="healthcare" amount={numberFromStat(zone.stats, "Мед")} label="мед" />
+        <ResourceAmount kind="education" amount={numberFromStat(zone.stats, "Обр")} label="обр" />
+        <ResourceAmount kind="influence" amount={numberFromStat(zone.stats, "Медиа")} label="сми" />
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export function GameBoard({
   viewModel,
   selectedEntityId,
@@ -33,23 +73,45 @@ export function GameBoard({
   onSelectPolicyCourse,
 }: GameBoardProps) {
   const hasHighlightedEntities = highlightedEntities.length > 0;
+  const boardHeight = Math.max(100, viewModel.boardHeight || 100);
+  const yScale = 100 / boardHeight;
+  const normalizedPolicyTracks = viewModel.policyTracks.map((track) => ({
+    ...track,
+    y: track.y * yScale,
+    height: track.height * yScale,
+  }));
+  const normalizedRenderables = viewModel.renderables.map((entity) => ({
+    ...entity,
+    yPct: entity.yPct * yScale,
+  }));
 
   return (
-    <Card className="mx-auto w-full border-zinc-700/90 bg-gradient-to-br from-zinc-950 via-zinc-900/95 to-zinc-950 shadow-[0_26px_54px_-26px_rgba(0,0,0,0.9)]">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base uppercase tracking-[0.18em] text-zinc-100">Игровое поле</CardTitle>
+    <Card className="mx-auto w-full border-[#9b7338]/70 bg-[linear-gradient(145deg,rgba(18,27,26,0.96),rgba(8,12,12,0.98))] shadow-[0_26px_54px_-26px_rgba(0,0,0,0.9)]">
+      <CardHeader className="border-b border-[#9b7338]/35 px-4 pb-3 pt-3">
+        <CardTitle className="text-center text-base uppercase text-[#d8b56b]">Центральное поле</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="relative mx-auto aspect-[16/10] min-h-[700px] w-full overflow-hidden rounded-2xl border border-zinc-600/80 bg-[radial-gradient(circle_at_12%_6%,rgba(254,205,123,0.18),transparent_32%),radial-gradient(circle_at_82%_72%,rgba(56,189,248,0.16),transparent_42%),linear-gradient(170deg,#121318_0%,#0f1117_55%,#0b0d12_100%)] p-1.5 shadow-inner shadow-black/35 xl:min-h-[760px] min-[2100px]:min-h-[920px]">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-            <rect x={0} y={0} width={100} height={100} fill="transparent" />
+      <CardContent className="p-3">
+        <div
+          className="relative mx-auto min-h-[900px] w-full overflow-hidden rounded-md border border-[#b98b45]/70 bg-[linear-gradient(170deg,#101817_0%,#101a1a_45%,#070a0b_100%)] p-1.5 shadow-inner shadow-black/50 xl:min-h-[980px] min-[2100px]:min-h-[1120px]"
+          style={{
+            aspectRatio: `16 / ${(11 * boardHeight) / 100}`,
+            minHeight: `${900 * (boardHeight / 100)}px`,
+          }}
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(213,166,83,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(213,166,83,0.05)_1px,transparent_1px)] bg-[size:36px_36px]" />
+          <svg viewBox={`0 0 100 ${boardHeight}`} preserveAspectRatio="none" className="h-full w-full">
+            <rect x={0} y={0} width={100} height={boardHeight} fill="transparent" />
             {viewModel.zones.map((zone) => (
               <BoardZone key={zone.id} zone={zone} onSelectZone={onSelectZone} />
             ))}
           </svg>
 
+          {viewModel.zones.map((zone) => (
+            <ZoneDecoration key={`${zone.id}-decoration`} zone={zone} boardHeight={boardHeight} />
+          ))}
+
           <PolicyTrackList
-            tracks={viewModel.policyTracks}
+            tracks={normalizedPolicyTracks}
             selectedPolicyId={selectedPolicyId}
             selectedCourse={selectedPolicyCourse}
             highlightedZoneIds={highlightedZones}
@@ -59,7 +121,7 @@ export function GameBoard({
           />
 
           <div className="pointer-events-none absolute inset-0">
-            {viewModel.renderables.map((entity) => (
+            {normalizedRenderables.map((entity) => (
               <BoardEntityChip
                 key={entity.id}
                 entity={entity}

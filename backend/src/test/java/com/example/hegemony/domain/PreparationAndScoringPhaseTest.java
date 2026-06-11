@@ -65,6 +65,25 @@ class PreparationAndScoringPhaseTest {
     }
 
     @Test
+    void preparationPaysPlayerLoanInterestAndBorrowsIfNeeded() {
+        GameRulesEngine engine = CoreTestSupport.engine();
+        GameState state = stateInPreparationRound2();
+        var worker = state.findPlayerById("worker").orElseThrow();
+        worker.addResource("loan", 2);
+        worker.setMoney(0);
+
+        state = apply(engine, state, new ResolvePreparationPhaseCommand("worker"));
+
+        worker = state.findPlayerById("worker").orElseThrow();
+        assertThat(worker.getResourceAmount("loan")).isEqualTo(3);
+        assertThat(worker.getMoney()).isEqualTo(40);
+        assertThat(state.getLastPreparationSummary().getExecutedSubsteps()).contains("player_loan_interest_paid");
+        assertThat(state.getLastPreparationSummary().getUnsupportedSubsteps().toString())
+                .doesNotContain("player loan interest");
+        assertThat(state.getEventLog()).anySatisfy(entry -> assertThat(entry.getType()).isEqualTo("PLAYER_LOAN_INTEREST_PAID"));
+    }
+
+    @Test
     void scoringPhaseProducesBreakdown() {
         GameRulesEngine engine = CoreTestSupport.engine();
         GameState state = stateInScoringRound2();
@@ -130,6 +149,34 @@ class PreparationAndScoringPhaseTest {
     }
 
     @Test
+    void stateScoresTwoLowestLegitimacyTracksEachScoringPhase() {
+        GameRulesEngine engine = CoreTestSupport.engine();
+        GameState state = CoreTestSupport.state(4);
+        state.setCurrentRound(2);
+        state.getTurnOrder().setRound(2);
+        state.setRoundMarker(2);
+        state.setCurrentPhase(RoundPhase.SCORING);
+        state.getTurnOrder().setPhase(RoundPhase.SCORING);
+        state.getTurnOrder().setCurrentPlayerIndex(0);
+        var statePlayer = state.findPlayerById("state").orElseThrow();
+        statePlayer.setLegitimacyWorker(4);
+        statePlayer.setLegitimacyMiddleClass(2);
+        statePlayer.setLegitimacyCapitalist(3);
+
+        state = apply(engine, state, new ResolveScoringPhaseCommand("worker"));
+
+        assertThat(state.findPlayerById("state").orElseThrow().getVictoryPoints()).isEqualTo(5);
+        assertThat(state.getLastScoringSummary().getPlayers())
+                .filteredOn(row -> row.getPlayerId().equals("state"))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.getGainedThisPhase()).isEqualTo(5);
+                    assertThat(row.getSources().stream().map(source -> source.getSourceId()).toList())
+                            .contains("state_legitimacy_two_lowest");
+                });
+    }
+
+    @Test
     void finalScoringAddsWorkerAndCapitalistEndgameSources() {
         GameRulesEngine engine = CoreTestSupport.engine();
         GameState state = stateInScoringRound5();
@@ -161,6 +208,33 @@ class PreparationAndScoringPhaseTest {
                 .contains("worker_final_socialist_policies")
                 .contains("capitalist_final_neoliberal_policies")
                 .contains("capitalist_final_resources");
+    }
+
+    @Test
+    void finalScoringSettlesOutstandingLoans() {
+        GameRulesEngine engine = CoreTestSupport.engine();
+        GameState state = stateInScoringRound5();
+        var worker = state.findPlayerById("worker").orElseThrow();
+        worker.setMoney(20);
+        worker.addResource("loan", 1);
+        var capitalist = state.findPlayerById("capitalist").orElseThrow();
+        capitalist.addResource("loan", 2);
+
+        state = apply(engine, state, new ResolveScoringPhaseCommand("worker"));
+
+        worker = state.findPlayerById("worker").orElseThrow();
+        capitalist = state.findPlayerById("capitalist").orElseThrow();
+        assertThat(worker.getMoney()).isZero();
+        assertThat(worker.getResourceAmount("loan")).isZero();
+        assertThat(capitalist.getResourceAmount("loan")).isZero();
+        assertThat(state.getFinalResult().getScoringBreakdown().stream()
+                .flatMap(row -> row.getSources().stream())
+                .map(source -> source.getSourceId())
+                .toList())
+                .contains("worker_final_loan_settlement")
+                .contains("capitalist_final_unpaid_loans");
+        assertThat(state.getEventLog()).anySatisfy(entry -> assertThat(entry.getType()).isEqualTo("FINAL_LOAN_SETTLEMENT"));
+        assertThat(state.getEventLog()).anySatisfy(entry -> assertThat(entry.getType()).isEqualTo("FINAL_LOAN_PENALTY"));
     }
 
     @Test

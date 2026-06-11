@@ -13,6 +13,7 @@ public class EnterpriseSlot {
     private WorkerSlotColor requiredColor;
     private WorkerSector requiredSector;
     private String occupiedWorkerId;
+    private boolean optional;
 
     public EnterpriseSlot() {
     }
@@ -36,7 +37,9 @@ public class EnterpriseSlot {
     }
 
     public EnterpriseSlot copy() {
-        return new EnterpriseSlot(id, requiredQualification, requiredColor, requiredSector, occupiedWorkerId);
+        EnterpriseSlot copy = new EnterpriseSlot(id, requiredQualification, requiredColor, requiredSector, occupiedWorkerId);
+        copy.setOptional(optional);
+        return copy;
     }
 
     public boolean isOccupied() {

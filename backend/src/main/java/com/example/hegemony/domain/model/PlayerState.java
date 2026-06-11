@@ -25,6 +25,8 @@ public class PlayerState {
     private Map<String, Integer> resources = new HashMap<>();
     private Map<String, Integer> goodsAndServicesArea = new HashMap<>();
     private Map<String, Integer> producedResourceStorage = new HashMap<>();
+    private Map<String, Integer> freeTradeZoneStorage = new HashMap<>();
+    private Map<String, Integer> extraStorageTokens = new HashMap<>();
     private Map<String, Integer> prices = new HashMap<>();
     private List<ProposalToken> proposalTokens = new ArrayList<>();
     private List<String> handCards = new ArrayList<>();
@@ -58,6 +60,8 @@ public class PlayerState {
             Map<String, Integer> resources,
             Map<String, Integer> goodsAndServicesArea,
             Map<String, Integer> producedResourceStorage,
+            Map<String, Integer> freeTradeZoneStorage,
+            Map<String, Integer> extraStorageTokens,
             Map<String, Integer> prices,
             List<ProposalToken> proposalTokens,
             List<String> handCards,
@@ -85,6 +89,8 @@ public class PlayerState {
         this.resources = new HashMap<>(resources == null ? Map.of() : resources);
         this.goodsAndServicesArea = new HashMap<>(goodsAndServicesArea == null ? Map.of() : goodsAndServicesArea);
         this.producedResourceStorage = new HashMap<>(producedResourceStorage == null ? Map.of() : producedResourceStorage);
+        this.freeTradeZoneStorage = new HashMap<>(freeTradeZoneStorage == null ? Map.of() : freeTradeZoneStorage);
+        this.extraStorageTokens = new HashMap<>(extraStorageTokens == null ? Map.of() : extraStorageTokens);
         this.prices = new HashMap<>(prices == null ? Map.of() : prices);
         this.proposalTokens = new ArrayList<>(proposalTokens == null ? List.of() : proposalTokens);
         this.handCards = new ArrayList<>(handCards == null ? List.of() : handCards);
@@ -116,6 +122,8 @@ public class PlayerState {
                 resources,
                 goodsAndServicesArea,
                 producedResourceStorage,
+                freeTradeZoneStorage,
+                extraStorageTokens,
                 prices,
                 proposalTokens.stream().map(ProposalToken::copy).toList(),
                 handCards,
@@ -290,11 +298,13 @@ public class PlayerState {
         if (classType == ClassType.CAPITALIST) {
             this.producedResourceStorage = new HashMap<>(this.resources);
             this.goodsAndServicesArea = new HashMap<>();
+            this.freeTradeZoneStorage = new HashMap<>();
         } else {
             this.goodsAndServicesArea = new HashMap<>(this.resources);
             if (classType != ClassType.MIDDLE_CLASS) {
                 this.producedResourceStorage = new HashMap<>();
             }
+            this.freeTradeZoneStorage = new HashMap<>();
         }
         syncLegacyResources();
     }
@@ -317,6 +327,74 @@ public class PlayerState {
         syncLegacyResources();
     }
 
+    public Map<String, Integer> getFreeTradeZoneStorage() {
+        return freeTradeZoneStorage;
+    }
+
+    public void setFreeTradeZoneStorage(Map<String, Integer> freeTradeZoneStorage) {
+        this.freeTradeZoneStorage = freeTradeZoneStorage == null ? new HashMap<>() : new HashMap<>(freeTradeZoneStorage);
+        syncLegacyResources();
+    }
+
+    public int getFreeTradeZoneAmount(String resourceId) {
+        if (resourceId == null || resourceId.isBlank()) {
+            return 0;
+        }
+        return freeTradeZoneStorage.getOrDefault(normalizeResourceKey(resourceId), 0);
+    }
+
+    public void setFreeTradeZoneAmount(String resourceId, int amount) {
+        if (resourceId == null || resourceId.isBlank()) {
+            return;
+        }
+        freeTradeZoneStorage.put(normalizeResourceKey(resourceId), Math.max(0, amount));
+        syncLegacyResources();
+    }
+
+    public void addFreeTradeZoneResource(String resourceId, int amount) {
+        if (resourceId == null || resourceId.isBlank() || amount <= 0) {
+            return;
+        }
+        String key = normalizeResourceKey(resourceId);
+        freeTradeZoneStorage.put(key, getFreeTradeZoneAmount(key) + amount);
+        syncLegacyResources();
+    }
+
+    public int consumeFreeTradeZoneResource(String resourceId, int amount) {
+        if (resourceId == null || resourceId.isBlank() || amount <= 0) {
+            return 0;
+        }
+        String key = normalizeResourceKey(resourceId);
+        int available = getFreeTradeZoneAmount(key);
+        int consumed = Math.min(available, amount);
+        freeTradeZoneStorage.put(key, available - consumed);
+        syncLegacyResources();
+        return consumed;
+    }
+
+    public Map<String, Integer> getExtraStorageTokens() {
+        return extraStorageTokens;
+    }
+
+    public void setExtraStorageTokens(Map<String, Integer> extraStorageTokens) {
+        this.extraStorageTokens = extraStorageTokens == null ? new HashMap<>() : new HashMap<>(extraStorageTokens);
+    }
+
+    public int getExtraStorageTokens(String resourceId) {
+        if (resourceId == null || resourceId.isBlank()) {
+            return 0;
+        }
+        return extraStorageTokens.getOrDefault(normalizeResourceKey(resourceId), 0);
+    }
+
+    public void addExtraStorageToken(String resourceId) {
+        if (resourceId == null || resourceId.isBlank()) {
+            return;
+        }
+        String key = normalizeResourceKey(resourceId);
+        extraStorageTokens.put(key, getExtraStorageTokens(key) + 1);
+    }
+
     public Map<String, Integer> getPrices() {
         return prices;
     }
@@ -330,7 +408,7 @@ public class PlayerState {
             return 0;
         }
         String key = normalizeResourceKey(resourceId);
-        return getGoodsAmount(key) + getProducedResourceAmount(key);
+        return getGoodsAmount(key) + getProducedResourceAmount(key) + getFreeTradeZoneAmount(key);
     }
 
     public void setResourceAmount(String resourceId, int amount) {
@@ -366,7 +444,12 @@ public class PlayerState {
         if (remaining <= 0) {
             return consumedFromGoods;
         }
-        return consumedFromGoods + consumeProducedResource(resourceId, remaining);
+        int consumedFromProduced = consumeProducedResource(resourceId, remaining);
+        remaining -= consumedFromProduced;
+        if (remaining <= 0) {
+            return consumedFromGoods + consumedFromProduced;
+        }
+        return consumedFromGoods + consumedFromProduced + consumeFreeTradeZoneResource(resourceId, remaining);
     }
 
     public int getGoodsAmount(String resourceId) {
@@ -520,6 +603,11 @@ public class PlayerState {
         }
         if (producedResourceStorage != null) {
             for (Map.Entry<String, Integer> entry : producedResourceStorage.entrySet()) {
+                merged.merge(normalizeResourceKey(entry.getKey()), Math.max(0, entry.getValue()), Integer::sum);
+            }
+        }
+        if (freeTradeZoneStorage != null) {
+            for (Map.Entry<String, Integer> entry : freeTradeZoneStorage.entrySet()) {
                 merged.merge(normalizeResourceKey(entry.getKey()), Math.max(0, entry.getValue()), Integer::sum);
             }
         }

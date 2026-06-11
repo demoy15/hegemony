@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class ExportCardManager {
             OrderedCardDeckState initialized = new OrderedCardDeckState();
             initialized.setDeckId(DECK_ID);
             initialized.setVisibleWindowSize(VISIBLE_WINDOW);
-            initialized.setOrderedCardIds(state.getExportCards().stream().map(ExportCardState::getCardId).toList());
+            initialized.setOrderedCardIds(shuffledCardIds(state.getExportCards().stream().map(ExportCardState::getCardId).toList()));
             initialized.setVisibleCardIds(List.of());
             initialized.setNextCardIndex(0);
             initialized.setRefreshCount(0);
@@ -100,6 +101,12 @@ public class ExportCardManager {
         state.setExportCardDeck(deck);
         state.setActiveExportCard(active);
         return active.copy();
+    }
+
+    private List<String> shuffledCardIds(List<String> cardIds) {
+        List<String> shuffled = new ArrayList<>(cardIds == null ? List.of() : cardIds);
+        Collections.shuffle(shuffled);
+        return shuffled;
     }
 
     private List<ExportCardState> loadCatalog(ObjectMapper objectMapper) {

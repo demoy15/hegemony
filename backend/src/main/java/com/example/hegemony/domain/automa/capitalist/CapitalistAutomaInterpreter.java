@@ -236,6 +236,7 @@ public class CapitalistAutomaInterpreter {
             return null;
         }
         return switch (policyTag) {
+            case POLICY_FISCAL -> PolicyId.POLICY_1_FISCAL;
             case POLICY_LABOR_MARKET -> PolicyId.POLICY_2_LABOR_MARKET;
             case POLICY_TAX -> PolicyId.POLICY_3_TAXATION;
             case POLICY_HEALTHCARE -> PolicyId.POLICY_4_HEALTHCARE_AND_BENEFITS;
@@ -279,7 +280,8 @@ public class CapitalistAutomaInterpreter {
             case ADVANCE_GAME_FLOW -> 180;
             case ADVANCE_TO_VOTING -> 160;
             case DECLARE_VOTE_STANCE -> 140;
-            case COMMIT_VOTE_INFLUENCE -> 120;
+            case DRAW_VOTING_CUBES,
+                    COMMIT_VOTE_INFLUENCE -> 120;
             case ADVANCE_TO_PRODUCTION,
                     RESOLVE_PRODUCTION_PHASE,
                     ADVANCE_TO_SCORING,

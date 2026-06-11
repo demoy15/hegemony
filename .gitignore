@@ -4,10 +4,12 @@ backend/data/saves/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
-frontend/tsconfig.tsbuildinfo
 data/saves/
+*.tsbuildinfo
 
 # Local runtime and editor noise
+.continue/
+.docker-config/
 .idea/
 .vscode/
 *.iml

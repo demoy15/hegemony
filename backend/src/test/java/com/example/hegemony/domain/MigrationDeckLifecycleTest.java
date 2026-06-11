@@ -26,7 +26,7 @@ class MigrationDeckLifecycleTest {
         GameRulesEngine engine = CoreTestSupport.engine();
         GameState state = stateInPreparationRound2();
         int expectedWorkerPopulation = PopulationScale.fromWorkerCount(workerCount(state, "worker") + 3);
-        int expectedMiddlePopulation = PopulationScale.fromWorkerCount(workerCount(state, "middle_class"));
+        int expectedMiddlePopulation = PopulationScale.fromWorkerCount(workerCount(state, "middle_class") + 1);
         int beforeTotalWorkers = state.getWorkers().size();
 
         ApplyCommandResult result = engine.apply(state, new ResolvePreparationPhaseCommand("worker"));
@@ -34,8 +34,8 @@ class MigrationDeckLifecycleTest {
         assertThat(result.validation().isValid()).isTrue();
         assertThat(result.resultingState().findPlayerById("worker").orElseThrow().getPopulation()).isEqualTo(expectedWorkerPopulation);
         assertThat(result.resultingState().findPlayerById("middle_class").orElseThrow().getPopulation()).isEqualTo(expectedMiddlePopulation);
-        assertThat(result.resultingState().getWorkers()).hasSize(beforeTotalWorkers + 3);
-        assertThat(result.resultingState().getMigrationDeck().getVisibleCardIds()).hasSize(1);
+        assertThat(result.resultingState().getWorkers()).hasSize(beforeTotalWorkers + 4);
+        assertThat(result.resultingState().getMigrationDeck().getVisibleCardIds()).hasSize(2);
     }
 
     @Test
@@ -44,14 +44,14 @@ class MigrationDeckLifecycleTest {
         GameState state = stateInPreparationRound2();
         state.findPolicy(PolicyId.POLICY_7_IMMIGRATION).orElseThrow().setCurrentCourse(PolicyCourse.C);
         int expectedWorkerPopulation = PopulationScale.fromWorkerCount(workerCount(state, "worker") + 4);
-        int expectedMiddlePopulation = PopulationScale.fromWorkerCount(workerCount(state, "middle_class"));
+        int expectedMiddlePopulation = PopulationScale.fromWorkerCount(workerCount(state, "middle_class") + 2);
 
         ApplyCommandResult result = engine.apply(state, new ResolvePreparationPhaseCommand("worker"));
 
         assertThat(result.validation().isValid()).isTrue();
         assertThat(result.resultingState().findPlayerById("worker").orElseThrow().getPopulation()).isEqualTo(expectedWorkerPopulation);
         assertThat(result.resultingState().findPlayerById("middle_class").orElseThrow().getPopulation()).isEqualTo(expectedMiddlePopulation);
-        assertThat(result.resultingState().getMigrationDeck().getVisibleCardIds()).hasSize(2);
+        assertThat(result.resultingState().getMigrationDeck().getVisibleCardIds()).hasSize(4);
     }
 
     @Test

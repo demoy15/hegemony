@@ -35,9 +35,11 @@ class CapitalistAutomaCardEngineTest {
 
         assertThat(registry.isLoaded()).isTrue();
         assertThat(registry.datasetStatus()).contains("READY_PARTIAL_DECK");
-        assertThat(registry.actionCards()).isNotEmpty();
+        assertThat(registry.actionCards()).hasSize(20);
         assertThat(registry.instructionCards()).isNotEmpty();
-        assertThat(registry.findActionCard(13)).isPresent();
+        assertThat(registry.findActionCard(1)).isPresent();
+        assertThat(registry.findActionCard(1).orElseThrow().policyTags())
+                .contains(CapitalistAutomaPolicyTag.POLICY_FISCAL);
     }
 
     @Test

@@ -62,6 +62,14 @@ class SetupSpecInitializationTest {
                 .filter(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST)
                 .map(enterprise -> enterprise.getId()))
                 .containsExactlyInAnyOrder("supermarket", "mall", "college", "polyclinic");
+        assertThat(state.findEnterprise("supermarket").orElseThrow().getSlots())
+                .filteredOn(slot -> slot.getRequiredQualification() == WorkerQualification.SKILLED)
+                .extracting(slot -> slot.getRequiredColor())
+                .containsOnly(WorkerSlotColor.GREEN);
+        assertThat(state.findEnterprise("supermarket").orElseThrow().getSlots())
+                .filteredOn(slot -> slot.getRequiredQualification() == WorkerQualification.UNSKILLED)
+                .extracting(slot -> slot.getRequiredColor())
+                .containsOnly(WorkerSlotColor.GRAY);
         assertThat(state.getWorkers()).isNotEmpty();
         assertThat(state.getWorkers().stream().anyMatch(w -> w.getLocation().name().equals("ENTERPRISE_SLOT"))).isTrue();
         assertThat(state.findPlayerById("worker").orElseThrow().getMoney()).isEqualTo(30);
@@ -88,6 +96,16 @@ class SetupSpecInitializationTest {
                 .containsExactlyInAnyOrder("university_hospital", "technical_university", "state_media");
         assertThat(state.findPlayerById("middle_class").orElseThrow().getMoney()).isEqualTo(40);
         assertThat(state.findPlayerById("middle_class").orElseThrow().getResources()).containsEntry("food", 1);
+        assertThat(state.findEnterprise("minimarket").orElseThrow().getWageTrack())
+                .containsEntry("low", 10)
+                .containsEntry("medium", 8)
+                .containsEntry("high", 6);
+        assertThat(state.findEnterprise("minimarket").orElseThrow().getSlots())
+                .anySatisfy(slot -> {
+                    assertThat(slot.isOptional()).isTrue();
+                    assertThat(slot.getRequiredQualification()).isEqualTo(WorkerQualification.UNSKILLED);
+                    assertThat(slot.getRequiredColor()).isEqualTo(WorkerSlotColor.GRAY);
+                });
     }
 
     @Test

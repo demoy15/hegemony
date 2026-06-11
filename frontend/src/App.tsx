@@ -141,8 +141,8 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),_transparent_35%),linear-gradient(180deg,#0a0a0b_0%,#111315_45%,#0c1014_100%)] text-foreground">
-      <div className="mx-auto w-full max-w-[2440px] space-y-4 px-4 py-4 sm:px-6 lg:px-8 2xl:px-10">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_18%_8%,rgba(180,132,56,0.14),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(20,106,113,0.16),transparent_30%),linear-gradient(180deg,#090c0c_0%,#111716_48%,#090b0b_100%)] text-foreground">
+      <div className="mx-auto w-full max-w-[2440px] space-y-4 px-3 py-3 sm:px-5 lg:px-6 2xl:px-8">
         <GameTableScreen
           state={state}
           legalMoves={legalMoves}

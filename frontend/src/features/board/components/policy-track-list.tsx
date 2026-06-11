@@ -32,7 +32,7 @@ export function PolicyTrackList({
     <section
       className={cn(
         "pointer-events-none absolute z-10",
-        "rounded-xl border border-violet-300/45 bg-zinc-950/55 p-1 backdrop-blur-[1px]",
+        "rounded-lg border border-violet-300/45 bg-zinc-950/55 p-1 backdrop-blur-[1px]",
       )}
       style={{
         left: `${policyTrackZone.x}%`,
@@ -42,7 +42,7 @@ export function PolicyTrackList({
       }}
     >
       <div className="mb-1 flex items-center justify-between px-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100">Policies 1-7</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100">7 направлений политики</p>
         <p className="text-[10px] text-zinc-300">A / B / C</p>
       </div>
 

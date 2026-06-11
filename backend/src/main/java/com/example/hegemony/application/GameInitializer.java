@@ -18,6 +18,7 @@ import com.example.hegemony.domain.model.PolicyId;
 import com.example.hegemony.domain.model.PolicyState;
 import com.example.hegemony.domain.model.PreparationSummary;
 import com.example.hegemony.domain.model.ProposalToken;
+import com.example.hegemony.domain.model.ResourceType;
 import com.example.hegemony.domain.model.RoundPhase;
 import com.example.hegemony.domain.model.RoundSummary;
 import com.example.hegemony.domain.model.TurnOrderState;
@@ -29,6 +30,7 @@ import com.example.hegemony.domain.model.WorkerSector;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -115,6 +117,10 @@ public class GameInitializer {
         List<Worker> workers = createWorkersAndPopulateSlots(spec, playerCount, enterprises);
         state.setEnterprises(enterprises);
         state.setWorkers(workers);
+        state.setCapitalistEnterpriseDeck(createCapitalistEnterpriseDeck(spec, enterprises));
+        refillCapitalistEnterpriseMarket(state);
+        state.setMiddleClassEnterpriseDeck(createMiddleClassEnterpriseDeck());
+        refillMiddleClassEnterpriseMarket(state);
         state.refreshLegacyPlayerSnapshots();
 
         state.setNextLogId(1);
@@ -213,7 +219,7 @@ public class GameInitializer {
                 ClassType classType = ClassType.valueOf(String.valueOf(entry.getKey()).toUpperCase(Locale.ROOT));
                 PlayerControlMode mode = PlayerControlMode.valueOf(String.valueOf(entry.getValue()).toUpperCase(Locale.ROOT));
                 if (activeClasses.contains(classType)) {
-                    resolved.put(classType, mode);
+                    resolved.put(classType, classType == ClassType.STATE ? PlayerControlMode.HUMAN : mode);
                 }
             } catch (IllegalArgumentException ignored) {
                 // Ignore malformed setup values and keep deterministic defaults.
@@ -244,7 +250,7 @@ public class GameInitializer {
                 ClassType classType = ClassType.valueOf(String.valueOf(entry.getKey()).toUpperCase(Locale.ROOT));
                 BotStrategyMode mode = BotStrategyMode.valueOf(String.valueOf(entry.getValue()).toUpperCase(Locale.ROOT));
                 if (activeClasses.contains(classType)) {
-                    resolved.put(classType, mode);
+                    resolved.put(classType, classType == ClassType.STATE ? BotStrategyMode.HEURISTIC_FALLBACK : mode);
                 }
             } catch (IllegalArgumentException ignored) {
                 // Ignore malformed setup values and keep deterministic defaults.
@@ -298,13 +304,351 @@ public class GameInitializer {
                 enterprise.setAutomated(false);
                 if (seed.ownerClass() == ClassType.STATE) {
                     enterprise.setWageTrack(Map.of("low", 15, "medium", 20, "high", 25));
+                } else if (seed.ownerClass() == ClassType.MIDDLE_CLASS) {
+                    enterprise.setWageTrack(defaultMiddleClassWageTrack());
                 }
                 List<SlotTemplate> slotTemplates = placementTemplates.get(seed.id());
-                enterprise.setSlots(buildSlotsFromTemplates(seed.id(), slotTemplates));
+                List<EnterpriseSlot> slots = buildSlotsFromTemplates(seed.id(), slotTemplates);
+                if (seed.ownerClass() == ClassType.MIDDLE_CLASS) {
+                    slots = withOptionalMiddleClassHiredSlot(seed.id(), slots, colorForSlot(WorkerQualification.UNSKILLED, seed.sector()));
+                }
+                enterprise.setSlots(slots);
             }
             enterprises.add(enterprise);
         }
         return enterprises;
+    }
+
+    private List<Enterprise> createCapitalistEnterpriseDeck(SetupSpecModel spec, List<Enterprise> startingEnterprises) {
+        List<String> existingIds = startingEnterprises.stream()
+                .map(Enterprise::getId)
+                .toList();
+        List<Enterprise> deck = spec.getCapitalistEnterpriseDefinitions().values().stream()
+                .filter(definition -> !definition.isStarting())
+                .filter(definition -> !existingIds.contains(definition.getId()))
+                .map(definition -> {
+                    Enterprise enterprise = new Enterprise();
+                    enterprise.setId(definition.getId());
+                    enterprise.setOwnerClass(ClassType.CAPITALIST);
+                    enterprise.setWageLevel(2);
+                    applyCapitalistDefinition(enterprise, definition);
+                    return enterprise;
+                })
+                .toList();
+        deck = new ArrayList<>(deck);
+        Collections.shuffle(deck);
+        return deck;
+    }
+
+    private void refillCapitalistEnterpriseMarket(GameState state) {
+        List<Enterprise> market = new ArrayList<>(state.getCapitalistEnterpriseMarket());
+        List<Enterprise> deck = new ArrayList<>(state.getCapitalistEnterpriseDeck());
+        while (market.size() < 4 && !deck.isEmpty()) {
+            market.add(deck.remove(0));
+        }
+        state.setCapitalistEnterpriseMarket(market);
+        state.setCapitalistEnterpriseDeck(deck);
+    }
+
+    private List<Enterprise> createMiddleClassEnterpriseDeck() {
+        List<Enterprise> deck = new ArrayList<>();
+        deck.add(middleClassEnterprise(
+                "doctors_office",
+                "Doctor's Office",
+                "healthcare",
+                12,
+                WorkerSector.HEALTHCARE,
+                ResourceType.HEALTHCARE.id(),
+                2,
+                2,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("doctors_office", WorkerSlotColor.RED, WorkerSlotColor.GRAY)
+        ));
+        deck.add(middleClassEnterprise(
+                "pr_agency",
+                "PR Agency",
+                "media",
+                20,
+                WorkerSector.MEDIA,
+                "media",
+                3,
+                null,
+                defaultMiddleClassWageTrack(),
+                twoMiddleSlots("pr_agency", WorkerSlotColor.PURPLE)
+        ));
+        deck.add(middleClassEnterprise(
+                "fast_food_restaurant",
+                "Fast Food Restaurant",
+                "food",
+                20,
+                WorkerSector.RETAIL,
+                ResourceType.FOOD.id(),
+                3,
+                null,
+                defaultMiddleClassWageTrack(),
+                twoMiddleSlots("fast_food_restaurant", WorkerSlotColor.GREEN)
+        ));
+        deck.add(middleClassEnterprise(
+                "tutoring_company",
+                "Tutoring Company",
+                "education",
+                12,
+                WorkerSector.EDUCATION,
+                ResourceType.EDUCATION.id(),
+                2,
+                2,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("tutoring_company", WorkerSlotColor.ORANGE, WorkerSlotColor.GRAY)
+        ));
+        deck.add(middleClassEnterprise(
+                "private_school",
+                "Private School",
+                "education",
+                20,
+                WorkerSector.EDUCATION,
+                ResourceType.EDUCATION.id(),
+                2,
+                4,
+                wageTrack(15, 12, 9),
+                middleWithHiredSlots("private_school", WorkerSlotColor.ORANGE, WorkerSlotColor.ORANGE)
+        ));
+        deck.add(middleClassEnterprise(
+                "training_center",
+                "Training Center",
+                "education",
+                16,
+                WorkerSector.EDUCATION,
+                ResourceType.EDUCATION.id(),
+                4,
+                null,
+                defaultMiddleClassWageTrack(),
+                twoMiddleSlots("training_center", WorkerSlotColor.ORANGE)
+        ));
+        deck.add(middleClassEnterprise(
+                "convenience_store",
+                "Convenience Store",
+                "food",
+                14,
+                WorkerSector.RETAIL,
+                ResourceType.FOOD.id(),
+                2,
+                1,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("convenience_store", WorkerSlotColor.GREEN, WorkerSlotColor.GRAY)
+        ));
+        deck.add(middleClassEnterprise(
+                "medical_laboratory",
+                "Medical Laboratory",
+                "healthcare",
+                20,
+                WorkerSector.HEALTHCARE,
+                ResourceType.HEALTHCARE.id(),
+                2,
+                4,
+                wageTrack(15, 12, 9),
+                middleWithHiredSlots("medical_laboratory", WorkerSlotColor.RED, WorkerSlotColor.RED)
+        ));
+        deck.add(middleClassEnterprise(
+                "electronics_store",
+                "Electronics Store",
+                "luxury",
+                20,
+                WorkerSector.BLUE,
+                ResourceType.LUXURY.id(),
+                2,
+                4,
+                wageTrack(15, 12, 9),
+                middleWithHiredSlots("electronics_store", WorkerSlotColor.BLUE, WorkerSlotColor.BLUE)
+        ));
+        deck.add(middleClassEnterprise(
+                "local_newspaper",
+                "Local Newspaper",
+                "media",
+                14,
+                WorkerSector.MEDIA,
+                "media",
+                2,
+                1,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("local_newspaper", WorkerSlotColor.PURPLE, WorkerSlotColor.GRAY)
+        ));
+        deck.add(middleClassEnterprise(
+                "game_store",
+                "Game Store",
+                "luxury",
+                12,
+                WorkerSector.BLUE,
+                ResourceType.LUXURY.id(),
+                2,
+                2,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("game_store", WorkerSlotColor.BLUE, WorkerSlotColor.GRAY)
+        ));
+        deck.add(middleClassEnterprise(
+                "organic_farm",
+                "Organic Farm",
+                "food",
+                20,
+                WorkerSector.RETAIL,
+                ResourceType.FOOD.id(),
+                2,
+                2,
+                wageTrack(15, 12, 9),
+                middleWithHiredSlots("organic_farm", WorkerSlotColor.GREEN, WorkerSlotColor.GREEN)
+        ));
+        deck.add(middleClassEnterprise(
+                "pharmacy",
+                "Pharmacy",
+                "healthcare",
+                16,
+                WorkerSector.HEALTHCARE,
+                ResourceType.HEALTHCARE.id(),
+                4,
+                null,
+                defaultMiddleClassWageTrack(),
+                twoMiddleSlots("pharmacy", WorkerSlotColor.RED)
+        ));
+        deck.add(middleClassEnterprise(
+                "regional_radio_station",
+                "Regional Radio Station",
+                "media",
+                20,
+                WorkerSector.MEDIA,
+                "media",
+                2,
+                2,
+                wageTrack(15, 12, 9),
+                middleWithHiredSlots("regional_radio_station", WorkerSlotColor.PURPLE, WorkerSlotColor.PURPLE)
+        ));
+        deck.add(middleClassEnterprise(
+                "jewelry_store",
+                "Jewelry Store",
+                "luxury",
+                16,
+                WorkerSector.BLUE,
+                ResourceType.LUXURY.id(),
+                4,
+                null,
+                defaultMiddleClassWageTrack(),
+                twoMiddleSlots("jewelry_store", WorkerSlotColor.BLUE)
+        ));
+        deck.add(middleClassEnterprise(
+                "doctors_office_starting",
+                "Doctor's Office",
+                "healthcare",
+                12,
+                WorkerSector.HEALTHCARE,
+                ResourceType.HEALTHCARE.id(),
+                2,
+                2,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("doctors_office_starting", WorkerSlotColor.RED, WorkerSlotColor.GRAY)
+        ));
+        deck.add(middleClassEnterprise(
+                "convenience_store_starting",
+                "Convenience Store",
+                "food",
+                14,
+                WorkerSector.RETAIL,
+                ResourceType.FOOD.id(),
+                2,
+                1,
+                wageTrack(10, 8, 6),
+                middleWithHiredSlots("convenience_store_starting", WorkerSlotColor.GREEN, WorkerSlotColor.GRAY)
+        ));
+        return deck;
+    }
+
+    private Enterprise middleClassEnterprise(
+            String id,
+            String name,
+            String category,
+            int cost,
+            WorkerSector sector,
+            String producedResourceId,
+            int productionAmount,
+            Integer productionPerWorkers,
+            Map<String, Integer> wageTrack,
+            List<EnterpriseSlot> slots
+    ) {
+        Enterprise enterprise = new Enterprise();
+        enterprise.setId(id);
+        enterprise.setName(name);
+        enterprise.setCategory(category);
+        enterprise.setCost(cost);
+        enterprise.setOwnerClass(ClassType.MIDDLE_CLASS);
+        enterprise.setSector(sector);
+        enterprise.setWageLevel(2);
+        enterprise.setAutomated(false);
+        enterprise.setProducedResources(Map.of(producedResourceId, productionAmount));
+        enterprise.setProductionAmount(productionAmount);
+        enterprise.setProductionPerWorkers(productionPerWorkers);
+        enterprise.setWageTrack(wageTrack == null ? defaultMiddleClassWageTrack() : wageTrack);
+        enterprise.setSlots(slots);
+        return enterprise;
+    }
+
+    private Map<String, Integer> defaultMiddleClassWageTrack() {
+        return wageTrack(10, 8, 6);
+    }
+
+    private Map<String, Integer> wageTrack(int low, int medium, int high) {
+        return Map.of("low", low, "medium", medium, "high", high);
+    }
+
+    private List<EnterpriseSlot> middleWithHiredSlots(String enterpriseId, WorkerSlotColor middleColor, WorkerSlotColor hiredColor) {
+        return List.of(
+                middleSlot(enterpriseId, 1, middleColor),
+                hiredSlot(enterpriseId, hiredColor)
+        );
+    }
+
+    private List<EnterpriseSlot> twoMiddleSlots(String enterpriseId, WorkerSlotColor skilledColor) {
+        return withOptionalMiddleClassHiredSlot(enterpriseId, List.of(
+                middleSlot(enterpriseId, 1, skilledColor),
+                new EnterpriseSlot(enterpriseId + "-middle-slot-2", WorkerQualification.UNSKILLED, WorkerSlotColor.GRAY, null, null)
+        ), WorkerSlotColor.GRAY);
+    }
+
+    private EnterpriseSlot middleSlot(String enterpriseId, int index, WorkerSlotColor color) {
+        return new EnterpriseSlot(
+                enterpriseId + "-middle-slot-" + index,
+                WorkerQualification.SKILLED,
+                color,
+                null,
+                null
+        );
+    }
+
+    private EnterpriseSlot hiredSlot(String enterpriseId, WorkerSlotColor color) {
+        EnterpriseSlot slot = new EnterpriseSlot(
+                enterpriseId + "-hired-worker-slot-1",
+                WorkerQualification.UNSKILLED,
+                color,
+                null,
+                null
+        );
+        slot.setOptional(true);
+        return slot;
+    }
+
+    private List<EnterpriseSlot> withOptionalMiddleClassHiredSlot(String enterpriseId, List<EnterpriseSlot> slots, WorkerSlotColor color) {
+        List<EnterpriseSlot> result = new ArrayList<>(slots == null ? List.of() : slots);
+        boolean hasHiredSlot = result.stream().anyMatch(slot -> slot.getId() != null && slot.getId().contains("hired-worker-slot"));
+        if (!hasHiredSlot) {
+            result.add(hiredSlot(enterpriseId, color == null ? WorkerSlotColor.GRAY : color));
+        }
+        return result;
+    }
+
+    private void refillMiddleClassEnterpriseMarket(GameState state) {
+        List<Enterprise> market = new ArrayList<>(state.getMiddleClassEnterpriseMarket());
+        List<Enterprise> deck = new ArrayList<>(state.getMiddleClassEnterpriseDeck());
+        while (market.size() < 3 && !deck.isEmpty()) {
+            market.add(deck.remove(0));
+        }
+        state.setMiddleClassEnterpriseMarket(market);
+        state.setMiddleClassEnterpriseDeck(deck);
     }
 
     private void applyCapitalistDefinition(Enterprise enterprise, SetupSpecModel.EnterpriseDefinition definition) {
@@ -383,7 +727,7 @@ public class GameInitializer {
             case PURPLE, MEDIA -> WorkerSlotColor.PURPLE;
             case GREEN, RETAIL -> WorkerSlotColor.GREEN;
             case BLUE -> WorkerSlotColor.BLUE;
-            case RED -> WorkerSlotColor.RED;
+            case RED -> WorkerSlotColor.WHITE;
             default -> null;
         };
     }

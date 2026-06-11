@@ -44,7 +44,7 @@ export type RenderableKind =
   | "INFO_MARKER";
 
 export interface RenderableSourceRef {
-  sourceType: "policy" | "enterprise" | "worker" | "player" | "zone" | "businessDeal" | "exportCard";
+  sourceType: "policy" | "enterprise" | "enterpriseMarket" | "worker" | "player" | "zone" | "businessDeal" | "exportCard" | "stateEvent";
   sourceId: string;
 }
 
@@ -69,6 +69,7 @@ export interface BoardViewModel {
   renderables: BoardRenderable[];
   pendingProposalPoliciesInOrder: string[];
   policyTracks: PolicyTrackView[];
+  boardHeight?: number;
 }
 
 export interface PolicyCourseCellView {

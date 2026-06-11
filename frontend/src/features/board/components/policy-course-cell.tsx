@@ -28,12 +28,12 @@ export function PolicyCourseCell({ policyId, cell, selected, onSelectCourse }: P
       )}
       title={
         cell.active
-          ? "Current course"
+          ? "Текущий курс"
           : cell.proposed
-            ? "Pending proposal target"
+            ? "Цель внесенного законопроекта"
             : cell.selectable
-              ? `Select ${cell.course} as bill target`
-              : `Course ${cell.course} not legal from current state`
+              ? `Выбрать курс ${cell.course} для законопроекта`
+              : `Курс ${cell.course} сейчас недоступен`
       }
     >
       {cell.course}

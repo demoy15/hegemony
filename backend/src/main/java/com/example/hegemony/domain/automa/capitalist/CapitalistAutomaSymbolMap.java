@@ -17,6 +17,7 @@ public final class CapitalistAutomaSymbolMap {
     );
 
     private static final Map<String, CapitalistAutomaPolicyTag> POLICY_TAGS = Map.of(
+            "fiscal", CapitalistAutomaPolicyTag.POLICY_FISCAL,
             "labor_market", CapitalistAutomaPolicyTag.POLICY_LABOR_MARKET,
             "tax", CapitalistAutomaPolicyTag.POLICY_TAX,
             "healthcare", CapitalistAutomaPolicyTag.POLICY_HEALTHCARE,

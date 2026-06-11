@@ -1,0 +1,3977 @@
+{
+  "gameState" : {
+    "players" : [ {
+      "playerId" : "worker",
+      "classType" : "WORKER",
+      "money" : 30,
+      "revenue" : 0,
+      "capital" : 0,
+      "wealthTrackLevel" : 0,
+      "influence" : 1,
+      "population" : 3,
+      "welfare" : 0,
+      "lastWelfareDelta" : 0,
+      "victoryPoints" : 0,
+      "legitimacyWorker" : 0,
+      "legitimacyMiddleClass" : 0,
+      "legitimacyCapitalist" : 0,
+      "controlMode" : "HUMAN",
+      "botStrategyMode" : "HEURISTIC_FALLBACK",
+      "resources" : {
+        "media_influence" : 0,
+        "education" : 0,
+        "luxury" : 0,
+        "food" : 0,
+        "influence" : 0,
+        "healthcare" : 0
+      },
+      "goodsAndServicesArea" : {
+        "media_influence" : 0,
+        "luxury" : 0,
+        "education" : 0,
+        "food" : 0,
+        "healthcare" : 0,
+        "influence" : 0
+      },
+      "producedResourceStorage" : { },
+      "freeTradeZoneStorage" : { },
+      "extraStorageTokens" : { },
+      "prices" : {
+        "luxury" : 0,
+        "education" : 0,
+        "food" : 0,
+        "healthcare" : 0,
+        "influence" : 0
+      },
+      "proposalTokens" : [ {
+        "id" : "worker-proposal-1",
+        "ownerPlayerId" : "worker",
+        "ownerClass" : "WORKER",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "worker-proposal-2",
+        "ownerPlayerId" : "worker",
+        "ownerClass" : "WORKER",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "worker-proposal-3",
+        "ownerPlayerId" : "worker",
+        "ownerClass" : "WORKER",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      } ],
+      "handCards" : [ ],
+      "availableWorkers" : 4,
+      "employedWorkers" : 7,
+      "enterprises" : 0,
+      "goods" : 0,
+      "role" : "WORKER"
+    }, {
+      "playerId" : "middle_class",
+      "classType" : "MIDDLE_CLASS",
+      "money" : 40,
+      "revenue" : 0,
+      "capital" : 0,
+      "wealthTrackLevel" : 0,
+      "influence" : 1,
+      "population" : 3,
+      "welfare" : 0,
+      "lastWelfareDelta" : 0,
+      "victoryPoints" : 0,
+      "legitimacyWorker" : 0,
+      "legitimacyMiddleClass" : 0,
+      "legitimacyCapitalist" : 0,
+      "controlMode" : "HUMAN",
+      "botStrategyMode" : "HEURISTIC_FALLBACK",
+      "resources" : {
+        "media_influence" : 0,
+        "education" : 0,
+        "luxury" : 0,
+        "food" : 1,
+        "influence" : 0,
+        "healthcare" : 1
+      },
+      "goodsAndServicesArea" : {
+        "media_influence" : 0,
+        "luxury" : 0,
+        "education" : 0,
+        "food" : 1,
+        "healthcare" : 1,
+        "influence" : 0
+      },
+      "producedResourceStorage" : { },
+      "freeTradeZoneStorage" : { },
+      "extraStorageTokens" : { },
+      "prices" : {
+        "luxury" : 8,
+        "education" : 8,
+        "food" : 12,
+        "healthcare" : 8,
+        "influence" : 0
+      },
+      "proposalTokens" : [ {
+        "id" : "middle_class-proposal-1",
+        "ownerPlayerId" : "middle_class",
+        "ownerClass" : "MIDDLE_CLASS",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "middle_class-proposal-2",
+        "ownerPlayerId" : "middle_class",
+        "ownerClass" : "MIDDLE_CLASS",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "middle_class-proposal-3",
+        "ownerPlayerId" : "middle_class",
+        "ownerClass" : "MIDDLE_CLASS",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      } ],
+      "handCards" : [ ],
+      "availableWorkers" : 3,
+      "employedWorkers" : 7,
+      "enterprises" : 2,
+      "goods" : 0,
+      "role" : "MIDDLE_CLASS"
+    }, {
+      "playerId" : "capitalist",
+      "classType" : "CAPITALIST",
+      "money" : 120,
+      "revenue" : 120,
+      "capital" : 0,
+      "wealthTrackLevel" : 0,
+      "influence" : 1,
+      "population" : 0,
+      "welfare" : 0,
+      "lastWelfareDelta" : 0,
+      "victoryPoints" : 0,
+      "legitimacyWorker" : 0,
+      "legitimacyMiddleClass" : 0,
+      "legitimacyCapitalist" : 0,
+      "controlMode" : "HUMAN",
+      "botStrategyMode" : "HEURISTIC_FALLBACK",
+      "resources" : {
+        "media_influence" : 0,
+        "education" : 2,
+        "luxury" : 2,
+        "food" : 1,
+        "influence" : 0,
+        "healthcare" : 0
+      },
+      "goodsAndServicesArea" : { },
+      "producedResourceStorage" : {
+        "media_influence" : 0,
+        "luxury" : 2,
+        "education" : 2,
+        "food" : 1,
+        "healthcare" : 0,
+        "influence" : 0
+      },
+      "freeTradeZoneStorage" : { },
+      "extraStorageTokens" : { },
+      "prices" : {
+        "luxury" : 8,
+        "education" : 8,
+        "food" : 12,
+        "healthcare" : 8,
+        "influence" : 0
+      },
+      "proposalTokens" : [ {
+        "id" : "capitalist-proposal-1",
+        "ownerPlayerId" : "capitalist",
+        "ownerClass" : "CAPITALIST",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "capitalist-proposal-2",
+        "ownerPlayerId" : "capitalist",
+        "ownerClass" : "CAPITALIST",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "capitalist-proposal-3",
+        "ownerPlayerId" : "capitalist",
+        "ownerClass" : "CAPITALIST",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      } ],
+      "handCards" : [ ],
+      "availableWorkers" : 0,
+      "employedWorkers" : 0,
+      "enterprises" : 4,
+      "goods" : 0,
+      "role" : "CAPITALIST"
+    }, {
+      "playerId" : "state",
+      "classType" : "STATE",
+      "money" : 0,
+      "revenue" : 0,
+      "capital" : 0,
+      "wealthTrackLevel" : 0,
+      "influence" : 1,
+      "population" : 0,
+      "welfare" : 0,
+      "lastWelfareDelta" : 0,
+      "victoryPoints" : 0,
+      "legitimacyWorker" : 2,
+      "legitimacyMiddleClass" : 2,
+      "legitimacyCapitalist" : 2,
+      "controlMode" : "HUMAN",
+      "botStrategyMode" : "HEURISTIC_FALLBACK",
+      "resources" : {
+        "media_influence" : 0,
+        "education" : 0,
+        "luxury" : 0,
+        "food" : 0,
+        "influence" : 0,
+        "healthcare" : 0
+      },
+      "goodsAndServicesArea" : {
+        "media_influence" : 0,
+        "luxury" : 0,
+        "education" : 0,
+        "food" : 0,
+        "healthcare" : 0,
+        "influence" : 0
+      },
+      "producedResourceStorage" : { },
+      "freeTradeZoneStorage" : { },
+      "extraStorageTokens" : { },
+      "prices" : {
+        "luxury" : 0,
+        "education" : 0,
+        "food" : 0,
+        "healthcare" : 0,
+        "influence" : 0
+      },
+      "proposalTokens" : [ {
+        "id" : "state-proposal-1",
+        "ownerPlayerId" : "state",
+        "ownerClass" : "STATE",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "state-proposal-2",
+        "ownerPlayerId" : "state",
+        "ownerClass" : "STATE",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      }, {
+        "id" : "state-proposal-3",
+        "ownerPlayerId" : "state",
+        "ownerClass" : "STATE",
+        "available" : true,
+        "targetCourse" : null,
+        "policyId" : null
+      } ],
+      "handCards" : [ ],
+      "availableWorkers" : 0,
+      "employedWorkers" : 0,
+      "enterprises" : 3,
+      "goods" : 0,
+      "role" : "STATE"
+    } ],
+    "policies" : [ {
+      "id" : "POLICY_1_FISCAL",
+      "currentCourse" : "C",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    }, {
+      "id" : "POLICY_2_LABOR_MARKET",
+      "currentCourse" : "B",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    }, {
+      "id" : "POLICY_3_TAXATION",
+      "currentCourse" : "A",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    }, {
+      "id" : "POLICY_4_HEALTHCARE_AND_BENEFITS",
+      "currentCourse" : "B",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    }, {
+      "id" : "POLICY_5_EDUCATION",
+      "currentCourse" : "C",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    }, {
+      "id" : "POLICY_6_FOREIGN_TRADE",
+      "currentCourse" : "B",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    }, {
+      "id" : "POLICY_7_IMMIGRATION",
+      "currentCourse" : "B",
+      "occupyingProposalToken" : null,
+      "locked" : false
+    } ],
+    "enterprises" : [ {
+      "id" : "supermarket",
+      "name" : "Супермаркет",
+      "category" : "food",
+      "cost" : 16,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "GREEN",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 25,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "food" : 4
+      },
+      "slots" : [ {
+        "id" : "supermarket-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "worker-worker-1",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "supermarket-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "worker-worker-2",
+        "optional" : false,
+        "occupied" : true
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "mall",
+      "name" : "Торговый центр",
+      "category" : "luxury",
+      "cost" : 16,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "BLUE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 6,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 25,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "luxury" : 6
+      },
+      "slots" : [ {
+        "id" : "mall-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : "BLUE",
+        "occupiedWorkerId" : "middle_class-worker-4",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "mall-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "middle_class-worker-5",
+        "optional" : false,
+        "occupied" : true
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "college",
+      "name" : "Колледж",
+      "category" : "education",
+      "cost" : 19,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "ORANGE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 6,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 30,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "education" : 6
+      },
+      "slots" : [ {
+        "id" : "college-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "ORANGE",
+        "requiredSector" : "ORANGE",
+        "occupiedWorkerId" : "worker-worker-3",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "college-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "worker-worker-4",
+        "optional" : false,
+        "occupied" : true
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "polyclinic",
+      "name" : "Поликлиника",
+      "category" : "healthcare",
+      "cost" : 19,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "RED",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 6,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 30,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "healthcare" : 6
+      },
+      "slots" : [ {
+        "id" : "polyclinic-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : "WHITE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "polyclinic-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "minimarket",
+      "name" : "minimarket",
+      "category" : "retail",
+      "cost" : 0,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "RETAIL",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 1,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "food" : 1
+      },
+      "slots" : [ {
+        "id" : "minimarket-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : "GREEN",
+        "occupiedWorkerId" : "middle_class-worker-6",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "minimarket-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "private_clinic",
+      "name" : "private_clinic",
+      "category" : "healthcare",
+      "cost" : 0,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "HEALTHCARE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 1,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "healthcare" : 1
+      },
+      "slots" : [ {
+        "id" : "private_clinic-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "WHITE",
+        "requiredSector" : "WHITE",
+        "occupiedWorkerId" : "middle_class-worker-7",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "private_clinic-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "university_hospital",
+      "name" : "university_hospital",
+      "category" : "healthcare",
+      "cost" : 0,
+      "ownerClass" : "STATE",
+      "sector" : "HEALTHCARE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 25,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "healthcare" : 4
+      },
+      "slots" : [ {
+        "id" : "university_hospital-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "WHITE",
+        "requiredSector" : "WHITE",
+        "occupiedWorkerId" : "worker-worker-5",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "university_hospital-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "worker-worker-6",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "university_hospital-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "worker-worker-7",
+        "optional" : false,
+        "occupied" : true
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "technical_university",
+      "name" : "technical_university",
+      "category" : "education",
+      "cost" : 0,
+      "ownerClass" : "STATE",
+      "sector" : "EDUCATION",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 25,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "education" : 4
+      },
+      "slots" : [ {
+        "id" : "technical_university-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "ORANGE",
+        "requiredSector" : "ORANGE",
+        "occupiedWorkerId" : "middle_class-worker-1",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "technical_university-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "middle_class-worker-2",
+        "optional" : false,
+        "occupied" : true
+      }, {
+        "id" : "technical_university-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : "middle_class-worker-3",
+        "optional" : false,
+        "occupied" : true
+      } ],
+      "fullyEmpty" : false,
+      "functioning" : true,
+      "partiallyFilled" : false
+    }, {
+      "id" : "state_media",
+      "name" : "state_media",
+      "category" : "media",
+      "cost" : 0,
+      "ownerClass" : "STATE",
+      "sector" : "MEDIA",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 3,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 25,
+        "medium" : 20
+      },
+      "producedResources" : {
+        "media_influence" : 3
+      },
+      "slots" : [ {
+        "id" : "state_media-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : "PURPLE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "state_media-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    } ],
+    "workers" : [ {
+      "id" : "worker-worker-1",
+      "classType" : "WORKER",
+      "qualificationType" : "SKILLED",
+      "sector" : "GREEN",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "supermarket",
+      "slotId" : "supermarket-slot-1"
+    }, {
+      "id" : "worker-worker-2",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "supermarket",
+      "slotId" : "supermarket-slot-2"
+    }, {
+      "id" : "worker-worker-3",
+      "classType" : "WORKER",
+      "qualificationType" : "SKILLED",
+      "sector" : "ORANGE",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "college",
+      "slotId" : "college-slot-1"
+    }, {
+      "id" : "worker-worker-4",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "college",
+      "slotId" : "college-slot-2"
+    }, {
+      "id" : "worker-worker-5",
+      "classType" : "WORKER",
+      "qualificationType" : "SKILLED",
+      "sector" : "WHITE",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "university_hospital",
+      "slotId" : "university_hospital-slot-1"
+    }, {
+      "id" : "worker-worker-6",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "university_hospital",
+      "slotId" : "university_hospital-slot-2"
+    }, {
+      "id" : "worker-worker-7",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "university_hospital",
+      "slotId" : "university_hospital-slot-3"
+    }, {
+      "id" : "middle_class-worker-1",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "ORANGE",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "technical_university",
+      "slotId" : "technical_university-slot-1"
+    }, {
+      "id" : "middle_class-worker-2",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "technical_university",
+      "slotId" : "technical_university-slot-2"
+    }, {
+      "id" : "middle_class-worker-3",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "technical_university",
+      "slotId" : "technical_university-slot-3"
+    }, {
+      "id" : "middle_class-worker-4",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "BLUE",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "mall",
+      "slotId" : "mall-slot-1"
+    }, {
+      "id" : "middle_class-worker-5",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "mall",
+      "slotId" : "mall-slot-2"
+    }, {
+      "id" : "middle_class-worker-6",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "GREEN",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "minimarket",
+      "slotId" : "minimarket-slot-1"
+    }, {
+      "id" : "middle_class-worker-7",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "WHITE",
+      "location" : "ENTERPRISE_SLOT",
+      "tiedContract" : true,
+      "enterpriseId" : "private_clinic",
+      "slotId" : "private_clinic-slot-1"
+    }, {
+      "id" : "worker-worker-8",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    }, {
+      "id" : "worker-worker-9",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    }, {
+      "id" : "worker-worker-10",
+      "classType" : "WORKER",
+      "qualificationType" : "UNSKILLED",
+      "sector" : null,
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    }, {
+      "id" : "middle_class-worker-8",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "GENERAL",
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    }, {
+      "id" : "middle_class-worker-9",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "GENERAL",
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    }, {
+      "id" : "middle_class-worker-10",
+      "classType" : "MIDDLE_CLASS",
+      "qualificationType" : "SKILLED",
+      "sector" : "GENERAL",
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    }, {
+      "id" : "worker-worker-11",
+      "classType" : "WORKER",
+      "qualificationType" : "SKILLED",
+      "sector" : "GREEN",
+      "location" : "UNEMPLOYED",
+      "tiedContract" : false,
+      "enterpriseId" : null,
+      "slotId" : null
+    } ],
+    "market" : {
+      "goodsPrice" : 3,
+      "workerHireCost" : 2
+    },
+    "turnOrder" : {
+      "round" : 1,
+      "phase" : "ACTIONS",
+      "activeClasses" : [ "WORKER", "MIDDLE_CLASS", "CAPITALIST", "STATE" ],
+      "currentPlayerIndex" : 0,
+      "actionsPerPlayer" : 5,
+      "actionsTakenByPlayer" : [ 0, 0, 0, 0 ]
+    },
+    "treasury" : 120,
+    "stateLoans" : 0,
+    "publicServices" : {
+      "healthcare" : 6,
+      "education" : 6,
+      "mediaInfluence" : 4
+    },
+    "publicServicesStorage" : {
+      "media_influence" : 4,
+      "education" : 6,
+      "healthcare" : 6
+    },
+    "votingBag" : {
+      "worker" : 8,
+      "middleClass" : 8,
+      "capitalist" : 8
+    },
+    "currentVoteState" : null,
+    "lastProposalResolution" : null,
+    "productionPhaseState" : null,
+    "lastProductionSummary" : null,
+    "roundMarker" : 1,
+    "taxMultiplier" : 5,
+    "eventLog" : [ {
+      "id" : 1,
+      "type" : "GAME_SETUP",
+      "message" : "Game initialized from setup-spec for 4 players."
+    }, {
+      "id" : 2,
+      "type" : "WORKER_OPENING_MIGRATION",
+      "message" : "Opening migration before worker turn: migration-card-24 -> SKILLED/GREEN (worker-worker-11)"
+    }, {
+      "id" : 3,
+      "type" : "MIGRATION_RESOLVED",
+      "message" : "Migration resolved for round 1: Opening migration before worker turn: migration-card-24 -> SKILLED/GREEN (worker-worker-11)."
+    } ],
+    "nextLogId" : 4,
+    "demoMode" : false,
+    "demonstrationToken" : false,
+    "demonstrationPenaltyAllocation" : { },
+    "maxRounds" : 5,
+    "gameStatus" : "IN_PROGRESS",
+    "lastPreparationSummary" : {
+      "round" : 1,
+      "skipped" : true,
+      "resolved" : true,
+      "executedSubsteps" : [ ],
+      "unsupportedSubsteps" : [ ],
+      "notes" : [ "Round 1 preparation is skipped by rules." ]
+    },
+    "lastScoringSummary" : null,
+    "scoringBreakdown" : [ ],
+    "lastRoundSummary" : {
+      "round" : 1,
+      "preparationSummary" : {
+        "round" : 1,
+        "skipped" : true,
+        "resolved" : true,
+        "executedSubsteps" : [ ],
+        "unsupportedSubsteps" : [ ],
+        "notes" : [ "Round 1 preparation is skipped by rules." ]
+      },
+      "scoringSummary" : null
+    },
+    "finalResult" : null,
+    "lifecycleUnsupportedNotes" : [ ],
+    "economyUnsupportedNotes" : [ ],
+    "cardReadiness" : {
+      "enterpriseCardDatasetInstalled" : false,
+      "actionModifierDatasetInstalled" : false,
+      "simpleAutomaCardDatasetInstalledByClass" : {
+        "WORKER" : false,
+        "MIDDLE_CLASS" : false,
+        "CAPITALIST" : false,
+        "STATE" : false
+      },
+      "notes" : [ "Card datasets are not installed in this iteration." ]
+    },
+    "lastBotTurnSummary" : null,
+    "businessDealCards" : [ {
+      "id" : "business-deal-01",
+      "sequence" : 1,
+      "title" : "Business Deal 01",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 7
+      }, {
+        "resourceId" : "luxury",
+        "amount" : 5
+      } ],
+      "payout" : 70,
+      "thresholdAmount" : 6,
+      "policyABonus" : 24,
+      "policyBBonus" : 12,
+      "sourceImageRef" : "provided-image-01"
+    }, {
+      "id" : "business-deal-02",
+      "sequence" : 2,
+      "title" : "Business Deal 02",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 7
+      } ],
+      "payout" : 50,
+      "thresholdAmount" : 6,
+      "policyABonus" : 14,
+      "policyBBonus" : 7,
+      "sourceImageRef" : "provided-image-02"
+    }, {
+      "id" : "business-deal-03",
+      "sequence" : 3,
+      "title" : "Business Deal 03",
+      "requirements" : [ {
+        "resourceId" : "luxury",
+        "amount" : 12
+      } ],
+      "payout" : 50,
+      "thresholdAmount" : 6,
+      "policyABonus" : 24,
+      "policyBBonus" : 12,
+      "sourceImageRef" : "provided-image-03"
+    }, {
+      "id" : "business-deal-04",
+      "sequence" : 4,
+      "title" : "Business Deal 04",
+      "requirements" : [ {
+        "resourceId" : "luxury",
+        "amount" : 10
+      } ],
+      "payout" : 40,
+      "thresholdAmount" : 6,
+      "policyABonus" : 20,
+      "policyBBonus" : 10,
+      "sourceImageRef" : "provided-image-04"
+    }, {
+      "id" : "business-deal-05",
+      "sequence" : 5,
+      "title" : "Business Deal 05",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 5
+      }, {
+        "resourceId" : "luxury",
+        "amount" : 6
+      } ],
+      "payout" : 60,
+      "thresholdAmount" : 6,
+      "policyABonus" : 22,
+      "policyBBonus" : 11,
+      "sourceImageRef" : "provided-image-05"
+    }, {
+      "id" : "business-deal-06",
+      "sequence" : 6,
+      "title" : "Business Deal 06",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 8
+      }, {
+        "resourceId" : "luxury",
+        "amount" : 4
+      } ],
+      "payout" : 75,
+      "thresholdAmount" : 6,
+      "policyABonus" : 24,
+      "policyBBonus" : 12,
+      "sourceImageRef" : "provided-image-06"
+    }, {
+      "id" : "business-deal-07",
+      "sequence" : 7,
+      "title" : "Business Deal 07",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 6
+      } ],
+      "payout" : 40,
+      "thresholdAmount" : 6,
+      "policyABonus" : 12,
+      "policyBBonus" : 6,
+      "sourceImageRef" : "provided-image-07"
+    }, {
+      "id" : "business-deal-08",
+      "sequence" : 8,
+      "title" : "Business Deal 08",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 8
+      } ],
+      "payout" : 55,
+      "thresholdAmount" : 6,
+      "policyABonus" : 16,
+      "policyBBonus" : 8,
+      "sourceImageRef" : "provided-image-08"
+    }, {
+      "id" : "business-deal-09",
+      "sequence" : 9,
+      "title" : "Business Deal 09",
+      "requirements" : [ {
+        "resourceId" : "food",
+        "amount" : 4
+      }, {
+        "resourceId" : "luxury",
+        "amount" : 8
+      } ],
+      "payout" : 60,
+      "thresholdAmount" : 6,
+      "policyABonus" : 24,
+      "policyBBonus" : 12,
+      "sourceImageRef" : "provided-image-09"
+    }, {
+      "id" : "business-deal-10",
+      "sequence" : 10,
+      "title" : "Business Deal 10",
+      "requirements" : [ {
+        "resourceId" : "luxury",
+        "amount" : 8
+      } ],
+      "payout" : 30,
+      "thresholdAmount" : 6,
+      "policyABonus" : 16,
+      "policyBBonus" : 8,
+      "sourceImageRef" : "provided-image-10"
+    } ],
+    "businessDealDeck" : {
+      "deckId" : "business-deals",
+      "orderedCardIds" : [ "business-deal-02", "business-deal-01", "business-deal-07", "business-deal-03", "business-deal-04", "business-deal-06", "business-deal-08", "business-deal-05", "business-deal-09", "business-deal-10" ],
+      "visibleCardIds" : [ "business-deal-02" ],
+      "visibleWindowSize" : 1,
+      "nextCardIndex" : 1,
+      "refreshCount" : 1,
+      "lastRefreshedRound" : 1,
+      "lastRefreshReason" : "INITIAL_SETUP"
+    },
+    "exportCards" : [ {
+      "cardId" : "export-card-01",
+      "title" : "Export Card 01",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 1,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 2,
+        "revenue" : 20
+      }, {
+        "resourceId" : "food",
+        "quantity" : 6,
+        "revenue" : 55
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 5,
+        "revenue" : 40
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 4,
+        "revenue" : 30
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 8,
+        "revenue" : 55
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_01.jpg"
+    }, {
+      "cardId" : "export-card-02",
+      "title" : "Export Card 02",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 2,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 3,
+        "revenue" : 30
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 70
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 5,
+        "revenue" : 35
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 4,
+        "revenue" : 30
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 40
+      }, {
+        "resourceId" : "education",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 6,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_02.jpg"
+    }, {
+      "cardId" : "export-card-03",
+      "title" : "Export Card 03",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 3,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 4,
+        "revenue" : 50
+      }, {
+        "resourceId" : "food",
+        "quantity" : 8,
+        "revenue" : 95
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 7,
+        "revenue" : 35
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 5,
+        "revenue" : 30
+      }, {
+        "resourceId" : "education",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 6,
+        "revenue" : 40
+      } ],
+      "sourceImageRef" : "deck_183_card_03.jpg"
+    }, {
+      "cardId" : "export-card-04",
+      "title" : "Export Card 04",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 4,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 3,
+        "revenue" : 35
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 80
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 4,
+        "revenue" : 20
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 8,
+        "revenue" : 40
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 5,
+        "revenue" : 25
+      }, {
+        "resourceId" : "education",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 6,
+        "revenue" : 45
+      } ],
+      "sourceImageRef" : "deck_183_card_04.jpg"
+    }, {
+      "cardId" : "export-card-05",
+      "title" : "Export Card 05",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 5,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 4,
+        "revenue" : 45
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 80
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 6,
+        "revenue" : 40
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 5,
+        "revenue" : 30
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 50
+      } ],
+      "sourceImageRef" : "deck_183_card_05.jpg"
+    }, {
+      "cardId" : "export-card-06",
+      "title" : "Export Card 06",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 6,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 55
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 4,
+        "revenue" : 20
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 8,
+        "revenue" : 40
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 4,
+        "revenue" : 25
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 8,
+        "revenue" : 45
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "education",
+        "quantity" : 5,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_06.jpg"
+    }, {
+      "cardId" : "export-card-07",
+      "title" : "Export Card 07",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 7,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 2,
+        "revenue" : 25
+      }, {
+        "resourceId" : "food",
+        "quantity" : 6,
+        "revenue" : 65
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 7,
+        "revenue" : 40
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 4,
+        "revenue" : 20
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 7,
+        "revenue" : 35
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "education",
+        "quantity" : 6,
+        "revenue" : 45
+      } ],
+      "sourceImageRef" : "deck_183_card_07.jpg"
+    }, {
+      "cardId" : "export-card-08",
+      "title" : "Export Card 08",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 8,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 3,
+        "revenue" : 35
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 75
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 5,
+        "revenue" : 35
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 2,
+        "revenue" : 10
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 35
+      }, {
+        "resourceId" : "education",
+        "quantity" : 4,
+        "revenue" : 25
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 40
+      } ],
+      "sourceImageRef" : "deck_183_card_08.jpg"
+    }, {
+      "cardId" : "export-card-09",
+      "title" : "Export Card 09",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 9,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 4,
+        "revenue" : 45
+      }, {
+        "resourceId" : "food",
+        "quantity" : 8,
+        "revenue" : 85
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 5,
+        "revenue" : 25
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 40
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_09.jpg"
+    }, {
+      "cardId" : "export-card-10",
+      "title" : "Export Card 10",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 10,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "food",
+        "quantity" : 6,
+        "revenue" : 50
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 4,
+        "revenue" : 25
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 8,
+        "revenue" : 45
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 5,
+        "revenue" : 40
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_10.jpg"
+    }, {
+      "cardId" : "export-card-11",
+      "title" : "Export Card 11",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 11,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 3,
+        "revenue" : 35
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 75
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 5,
+        "revenue" : 35
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 2,
+        "revenue" : 10
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 35
+      }, {
+        "resourceId" : "education",
+        "quantity" : 4,
+        "revenue" : 25
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 40
+      } ],
+      "sourceImageRef" : "deck_183_card_11.jpg"
+    }, {
+      "cardId" : "export-card-12",
+      "title" : "Export Card 12",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 12,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 4,
+        "revenue" : 45
+      }, {
+        "resourceId" : "food",
+        "quantity" : 8,
+        "revenue" : 85
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 5,
+        "revenue" : 25
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 40
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_12.jpg"
+    }, {
+      "cardId" : "export-card-13",
+      "title" : "Export Card 13",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 13,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "food",
+        "quantity" : 6,
+        "revenue" : 50
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 4,
+        "revenue" : 25
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 8,
+        "revenue" : 45
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 5,
+        "revenue" : 40
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 7,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_13.jpg"
+    }, {
+      "cardId" : "export-card-14",
+      "title" : "Export Card 14",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 14,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "food",
+        "quantity" : 6,
+        "revenue" : 50
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 4,
+        "revenue" : 30
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 7,
+        "revenue" : 50
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 7,
+        "revenue" : 35
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "education",
+        "quantity" : 5,
+        "revenue" : 35
+      } ],
+      "sourceImageRef" : "deck_183_card_14.jpg"
+    }, {
+      "cardId" : "export-card-15",
+      "title" : "Export Card 15",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 15,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 3,
+        "revenue" : 30
+      }, {
+        "resourceId" : "food",
+        "quantity" : 5,
+        "revenue" : 50
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 7,
+        "revenue" : 55
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 2,
+        "revenue" : 10
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 35
+      }, {
+        "resourceId" : "education",
+        "quantity" : 4,
+        "revenue" : 25
+      }, {
+        "resourceId" : "education",
+        "quantity" : 8,
+        "revenue" : 45
+      } ],
+      "sourceImageRef" : "deck_183_card_15.jpg"
+    }, {
+      "cardId" : "export-card-16",
+      "title" : "Export Card 16",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 0,
+      "placeholder" : false,
+      "sequence" : 16,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 4,
+        "revenue" : 40
+      }, {
+        "resourceId" : "food",
+        "quantity" : 7,
+        "revenue" : 70
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 7,
+        "revenue" : 50
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 25
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 6,
+        "revenue" : 50
+      }, {
+        "resourceId" : "education",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "education",
+        "quantity" : 5,
+        "revenue" : 30
+      } ],
+      "sourceImageRef" : "deck_183_card_16.jpg"
+    } ],
+    "exportCardDeck" : {
+      "deckId" : "export-cards",
+      "orderedCardIds" : [ "export-card-03", "export-card-14", "export-card-06", "export-card-05", "export-card-10", "export-card-12", "export-card-08", "export-card-09", "export-card-16", "export-card-07", "export-card-15", "export-card-13", "export-card-01", "export-card-02", "export-card-11", "export-card-04" ],
+      "visibleCardIds" : [ "export-card-03" ],
+      "visibleWindowSize" : 1,
+      "nextCardIndex" : 1,
+      "refreshCount" : 1,
+      "lastRefreshedRound" : 1,
+      "lastRefreshReason" : "INITIAL_SETUP"
+    },
+    "migrationCards" : [ {
+      "cardId" : "migration-card-01",
+      "sequence" : 1,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "RED"
+      }
+    }, {
+      "cardId" : "migration-card-02",
+      "sequence" : 2,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "ORANGE"
+      }
+    }, {
+      "cardId" : "migration-card-03",
+      "sequence" : 3,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "BLUE"
+      }
+    }, {
+      "cardId" : "migration-card-04",
+      "sequence" : 4,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "GREEN"
+      }
+    }, {
+      "cardId" : "migration-card-05",
+      "sequence" : 5,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "PURPLE"
+      }
+    }, {
+      "cardId" : "migration-card-06",
+      "sequence" : 6,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "RED"
+      }
+    }, {
+      "cardId" : "migration-card-07",
+      "sequence" : 7,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "ORANGE"
+      }
+    }, {
+      "cardId" : "migration-card-08",
+      "sequence" : 8,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "BLUE"
+      }
+    }, {
+      "cardId" : "migration-card-09",
+      "sequence" : 9,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "GREEN"
+      }
+    }, {
+      "cardId" : "migration-card-10",
+      "sequence" : 10,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "PURPLE"
+      }
+    }, {
+      "cardId" : "migration-card-11",
+      "sequence" : 11,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "RED"
+      }
+    }, {
+      "cardId" : "migration-card-12",
+      "sequence" : 12,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "ORANGE"
+      }
+    }, {
+      "cardId" : "migration-card-13",
+      "sequence" : 13,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "BLUE"
+      }
+    }, {
+      "cardId" : "migration-card-14",
+      "sequence" : 14,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "GREEN"
+      }
+    }, {
+      "cardId" : "migration-card-15",
+      "sequence" : 15,
+      "workerEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "PURPLE"
+      }
+    }, {
+      "cardId" : "migration-card-16",
+      "sequence" : 16,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "RED"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-17",
+      "sequence" : 17,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "ORANGE"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-18",
+      "sequence" : 18,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "BLUE"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-19",
+      "sequence" : 19,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "GREEN"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-20",
+      "sequence" : 20,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "PURPLE"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-21",
+      "sequence" : 21,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "RED"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-22",
+      "sequence" : 22,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "ORANGE"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-23",
+      "sequence" : 23,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "BLUE"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-24",
+      "sequence" : 24,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "GREEN"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    }, {
+      "cardId" : "migration-card-25",
+      "sequence" : 25,
+      "workerEntry" : {
+        "qualificationType" : "SKILLED",
+        "sector" : "PURPLE"
+      },
+      "middleClassEntry" : {
+        "qualificationType" : "UNSKILLED",
+        "sector" : "GENERAL"
+      }
+    } ],
+    "migrationDeck" : {
+      "deckId" : "migration-cards",
+      "orderedCardIds" : [ "migration-card-24", "migration-card-09", "migration-card-21", "migration-card-11", "migration-card-12", "migration-card-22", "migration-card-23", "migration-card-18", "migration-card-05", "migration-card-07", "migration-card-25", "migration-card-04", "migration-card-16", "migration-card-19", "migration-card-10", "migration-card-06", "migration-card-13", "migration-card-14", "migration-card-17", "migration-card-01", "migration-card-03", "migration-card-08", "migration-card-20", "migration-card-02", "migration-card-15" ],
+      "visibleCardIds" : [ "migration-card-24" ],
+      "visibleWindowSize" : 0,
+      "nextCardIndex" : 1,
+      "refreshCount" : 1,
+      "lastRefreshedRound" : 1,
+      "lastRefreshReason" : "WORKER_OPENING_TURN"
+    },
+    "stateEventCards" : [ {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "STATE",
+        "variant" : "45",
+        "summary" : "Заплатить 45: 2 ПО за каждые 15 монет."
+      } ],
+      "id" : "urgent_deflation_concern",
+      "title" : "Опасение дефляции",
+      "instruction" : "Заплатите 15, 30 или 45 монет."
+    }, {
+      "noActionPenaltyClasses" : [ "MIDDLE_CLASS", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "support",
+        "summary" : "Средний класс: +1 легитимность за каждые 2 роскоши."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "support",
+        "summary" : "Капиталисты: +1 легитимность за каждые 2 роскоши."
+      } ],
+      "id" : "enterprise_internet_speed",
+      "title" : "Предприятия требуют улучшения скорости интернета",
+      "instruction" : "Обеспечьте роскошь в количестве 1/2 функционирующих предприятий класса."
+    }, {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "STATE",
+        "variant" : "6",
+        "summary" : "1 ПО за каждое потраченное здравоохранение."
+      } ],
+      "id" : "neighboring_states_war",
+      "title" : "Война соседних государств",
+      "instruction" : "Потратьте не более 6 здравоохранения."
+    }, {
+      "noActionPenaltyClasses" : [ "MIDDLE_CLASS", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "money",
+        "summary" : "Средний класс: +1 легитимность за каждые 20 монет."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "money",
+        "summary" : "Капиталисты: 2 ПО за каждые 15 монет."
+      } ],
+      "id" : "local_industry_crisis",
+      "title" : "Кризис местной промышленности",
+      "instruction" : "Обеспечьте по 5 монет за каждое функционирующее предприятие класса."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "healthcare",
+        "summary" : "Рабочий класс: +1 легитимность."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "healthcare",
+        "summary" : "Средний класс: +1 легитимность."
+      } ],
+      "id" : "declining_birth_rate",
+      "title" : "Снижение темпов рождаемости",
+      "instruction" : "Обеспечьте здравоохранение в количестве 1/2 населения класса."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "media",
+        "summary" : "Рабочий класс: +1 легитимность."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "media",
+        "summary" : "Капиталисты: +1 легитимность."
+      } ],
+      "id" : "port_strike",
+      "title" : "Забастовка в порту",
+      "instruction" : "Обеспечьте классу 2 СМИ."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "food",
+        "summary" : "Рабочий класс: +1 легитимность."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "food",
+        "summary" : "Капиталисты: +1 легитимность."
+      } ],
+      "id" : "drought",
+      "title" : "Засуха",
+      "instruction" : "Обеспечьте еду в количестве 1/2 населения или 1/2 функционирующих предприятий класса."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "bill",
+        "summary" : "Рабочий класс: +2 легитимность."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "bill",
+        "summary" : "Капиталисты: +2 легитимность."
+      } ],
+      "id" : "public_unrest",
+      "title" : "Народные волнения",
+      "instruction" : "Внесите законопроект по выбору соперника."
+    }, {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "STATE",
+        "variant" : "10",
+        "summary" : "По 10 монет каждому классу: государство получает 3 ПО."
+      }, {
+        "targetClass" : "STATE",
+        "variant" : "15",
+        "summary" : "По 15 монет каждому классу: +1 легитимность всем классам."
+      } ],
+      "id" : "stimulus_measures",
+      "title" : "Необходимость мер стимулирования",
+      "instruction" : "Выберите 1 вариант: обеспечьте по 10 или 15 монет каждому классу."
+    }, {
+      "noActionPenaltyClasses" : [ "MIDDLE_CLASS", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "build",
+        "summary" : "Средний класс: +1 легитимность."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "build",
+        "summary" : "Капиталисты: +1 легитимность."
+      } ],
+      "id" : "young_industry_support",
+      "title" : "Поддержка молодой отрасли",
+      "instruction" : "Оплатите и постройте предприятие другому классу стоимостью 15 или более."
+    }, {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "votes",
+        "summary" : "Рабочий класс: +1 легитимность."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "votes",
+        "summary" : "Средний класс: +1 легитимность."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "votes",
+        "summary" : "Капиталисты: +1 легитимность."
+      } ],
+      "id" : "unfair_representation",
+      "title" : "Несправедливое представительство",
+      "instruction" : "Обеспечьте классу 1 личное влияние и 2 кубика для голосования."
+    }, {
+      "noActionPenaltyClasses" : [ "MIDDLE_CLASS", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "buy",
+        "summary" : "Средний класс: +1 легитимность за каждые 3 образования."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "buy",
+        "summary" : "Капиталисты: +1 легитимность за каждые 3 образования."
+      } ],
+      "id" : "university_rating",
+      "title" : "Низкий рейтинг университетов",
+      "instruction" : "Купите образование у соперников в количестве не больше числа госпредприятий."
+    }, {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "money",
+        "summary" : "Выбранные классы: +1 легитимность."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "money",
+        "summary" : "Выбранные классы: +1 легитимность."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "money",
+        "summary" : "Выбранные классы: +1 легитимность."
+      } ],
+      "id" : "sustainable_development_initiative",
+      "title" : "Необходимость инициативы устойчивого развития",
+      "instruction" : "Выберите 2 класса. Обеспечьте по 25 монет каждому из них."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "services",
+        "summary" : "Рабочий класс: +1 легитимность."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "services",
+        "summary" : "Средний класс: +1 легитимность."
+      } ],
+      "id" : "welfare_standards_demand",
+      "title" : "Требование повышения стандартов благосостояния",
+      "instruction" : "Обеспечьте здравоохранение и образование в сумме 1/2 населения класса, минимум по 1 каждого."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "money",
+        "summary" : "Рабочий класс: 2 ПО за каждые 15 монет."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "money",
+        "summary" : "Средний класс: +1 легитимность за каждые 20 монет."
+      } ],
+      "id" : "pension_reform_demand",
+      "title" : "Требование пенсионной реформы",
+      "instruction" : "Обеспечьте монеты в количестве, равном населению класса, умноженному на 5."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "services",
+        "summary" : "Рабочий класс: +1 легитимность за каждые 2 компонента."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "services",
+        "summary" : "Средний класс: +1 легитимность за каждые 2 компонента."
+      } ],
+      "id" : "earthquake",
+      "title" : "Землетрясение",
+      "instruction" : "Обеспечьте еду и здравоохранение в сумме 1/2 населения класса, минимум по 1 каждого."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "votes",
+        "summary" : "Рабочий класс: +1 легитимность за каждые 2 кубика."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "votes",
+        "summary" : "Капиталисты: +1 легитимность за каждые 2 кубика."
+      } ],
+      "id" : "political_polarization",
+      "title" : "Политическая поляризация",
+      "instruction" : "Заплатите 30 монет и обеспечьте 4 кубика для голосования классам в любом сочетании."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "services",
+        "summary" : "Рабочий класс: +1 легитимность за каждые 2 компонента."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "services",
+        "summary" : "Капиталисты: +1 легитимность за каждые 2 компонента."
+      } ],
+      "id" : "technological_illiteracy",
+      "title" : "Технологическая безграмотность",
+      "instruction" : "Обеспечьте роскошь и образование в сумме 1/2 населения или 1/2 функционирующих предприятий класса, минимум по 1 каждого."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "goods",
+        "summary" : "Рабочий класс: +1 легитимность за каждые 2 компонента."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "goods",
+        "summary" : "Средний класс: 1 ПО за каждый компонент."
+      } ],
+      "id" : "global_supply_chain_crisis",
+      "title" : "Кризис глобальной цепочки поставок",
+      "instruction" : "Обеспечьте еду и роскошь в сумме 1/2 населения класса, минимум по 1 каждого."
+    }, {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "media",
+        "summary" : "Рабочий класс: +1 легитимность за каждый СМИ."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "media",
+        "summary" : "Средний класс: +1 легитимность за каждый СМИ."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "media",
+        "summary" : "Капиталисты: +1 легитимность за каждый СМИ."
+      } ],
+      "id" : "political_scandal",
+      "title" : "Политический скандал",
+      "instruction" : "Заплатите 25 монет и обеспечьте не более 3 СМИ классам в любом сочетании."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "money",
+        "summary" : "Рабочий класс: +1 легитимность за каждые 25 монет."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "money",
+        "summary" : "Средний класс: +1 легитимность за каждые 15 монет."
+      } ],
+      "id" : "thirteenth_salary_demand",
+      "title" : "Требование 13-й зарплаты",
+      "instruction" : "Обеспечьте 5 монет за каждого работника класса, занятого в госсекторе."
+    }, {
+      "noActionPenaltyClasses" : [ "MIDDLE_CLASS", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "buy",
+        "summary" : "Средний класс: +1 легитимность за каждые 3 роскоши."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "buy",
+        "summary" : "Капиталисты: +1 легитимность за каждые 3 роскоши."
+      } ],
+      "id" : "old_state_infrastructure",
+      "title" : "Устаревшая инфраструктура госсектора",
+      "instruction" : "Купите роскошь у соперников в количестве не больше числа госпредприятий."
+    }, {
+      "noActionPenaltyClasses" : [ ],
+      "options" : [ {
+        "targetClass" : "STATE",
+        "variant" : "6",
+        "summary" : "1 ПО за каждое потраченное образование."
+      } ],
+      "id" : "developing_countries_education",
+      "title" : "Образование для развивающихся стран",
+      "instruction" : "Потратьте не более 6 образования."
+    }, {
+      "noActionPenaltyClasses" : [ "MIDDLE_CLASS", "CAPITALIST" ],
+      "options" : [ {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "buy",
+        "summary" : "Средний класс: +1 легитимность за каждые 3 здравоохранения."
+      }, {
+        "targetClass" : "CAPITALIST",
+        "variant" : "buy",
+        "summary" : "Капиталисты: +1 легитимность за каждые 3 здравоохранения."
+      } ],
+      "id" : "pandemic",
+      "title" : "Пандемия",
+      "instruction" : "Купите здравоохранение у соперников в количестве не больше числа госпредприятий."
+    }, {
+      "noActionPenaltyClasses" : [ "WORKER", "MIDDLE_CLASS" ],
+      "options" : [ {
+        "targetClass" : "WORKER",
+        "variant" : "education",
+        "summary" : "Рабочий класс: +1 легитимность."
+      }, {
+        "targetClass" : "MIDDLE_CLASS",
+        "variant" : "education",
+        "summary" : "Средний класс: +1 легитимность."
+      } ],
+      "id" : "low_education_index",
+      "title" : "Низкий индекс образования",
+      "instruction" : "Обеспечьте образование в количестве 1/2 населения класса."
+    } ],
+    "stateEventDeck" : {
+      "deckId" : "state-events",
+      "orderedCardIds" : [ "urgent_deflation_concern", "enterprise_internet_speed", "neighboring_states_war", "local_industry_crisis", "declining_birth_rate", "port_strike", "drought", "public_unrest", "stimulus_measures", "young_industry_support", "unfair_representation", "university_rating", "sustainable_development_initiative", "welfare_standards_demand", "pension_reform_demand", "earthquake", "political_polarization", "technological_illiteracy", "global_supply_chain_crisis", "political_scandal", "thirteenth_salary_demand", "old_state_infrastructure", "developing_countries_education", "pandemic", "low_education_index" ],
+      "visibleCardIds" : [ "urgent_deflation_concern", "enterprise_internet_speed" ],
+      "visibleWindowSize" : 2,
+      "nextCardIndex" : 2,
+      "refreshCount" : 1,
+      "lastRefreshedRound" : 1,
+      "lastRefreshReason" : "REFILL_VISIBLE_EVENTS"
+    },
+    "capitalistAutomaDeck" : {
+      "deckId" : null,
+      "orderedCardIds" : [ ],
+      "visibleCardIds" : [ ],
+      "visibleWindowSize" : 0,
+      "nextCardIndex" : 0,
+      "refreshCount" : 0,
+      "lastRefreshedRound" : null,
+      "lastRefreshReason" : null
+    },
+    "workerAutomaDeck" : {
+      "deckId" : null,
+      "orderedCardIds" : [ ],
+      "visibleCardIds" : [ ],
+      "visibleWindowSize" : 0,
+      "nextCardIndex" : 0,
+      "refreshCount" : 0,
+      "lastRefreshedRound" : null,
+      "lastRefreshReason" : null
+    },
+    "activeExportCard" : {
+      "cardId" : "export-card-03",
+      "title" : "Export Card 03",
+      "description" : "Food, healthcare, luxury and education export offers.",
+      "availableOperations" : 8,
+      "activatedRound" : 1,
+      "placeholder" : false,
+      "sequence" : 3,
+      "offers" : [ {
+        "resourceId" : "food",
+        "quantity" : 4,
+        "revenue" : 50
+      }, {
+        "resourceId" : "food",
+        "quantity" : 8,
+        "revenue" : 95
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 3,
+        "revenue" : 15
+      }, {
+        "resourceId" : "healthcare",
+        "quantity" : 7,
+        "revenue" : 35
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 3,
+        "revenue" : 20
+      }, {
+        "resourceId" : "luxury",
+        "quantity" : 5,
+        "revenue" : 30
+      }, {
+        "resourceId" : "education",
+        "quantity" : 2,
+        "revenue" : 15
+      }, {
+        "resourceId" : "education",
+        "quantity" : 6,
+        "revenue" : 40
+      } ],
+      "sourceImageRef" : "deck_183_card_03.jpg"
+    },
+    "capitalistEnterpriseDeck" : [ {
+      "id" : "hospital",
+      "name" : "Медицинский комплекс",
+      "category" : "healthcare",
+      "cost" : 24,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "RED",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 9,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 20,
+        "high" : 40,
+        "medium" : 30
+      },
+      "producedResources" : {
+        "healthcare" : 9
+      },
+      "slots" : [ {
+        "id" : "hospital-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : "WHITE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "hospital-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "hospital-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "fish_farm",
+      "name" : "Рыбная ферма",
+      "category" : "food",
+      "cost" : 20,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "GREEN",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 6,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 25,
+        "high" : 35,
+        "medium" : 30
+      },
+      "producedResources" : {
+        "food" : 6
+      },
+      "slots" : [ {
+        "id" : "fish_farm-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : "GREEN",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "fish_farm-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "fish_farm-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "telecom_company",
+      "name" : "Телекомпания",
+      "category" : "media",
+      "cost" : 24,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "PURPLE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 20,
+        "high" : 40,
+        "medium" : 30
+      },
+      "producedResources" : {
+        "influence" : 4
+      },
+      "slots" : [ {
+        "id" : "telecom_company-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : "PURPLE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "telecom_company-slot-2",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : "PURPLE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "telecom_company-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    } ],
+    "capitalistEnterpriseMarket" : [ {
+      "id" : "publishing_house",
+      "name" : "Издательство",
+      "category" : "media",
+      "cost" : 12,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "PURPLE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 3,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 20,
+        "high" : 30,
+        "medium" : 25
+      },
+      "producedResources" : {
+        "influence" : 3
+      },
+      "slots" : [ {
+        "id" : "publishing_house-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : "PURPLE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "publishing_house-slot-2",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : "PURPLE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "publishing_house-slot-3",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : "PURPLE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "shopping_center",
+      "name" : "Торговый центр",
+      "category" : "luxury",
+      "cost" : 24,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "BLUE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 6,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 20,
+        "high" : 30,
+        "medium" : 25
+      },
+      "producedResources" : {
+        "luxury" : 6
+      },
+      "slots" : [ {
+        "id" : "shopping_center-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : "BLUE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "shopping_center-slot-2",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : "BLUE",
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "shopping_center-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "vegetable_farm",
+      "name" : "Овощная ферма",
+      "category" : "food",
+      "cost" : 15,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "GREEN",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 5,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 20,
+        "high" : 30,
+        "medium" : 25
+      },
+      "producedResources" : {
+        "food" : 5
+      },
+      "slots" : [ {
+        "id" : "vegetable_farm-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "vegetable_farm-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "vegetable_farm-slot-3",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "automobile_factory",
+      "name" : "Завод автомобилей",
+      "category" : "luxury",
+      "cost" : 45,
+      "ownerClass" : "CAPITALIST",
+      "sector" : "BLUE",
+      "wageLevel" : 2,
+      "automated" : true,
+      "productionAmount" : 5,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : { },
+      "producedResources" : {
+        "luxury" : 5
+      },
+      "slots" : [ ],
+      "fullyEmpty" : true,
+      "functioning" : true,
+      "partiallyFilled" : false
+    } ],
+    "middleClassEnterpriseDeck" : [ {
+      "id" : "tutoring_company",
+      "name" : "Tutoring Company",
+      "category" : "education",
+      "cost" : 12,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "EDUCATION",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "education" : 2
+      },
+      "slots" : [ {
+        "id" : "tutoring_company-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "ORANGE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "tutoring_company-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "private_school",
+      "name" : "Private School",
+      "category" : "education",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "EDUCATION",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 4,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 9,
+        "medium" : 12
+      },
+      "producedResources" : {
+        "education" : 2
+      },
+      "slots" : [ {
+        "id" : "private_school-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "ORANGE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "private_school-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "ORANGE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "training_center",
+      "name" : "Training Center",
+      "category" : "education",
+      "cost" : 16,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "EDUCATION",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "education" : 4
+      },
+      "slots" : [ {
+        "id" : "training_center-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "ORANGE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "training_center-middle-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "training_center-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "convenience_store",
+      "name" : "Convenience Store",
+      "category" : "food",
+      "cost" : 14,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "RETAIL",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "food" : 2
+      },
+      "slots" : [ {
+        "id" : "convenience_store-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "convenience_store-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "medical_laboratory",
+      "name" : "Medical Laboratory",
+      "category" : "healthcare",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "HEALTHCARE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 4,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 9,
+        "medium" : 12
+      },
+      "producedResources" : {
+        "healthcare" : 2
+      },
+      "slots" : [ {
+        "id" : "medical_laboratory-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "medical_laboratory-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "electronics_store",
+      "name" : "Electronics Store",
+      "category" : "luxury",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "BLUE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 4,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 9,
+        "medium" : 12
+      },
+      "producedResources" : {
+        "luxury" : 2
+      },
+      "slots" : [ {
+        "id" : "electronics_store-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "electronics_store-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "local_newspaper",
+      "name" : "Local Newspaper",
+      "category" : "media",
+      "cost" : 14,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "MEDIA",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "media" : 2
+      },
+      "slots" : [ {
+        "id" : "local_newspaper-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "local_newspaper-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "game_store",
+      "name" : "Game Store",
+      "category" : "luxury",
+      "cost" : 12,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "BLUE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "luxury" : 2
+      },
+      "slots" : [ {
+        "id" : "game_store-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "game_store-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "organic_farm",
+      "name" : "Organic Farm",
+      "category" : "food",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "RETAIL",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 9,
+        "medium" : 12
+      },
+      "producedResources" : {
+        "food" : 2
+      },
+      "slots" : [ {
+        "id" : "organic_farm-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "organic_farm-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "pharmacy",
+      "name" : "Pharmacy",
+      "category" : "healthcare",
+      "cost" : 16,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "HEALTHCARE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "healthcare" : 4
+      },
+      "slots" : [ {
+        "id" : "pharmacy-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "pharmacy-middle-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "pharmacy-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "regional_radio_station",
+      "name" : "Regional Radio Station",
+      "category" : "media",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "MEDIA",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 15,
+        "high" : 9,
+        "medium" : 12
+      },
+      "producedResources" : {
+        "media" : 2
+      },
+      "slots" : [ {
+        "id" : "regional_radio_station-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "regional_radio_station-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "jewelry_store",
+      "name" : "Jewelry Store",
+      "category" : "luxury",
+      "cost" : 16,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "BLUE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 4,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "luxury" : 4
+      },
+      "slots" : [ {
+        "id" : "jewelry_store-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "BLUE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "jewelry_store-middle-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "jewelry_store-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "doctors_office_starting",
+      "name" : "Doctor's Office",
+      "category" : "healthcare",
+      "cost" : 12,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "HEALTHCARE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "healthcare" : 2
+      },
+      "slots" : [ {
+        "id" : "doctors_office_starting-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "doctors_office_starting-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "convenience_store_starting",
+      "name" : "Convenience Store",
+      "category" : "food",
+      "cost" : 14,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "RETAIL",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 1,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "food" : 2
+      },
+      "slots" : [ {
+        "id" : "convenience_store_starting-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "convenience_store_starting-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    } ],
+    "middleClassEnterpriseMarket" : [ {
+      "id" : "doctors_office",
+      "name" : "Doctor's Office",
+      "category" : "healthcare",
+      "cost" : 12,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "HEALTHCARE",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 2,
+      "productionPerWorkers" : 2,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "healthcare" : 2
+      },
+      "slots" : [ {
+        "id" : "doctors_office-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "RED",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "doctors_office-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "pr_agency",
+      "name" : "PR Agency",
+      "category" : "media",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "MEDIA",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 3,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "media" : 3
+      },
+      "slots" : [ {
+        "id" : "pr_agency-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "PURPLE",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "pr_agency-middle-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "pr_agency-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    }, {
+      "id" : "fast_food_restaurant",
+      "name" : "Fast Food Restaurant",
+      "category" : "food",
+      "cost" : 20,
+      "ownerClass" : "MIDDLE_CLASS",
+      "sector" : "RETAIL",
+      "wageLevel" : 2,
+      "automated" : false,
+      "productionAmount" : 3,
+      "productionPerWorkers" : null,
+      "strikeToken" : false,
+      "wageTrack" : {
+        "low" : 10,
+        "high" : 6,
+        "medium" : 8
+      },
+      "producedResources" : {
+        "food" : 3
+      },
+      "slots" : [ {
+        "id" : "fast_food_restaurant-middle-slot-1",
+        "requiredQualification" : "SKILLED",
+        "requiredColor" : "GREEN",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "fast_food_restaurant-middle-slot-2",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : false,
+        "occupied" : false
+      }, {
+        "id" : "fast_food_restaurant-hired-worker-slot-1",
+        "requiredQualification" : "UNSKILLED",
+        "requiredColor" : "GRAY",
+        "requiredSector" : null,
+        "occupiedWorkerId" : null,
+        "optional" : true,
+        "occupied" : false
+      } ],
+      "fullyEmpty" : true,
+      "functioning" : false,
+      "partiallyFilled" : false
+    } ],
+    "currentPhase" : "ACTIONS",
+    "gameOver" : false,
+    "currentRound" : 1,
+    "turn" : {
+      "round" : 1,
+      "phase" : "ACTIONS",
+      "activeClasses" : [ "WORKER", "MIDDLE_CLASS", "CAPITALIST", "STATE" ],
+      "currentPlayerIndex" : 0,
+      "actionsPerPlayer" : 5,
+      "actionsTakenByPlayer" : [ 0, 0, 0, 0 ]
+    }
+  },
+  "legalMoves" : [ {
+    "id" : "add-voting-cubes:worker",
+    "actionType" : "ADD_VOTING_CUBES",
+    "summary" : "Add 3 voting cubes for worker.",
+    "legacyDemo" : false,
+    "template" : {
+      "amount" : 3,
+      "actorPlayerId" : "worker"
+    }
+  }, {
+    "id" : "propose-bill:worker:POLICY_1_FISCAL:B",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_1_FISCAL to B",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_2_LABOR_MARKET:A",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_2_LABOR_MARKET to A",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_2_LABOR_MARKET:C",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_2_LABOR_MARKET to C",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_3_TAXATION:B",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_3_TAXATION to B",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_4_HEALTHCARE_AND_BENEFITS:A",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_4_HEALTHCARE_AND_BENEFITS to A",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_4_HEALTHCARE_AND_BENEFITS:C",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_4_HEALTHCARE_AND_BENEFITS to C",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_5_EDUCATION:B",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_5_EDUCATION to B",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_6_FOREIGN_TRADE:A",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_6_FOREIGN_TRADE to A",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_6_FOREIGN_TRADE:C",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_6_FOREIGN_TRADE to C",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_7_IMMIGRATION:A",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_7_IMMIGRATION to A",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "propose-bill:worker:POLICY_7_IMMIGRATION:C",
+    "actionType" : "PROPOSE_BILL",
+    "summary" : "Propose bill on POLICY_7_IMMIGRATION to C",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "buy-goods-and-services:worker:FOOD:1",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy FOOD from 1 supplier(s)",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "buy-goods-and-services:worker:HEALTHCARE:1",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy HEALTHCARE from 1 supplier(s)",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "buy-goods-and-services:worker:EDUCATION:1",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy EDUCATION from 1 supplier(s)",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "buy-goods-and-services:worker:LUXURY:1",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy LUXURY from 1 supplier(s)",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "end-turn",
+    "actionType" : "END_TURN",
+    "summary" : "End turn",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "advance-game-flow:worker",
+    "actionType" : "ADVANCE_GAME_FLOW",
+    "summary" : "Advance one safe lifecycle step",
+    "legacyDemo" : false,
+    "template" : { }
+  }, {
+    "id" : "add-voting-cubes-template:worker",
+    "actionType" : "ADD_VOTING_CUBES",
+    "summary" : "Add 3 voting cubes of the acting class color to the bag.",
+    "legacyDemo" : false,
+    "template" : {
+      "amount" : 3,
+      "actorPlayerId" : "worker"
+    }
+  }, {
+    "id" : "assign-workers-template",
+    "actionType" : "ASSIGN_WORKERS",
+    "summary" : "Assign up to 3 workers using assignment operations.",
+    "legacyDemo" : false,
+    "template" : {
+      "targetIdFormat" : "<enterpriseId>:<slotId>",
+      "targetTypes" : [ "ENTERPRISE_SLOT", "UNION" ],
+      "maxWorkers" : 3
+    }
+  }, {
+    "id" : "buy-goods-template:worker:FOOD",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy FOOD from supported suppliers.",
+    "legacyDemo" : false,
+    "template" : {
+      "resourceType" : "FOOD",
+      "actorPlayerId" : "worker",
+      "maxPerSupplier" : 3,
+      "maxSuppliers" : 2,
+      "eligibleSuppliers" : [ {
+        "maxQuantity" : 1,
+        "supplierPlayerId" : "capitalist",
+        "unitPrice" : 12,
+        "supplierType" : "CAPITALIST"
+      }, {
+        "maxQuantity" : 3,
+        "supplierPlayerId" : "",
+        "unitPrice" : 15,
+        "supplierType" : "EXTERNAL_MARKET"
+      } ],
+      "templateOnly" : true
+    }
+  }, {
+    "id" : "buy-goods-template:worker:HEALTHCARE",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy HEALTHCARE from supported suppliers.",
+    "legacyDemo" : false,
+    "template" : {
+      "resourceType" : "HEALTHCARE",
+      "actorPlayerId" : "worker",
+      "maxPerSupplier" : 3,
+      "maxSuppliers" : 2,
+      "eligibleSuppliers" : [ {
+        "maxQuantity" : 6,
+        "supplierPlayerId" : "",
+        "unitPrice" : 5,
+        "supplierType" : "STATE"
+      } ],
+      "templateOnly" : true
+    }
+  }, {
+    "id" : "buy-goods-template:worker:EDUCATION",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy EDUCATION from supported suppliers.",
+    "legacyDemo" : false,
+    "template" : {
+      "resourceType" : "EDUCATION",
+      "actorPlayerId" : "worker",
+      "maxPerSupplier" : 3,
+      "maxSuppliers" : 2,
+      "eligibleSuppliers" : [ {
+        "maxQuantity" : 2,
+        "supplierPlayerId" : "capitalist",
+        "unitPrice" : 8,
+        "supplierType" : "CAPITALIST"
+      }, {
+        "maxQuantity" : 6,
+        "supplierPlayerId" : "",
+        "unitPrice" : 10,
+        "supplierType" : "STATE"
+      } ],
+      "templateOnly" : true
+    }
+  }, {
+    "id" : "buy-goods-template:worker:LUXURY",
+    "actionType" : "BUY_GOODS_AND_SERVICES",
+    "summary" : "Buy LUXURY from supported suppliers.",
+    "legacyDemo" : false,
+    "template" : {
+      "resourceType" : "LUXURY",
+      "actorPlayerId" : "worker",
+      "maxPerSupplier" : 3,
+      "maxSuppliers" : 2,
+      "eligibleSuppliers" : [ {
+        "maxQuantity" : 2,
+        "supplierPlayerId" : "capitalist",
+        "unitPrice" : 8,
+        "supplierType" : "CAPITALIST"
+      }, {
+        "maxQuantity" : 3,
+        "supplierPlayerId" : "",
+        "unitPrice" : 9,
+        "supplierType" : "EXTERNAL_MARKET"
+      } ],
+      "templateOnly" : true
+    }
+  }, {
+    "id" : "advance-game-flow-template",
+    "actionType" : "ADVANCE_GAME_FLOW",
+    "summary" : "Execute one legal lifecycle step for the current phase.",
+    "legacyDemo" : false,
+    "template" : {
+      "requiredActor" : "worker"
+    }
+  } ],
+  "composerMetadata" : {
+    "actorPlayerId" : "worker",
+    "actionTemplates" : [ {
+      "actionType" : "DRAW_VOTING_CUBES",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "PROPOSE_BILL",
+      "summary" : "Propose bill on POLICY_1_FISCAL to B",
+      "supported" : true,
+      "supportNote" : "SUPPORTED_IN_CURRENT_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "ADD_VOTING_CUBES",
+      "summary" : "Add 3 voting cubes for worker.",
+      "supported" : true,
+      "supportNote" : "SUPPORTED_IN_CURRENT_STATE",
+      "template" : {
+        "amount" : 3,
+        "actorPlayerId" : "worker"
+      },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "CALL_EXTRAORDINARY_VOTE",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "BUILD_ENTERPRISE",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "SELL_ENTERPRISE",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "SELL_ON_EXTERNAL_MARKET",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "MAKE_BUSINESS_DEAL",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "LOBBY_INTERESTS",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "CHANGE_PRICES",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "CHANGE_WAGES",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "PAY_BONUS",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "BUY_STORAGE",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "TAKE_STATE_BENEFITS",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "REPAY_LOAN",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "ASSIGN_WORKERS",
+      "summary" : "Assign up to 3 workers using assignment operations.",
+      "supported" : true,
+      "supportNote" : "SUPPORTED_IN_CURRENT_STATE",
+      "template" : {
+        "targetIdFormat" : "<enterpriseId>:<slotId>",
+        "targetTypes" : [ "ENTERPRISE_SLOT", "UNION" ],
+        "maxWorkers" : 3
+      },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "BUY_GOODS_AND_SERVICES",
+      "summary" : "Buy FOOD from 1 supplier(s)",
+      "supported" : true,
+      "supportNote" : "SUPPORTED_IN_CURRENT_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "CONSUME_HEALTHCARE",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "CONSUME_EDUCATION",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    }, {
+      "actionType" : "CONSUME_LUXURY",
+      "summary" : "Action exists in supported slice but is currently illegal in this state.",
+      "supported" : false,
+      "supportNote" : "CURRENTLY_ILLEGAL_FOR_STATE",
+      "template" : { },
+      "futureModifierSlot" : true
+    } ],
+    "modifierAvailable" : false,
+    "modifierAvailabilityNote" : "No action modifiers available: card/modifier dataset is not installed yet.",
+    "unavailableActionNotes" : [ "START_STRIKE: unsupported in current rules-engine slice.", "START_DEMONSTRATION: unsupported in current rules-engine slice.", "Capitalist enterprise cards, loan cards, and state-benefit tokens use MVP defaults until card JSON logic is installed." ]
+  },
+  "marketCandidates" : [ {
+    "enterpriseId" : "supermarket",
+    "ownerClass" : "CAPITALIST",
+    "freeSlots" : 0,
+    "wageLevel" : 2,
+    "decisionSource" : "fallback_market_view"
+  }, {
+    "enterpriseId" : "mall",
+    "ownerClass" : "CAPITALIST",
+    "freeSlots" : 0,
+    "wageLevel" : 2,
+    "decisionSource" : "fallback_market_view"
+  }, {
+    "enterpriseId" : "college",
+    "ownerClass" : "CAPITALIST",
+    "freeSlots" : 0,
+    "wageLevel" : 2,
+    "decisionSource" : "fallback_market_view"
+  }, {
+    "enterpriseId" : "polyclinic",
+    "ownerClass" : "CAPITALIST",
+    "freeSlots" : 2,
+    "wageLevel" : 2,
+    "decisionSource" : "fallback_market_view"
+  } ]
+}

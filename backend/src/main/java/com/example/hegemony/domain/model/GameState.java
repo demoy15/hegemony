@@ -47,7 +47,15 @@ public class GameState {
     private OrderedCardDeckState exportCardDeck = new OrderedCardDeckState();
     private List<MigrationCardState> migrationCards = new ArrayList<>();
     private OrderedCardDeckState migrationDeck = new OrderedCardDeckState();
+    private List<Map<String, Object>> stateEventCards = new ArrayList<>();
+    private OrderedCardDeckState stateEventDeck = new OrderedCardDeckState();
+    private OrderedCardDeckState capitalistAutomaDeck = new OrderedCardDeckState();
+    private OrderedCardDeckState workerAutomaDeck = new OrderedCardDeckState();
     private ExportCardState activeExportCard = new ExportCardState();
+    private List<Enterprise> capitalistEnterpriseDeck = new ArrayList<>();
+    private List<Enterprise> capitalistEnterpriseMarket = new ArrayList<>();
+    private List<Enterprise> middleClassEnterpriseDeck = new ArrayList<>();
+    private List<Enterprise> middleClassEnterpriseMarket = new ArrayList<>();
 
     public GameState() {
     }
@@ -103,7 +111,25 @@ public class GameState {
                 .map(MigrationCardState::copy)
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         copy.migrationDeck = migrationDeck == null ? new OrderedCardDeckState() : migrationDeck.copy();
+        copy.stateEventCards = (stateEventCards == null ? List.<Map<String, Object>>of() : stateEventCards).stream()
+                .map(HashMap::new)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        copy.stateEventDeck = stateEventDeck == null ? new OrderedCardDeckState() : stateEventDeck.copy();
+        copy.capitalistAutomaDeck = capitalistAutomaDeck == null ? new OrderedCardDeckState() : capitalistAutomaDeck.copy();
+        copy.workerAutomaDeck = workerAutomaDeck == null ? new OrderedCardDeckState() : workerAutomaDeck.copy();
         copy.activeExportCard = activeExportCard == null ? new ExportCardState() : activeExportCard.copy();
+        copy.capitalistEnterpriseDeck = (capitalistEnterpriseDeck == null ? List.<Enterprise>of() : capitalistEnterpriseDeck).stream()
+                .map(Enterprise::copy)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        copy.capitalistEnterpriseMarket = (capitalistEnterpriseMarket == null ? List.<Enterprise>of() : capitalistEnterpriseMarket).stream()
+                .map(Enterprise::copy)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        copy.middleClassEnterpriseDeck = (middleClassEnterpriseDeck == null ? List.<Enterprise>of() : middleClassEnterpriseDeck).stream()
+                .map(Enterprise::copy)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        copy.middleClassEnterpriseMarket = (middleClassEnterpriseMarket == null ? List.<Enterprise>of() : middleClassEnterpriseMarket).stream()
+                .map(Enterprise::copy)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         return copy;
     }
 
@@ -578,6 +604,80 @@ public class GameState {
 
     public void setMigrationDeck(OrderedCardDeckState migrationDeck) {
         this.migrationDeck = migrationDeck == null ? new OrderedCardDeckState() : migrationDeck;
+    }
+
+    public List<Map<String, Object>> getStateEventCards() {
+        return stateEventCards == null ? new ArrayList<>() : stateEventCards;
+    }
+
+    public void setStateEventCards(List<Map<String, Object>> stateEventCards) {
+        this.stateEventCards = stateEventCards == null
+                ? new ArrayList<>()
+                : stateEventCards.stream().map(HashMap::new).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    public OrderedCardDeckState getStateEventDeck() {
+        return stateEventDeck == null ? new OrderedCardDeckState() : stateEventDeck;
+    }
+
+    public void setStateEventDeck(OrderedCardDeckState stateEventDeck) {
+        this.stateEventDeck = stateEventDeck == null ? new OrderedCardDeckState() : stateEventDeck;
+    }
+
+    public OrderedCardDeckState getCapitalistAutomaDeck() {
+        return capitalistAutomaDeck == null ? new OrderedCardDeckState() : capitalistAutomaDeck;
+    }
+
+    public void setCapitalistAutomaDeck(OrderedCardDeckState capitalistAutomaDeck) {
+        this.capitalistAutomaDeck = capitalistAutomaDeck == null ? new OrderedCardDeckState() : capitalistAutomaDeck;
+    }
+
+    public OrderedCardDeckState getWorkerAutomaDeck() {
+        return workerAutomaDeck == null ? new OrderedCardDeckState() : workerAutomaDeck;
+    }
+
+    public void setWorkerAutomaDeck(OrderedCardDeckState workerAutomaDeck) {
+        this.workerAutomaDeck = workerAutomaDeck == null ? new OrderedCardDeckState() : workerAutomaDeck;
+    }
+
+    public List<Enterprise> getCapitalistEnterpriseDeck() {
+        return capitalistEnterpriseDeck == null ? new ArrayList<>() : capitalistEnterpriseDeck;
+    }
+
+    public void setCapitalistEnterpriseDeck(List<Enterprise> capitalistEnterpriseDeck) {
+        this.capitalistEnterpriseDeck = capitalistEnterpriseDeck == null
+                ? new ArrayList<>()
+                : capitalistEnterpriseDeck.stream().map(Enterprise::copy).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    public List<Enterprise> getCapitalistEnterpriseMarket() {
+        return capitalistEnterpriseMarket == null ? new ArrayList<>() : capitalistEnterpriseMarket;
+    }
+
+    public void setCapitalistEnterpriseMarket(List<Enterprise> capitalistEnterpriseMarket) {
+        this.capitalistEnterpriseMarket = capitalistEnterpriseMarket == null
+                ? new ArrayList<>()
+                : capitalistEnterpriseMarket.stream().map(Enterprise::copy).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    public List<Enterprise> getMiddleClassEnterpriseDeck() {
+        return middleClassEnterpriseDeck == null ? new ArrayList<>() : middleClassEnterpriseDeck;
+    }
+
+    public void setMiddleClassEnterpriseDeck(List<Enterprise> middleClassEnterpriseDeck) {
+        this.middleClassEnterpriseDeck = middleClassEnterpriseDeck == null
+                ? new ArrayList<>()
+                : middleClassEnterpriseDeck.stream().map(Enterprise::copy).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    public List<Enterprise> getMiddleClassEnterpriseMarket() {
+        return middleClassEnterpriseMarket == null ? new ArrayList<>() : middleClassEnterpriseMarket;
+    }
+
+    public void setMiddleClassEnterpriseMarket(List<Enterprise> middleClassEnterpriseMarket) {
+        this.middleClassEnterpriseMarket = middleClassEnterpriseMarket == null
+                ? new ArrayList<>()
+                : middleClassEnterpriseMarket.stream().map(Enterprise::copy).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private void syncPublicServicesStorageFromBoard() {

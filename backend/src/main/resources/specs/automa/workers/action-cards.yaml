@@ -1,0 +1,480 @@
+automa_action_cards_partial:
+  - card_no: 1
+    automa: WORKERS
+    checks: [ASSIGN_WORKERS, BUY_GOODS_AND_SERVICES, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_FISCAL, POLICY_LABOR_MARKET]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: owner_pays_per_assigned_worker, amount_per_worker: 4, max_unemployed: 4 }
+      raw_text_ru: "2Б/2В: вы можете назначить не более 4 безработных в этот ход. Получите от владельца предприятия по 4 ₩ за каждого работника, назначенного на предприятие таким образом."
+    special_action:
+      type: REPLACE_NON_WORKER_VOTE_CUBES_WITH_WORKER
+      params: { cubes_to_replace: 3 }
+      conditions: []
+      raw_text_ru: "Берите из мешочка кубики для голосования, пока не возьмёте 3 кубика других классов. Замените их своими и верните все взятые кубики, кроме заменённых, в мешочек."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-12.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №1."
+
+  - card_no: 2
+    automa: WORKERS
+    checks: [ASSIGN_WORKERS, PROPOSE_BILL, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_TAX, POLICY_FISCAL]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: build_cooperative_farm_then_assign }
+      raw_text_ru: "Если вы назначаете работников в этот ход, сначала постройте кооперативное хозяйство и назначьте работников туда, если возможно."
+    special_action:
+      type: BUY_INFLUENCE_FROM_STATE_OR_ADD_VOTING_CUBES
+      params: { amount: 3, cost_each: 5, cubes_per_unbought: 2 }
+      conditions: []
+      raw_text_ru: "Купите у государства 3 влияния по 5 ₩ за каждый. За каждое влияние, которое вы не смогли купить, добавьте по 2 кубика для голосования в мешок."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-16.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №2."
+
+  - card_no: 3
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, PROPOSE_BILL, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_FISCAL, POLICY_MIGRATION]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: public_services_only_state_pays_per_unemployed, amount_per_unemployed: 5 }
+      raw_text_ru: "4А/4Б: вы можете покупать только государственные услуги в этот ход. Если покупаете их, сначала получите от государства по 5 ₩ за каждого своего безработного."
+    special_action:
+      type: DRAW_SIX_RETURN_WORKER_CUBES_DISCARD_OTHERS
+      params: { draw_count: 6 }
+      conditions: []
+      raw_text_ru: "Возьмите из мешочка 6 кубиков для голосования. Верните все взятые кубики рабочего класса обратно в мешочек, остальные сбросьте."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-19.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №3."
+
+  - card_no: 4
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, PROPOSE_BILL, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_FISCAL, POLICY_LABOR_MARKET]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_sells_education_half_price_round_up }
+      raw_text_ru: "В этот ход государство продаёт образование за 1/2 стоимости, округляя вверх."
+    special_action:
+      type: ADD_WORKER_VOTING_CUBES_EQUAL_POPULATION
+      params: {}
+      conditions: []
+      raw_text_ru: "Добавьте в мешочек кубики для голосования в количестве, равном численности своего населения."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-22.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №4."
+
+  - card_no: 5
+    automa: WORKERS
+    checks: [PROPOSE_BILL, ASSIGN_WORKERS, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_TAX]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: add_two_voting_cubes }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, сначала добавьте в мешочек 2 кубика для голосования."
+    special_action:
+      type: TAKE_MONEY_FROM_OPPONENT_WITH_MOST_WORKER_EMPLOYEES
+      params: { amount: 15 }
+      conditions: []
+      raw_text_ru: "Получите 15 ₩ от соперника, на чьих предприятиях занято больше всего ваших работников."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-26.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №5."
+
+  - card_no: 6
+    automa: WORKERS
+    checks: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_TAX]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: free_extraordinary_vote }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, объявите внеочередное голосование, не тратя влияние."
+    special_action:
+      type: PAY_CAPITALISTS_GAIN_VP
+      params: { cost: 20, victory_points: 5 }
+      conditions: []
+      raw_text_ru: "Если возможно, заплатите 20 ₩ капиталистам и получите 5 ПО."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-29.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №6."
+
+  - card_no: 7
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_HEALTHCARE]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: take_skilled_worker_before_assign }
+      raw_text_ru: "7Б/7В: если вы назначаете работников в этот ход, сначала получите квалифицированного работника из запаса."
+    special_action:
+      type: REPLACE_NON_WORKER_VOTE_CUBES_WITH_WORKER
+      params: { cubes_to_replace: 3 }
+      conditions: []
+      raw_text_ru: "Берите из мешочка кубики для голосования, пока не возьмёте 3 кубика других классов. Замените их своими."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-32.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №7."
+
+  - card_no: 8
+    automa: WORKERS
+    checks: [ASSIGN_WORKERS, PROPOSE_BILL, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_EDUCATION]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: unlimited_worker_assignment_by_policy_2b_2c }
+      raw_text_ru: "Если вы назначаете работников в этот ход, вы можете назначить 2Б: сколько угодно безработных; 2В: сколько угодно работников."
+    special_action:
+      type: DRAW_SIX_RETURN_WORKER_CUBES_DISCARD_OTHERS
+      params: { draw_count: 6 }
+      conditions: []
+      raw_text_ru: "Возьмите из мешочка 6 кубиков для голосования. Верните все кубики рабочего класса обратно в мешочек, остальные сбросьте."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-35.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №8."
+
+  - card_no: 9
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_HEALTHCARE]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_education_enterprise_with_workers_produces_first }
+      raw_text_ru: "Если вы покупаете товары и услуги в этот ход, госпредприятие в отрасли образования, где заняты ваши работники, сначала выполняет производство."
+    special_action:
+      type: BUY_INFLUENCE_FROM_STATE_OR_ADD_VOTING_CUBES
+      params: { amount: 3, cost_each: 5, cubes_per_unbought: 2 }
+      conditions: []
+      raw_text_ru: "Купите у государства 3 влияния по 5 ₩ за каждый. За каждое влияние, которое вы не смогли купить, добавьте по 2 кубика для голосования в мешок."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-39.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №9."
+
+  - card_no: 10
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_EDUCATION]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_sells_healthcare_half_price_round_up }
+      raw_text_ru: "В этот ход государство продаёт здравоохранение за 1/2 стоимости, округляя вверх."
+    special_action:
+      type: REMOVE_UNEMPLOYED_GAIN_MONEY
+      params: { min_unemployed: 4, remove: 2, money: 10 }
+      conditions: []
+      raw_text_ru: "Если у вас 4 или больше безработных, уберите 2 из них и получите 10 ₩."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-42.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №10."
+
+  - card_no: 11
+    automa: WORKERS
+    checks: [PROPOSE_BILL, ASSIGN_WORKERS, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_FOREIGN_TRADE]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: place_token_on_preferred_policy_course }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, поместите фишку на свой предпочтительный курс, даже если он не соседний с текущим курсом. Внеочередное голосование возможно только для соседнего курса."
+    special_action:
+      type: ADD_WORKER_VOTING_CUBES_EQUAL_POPULATION
+      params: {}
+      conditions: []
+      raw_text_ru: "Добавьте в мешочек кубики для голосования в количестве, равном численности своего населения."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-46.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №11."
+
+  - card_no: 12
+    automa: WORKERS
+    checks: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_FOREIGN_TRADE, POLICY_TAX]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: add_two_voting_cubes }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, сначала добавьте в мешочек 2 кубика для голосования."
+    special_action:
+      type: REMOVE_UNEMPLOYED_GAIN_MONEY
+      params: { min_unemployed: 4, remove: 2, money: 10 }
+      conditions: []
+      raw_text_ru: "Если у вас 4 или больше безработных, уберите 2 из них и получите 10 ₩."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-49.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №12."
+
+  - card_no: 13
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_MIGRATION, POLICY_LABOR_MARKET]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_pays_per_employed_worker, amount_per_worker: 1 }
+      raw_text_ru: "2Б/2В: если вы покупаете товары и услуги в этот ход, сначала получите от государства по 1 ₩ за каждого своего работника, занятого на предприятиях."
+    special_action:
+      type: TAKE_MONEY_FROM_OPPONENT_WITH_MOST_WORKER_EMPLOYEES
+      params: { amount: 15 }
+      conditions: []
+      raw_text_ru: "Получите 15 ₩ от соперника, на чьих предприятиях занято больше всего ваших работников."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-52.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №13."
+
+  - card_no: 14
+    automa: WORKERS
+    checks: [ASSIGN_WORKERS, PROPOSE_BILL, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_MIGRATION]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: build_cooperative_farm_then_assign }
+      raw_text_ru: "Если вы назначаете работников в этот ход, сначала постройте кооперативное хозяйство и назначьте работников туда, если возможно."
+    special_action:
+      type: PAY_CAPITALISTS_GAIN_VP
+      params: { cost: 20, victory_points: 5 }
+      conditions: []
+      raw_text_ru: "Если возможно, заплатите 20 ₩ капиталистам и получите 5 ПО."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-55.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №14."
+
+  - card_no: 15
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_HEALTHCARE, POLICY_FISCAL]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_pays_half_luxury_bought_from_opponents }
+      raw_text_ru: "1А/1Б: в этот ход государство оплачивает 1/2 стоимости предметов роскоши, купленных у соперников, округляя вниз."
+    special_action:
+      type: DRAW_SIX_RETURN_WORKER_CUBES_DISCARD_OTHERS
+      params: { draw_count: 6 }
+      conditions: []
+      raw_text_ru: "Возьмите из мешочка 6 кубиков для голосования. Верните все кубики рабочего класса обратно в мешочек, остальные сбросьте."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-08-58.jpg", transcription_confidence: medium }
+    raw_text_ru: "Карта простой автомы рабочего класса №15."
+
+  - card_no: 16
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, PROPOSE_BILL, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_HEALTHCARE, POLICY_LABOR_MARKET]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_education_enterprise_with_workers_produces_first }
+      raw_text_ru: "Если вы покупаете товары и услуги в этот ход, госпредприятие в отрасли образования, где заняты ваши работники, сначала выполняет производство."
+    special_action:
+      type: BUY_INFLUENCE_FROM_STATE_OR_ADD_VOTING_CUBES
+      params: { amount: 3, cost_each: 5, cubes_per_unbought: 2 }
+      conditions: []
+      raw_text_ru: "Купите у государства 3 влияния по 5 ₩ за каждый. За каждое влияние, которое вы не смогли купить, добавьте по 2 кубика для голосования в мешок."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-01.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №16."
+
+  - card_no: 17
+    automa: WORKERS
+    checks: [PROPOSE_BILL, ASSIGN_WORKERS, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_LABOR_MARKET, POLICY_FOREIGN_TRADE]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: free_extraordinary_vote }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, объявите внеочередное голосование, не тратя влияние."
+    special_action:
+      type: REMOVE_UNEMPLOYED_GAIN_MONEY
+      params: { min_unemployed: 4, remove: 2, money: 10 }
+      conditions: []
+      raw_text_ru: "Если у вас 4 или больше безработных, уберите 2 из них и получите 10 ₩."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-33.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №17."
+
+  - card_no: 18
+    automa: WORKERS
+    checks: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_HEALTHCARE, POLICY_EDUCATION]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: place_token_on_preferred_policy_course }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, поместите фишку на свой предпочтительный курс, даже если он не соседний с текущим курсом. Внеочередное голосование возможно только для соседнего курса."
+    special_action:
+      type: TAKE_MONEY_FROM_OPPONENT_WITH_MOST_WORKER_EMPLOYEES
+      params: { amount: 15 }
+      conditions: []
+      raw_text_ru: "Получите 15 ₩ от соперника, на чьих предприятиях занято больше всего ваших работников."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-37.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №18."
+
+  - card_no: 19
+    automa: WORKERS
+    checks: [ASSIGN_WORKERS, BUY_GOODS_AND_SERVICES, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_HEALTHCARE, POLICY_FOREIGN_TRADE]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: unlimited_worker_assignment_by_policy_2b_2c }
+      raw_text_ru: "Если вы назначаете работников в этот ход, вы можете назначить 2Б: сколько угодно безработных; 2В: сколько угодно работников."
+    special_action:
+      type: PAY_CAPITALISTS_GAIN_VP
+      params: { cost: 20, victory_points: 5 }
+      conditions: []
+      raw_text_ru: "Если возможно, заплатите 20 ₩ капиталистам и получите 5 ПО."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-40.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №19."
+
+  - card_no: 20
+    automa: WORKERS
+    checks: [ASSIGN_WORKERS, PROPOSE_BILL, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_HEALTHCARE, POLICY_MIGRATION]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: take_skilled_worker_before_assign }
+      raw_text_ru: "7Б/7В: если вы назначаете работников в этот ход, сначала получите квалифицированного работника из запаса."
+    special_action:
+      type: ADD_WORKER_VOTING_CUBES_EQUAL_POPULATION
+      params: {}
+      conditions: []
+      raw_text_ru: "Добавьте в мешочек кубики для голосования в количестве, равном численности своего населения."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-43.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №20."
+
+  - card_no: 21
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_EDUCATION, POLICY_FISCAL]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_sells_healthcare_half_price_round_up }
+      raw_text_ru: "В этот ход государство продаёт здравоохранение за 1/2 стоимости, округляя вверх."
+    special_action:
+      type: REPLACE_NON_WORKER_VOTE_CUBES_WITH_WORKER
+      params: { cubes_to_replace: 3 }
+      conditions: []
+      raw_text_ru: "Берите из мешочка кубики для голосования, пока не возьмёте 3 кубика других классов. Замените их своими."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-46.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №21."
+
+  - card_no: 22
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, PROPOSE_BILL, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_EDUCATION, POLICY_LABOR_MARKET]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_pays_per_employed_worker, amount_per_worker: 1 }
+      raw_text_ru: "2Б/2В: если вы покупаете товары и услуги в этот ход, сначала получите от государства по 1 ₩ за каждого своего работника, занятого на предприятиях."
+    special_action:
+      type: REMOVE_UNEMPLOYED_GAIN_MONEY
+      params: { min_unemployed: 4, remove: 2, money: 10 }
+      conditions: []
+      raw_text_ru: "Если у вас 4 или больше безработных, уберите 2 из них и получите 10 ₩."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-48.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №22."
+
+  - card_no: 23
+    automa: WORKERS
+    checks: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_EDUCATION, POLICY_TAX]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: add_two_voting_cubes }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, сначала добавьте в мешочек 2 кубика для голосования."
+    special_action:
+      type: BUY_INFLUENCE_FROM_STATE_OR_ADD_VOTING_CUBES
+      params: { amount: 3, cost_each: 5, cubes_per_unbought: 2 }
+      conditions: []
+      raw_text_ru: "Купите у государства 3 влияния по 5 ₩ за каждый. За каждое влияние, которое вы не смогли купить, добавьте по 2 кубика для голосования в мешок."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-51.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №23."
+
+  - card_no: 24
+    automa: WORKERS
+    checks: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_EDUCATION, POLICY_HEALTHCARE]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: propose_two_bills_if_possible }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, внесите 2 законопроекта, если возможно."
+    special_action:
+      type: TAKE_MONEY_FROM_OPPONENT_WITH_MOST_WORKER_EMPLOYEES
+      params: { amount: 15 }
+      conditions: []
+      raw_text_ru: "Получите 15 ₩ от соперника, на чьих предприятиях занято больше всего ваших работников."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-09-59.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №24."
+
+  - card_no: 25
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_EDUCATION, POLICY_FOREIGN_TRADE]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: public_services_only_state_pays_per_unemployed, amount_per_unemployed: 5 }
+      raw_text_ru: "4А/4Б: вы можете покупать только государственные услуги в этот ход. Если покупаете их, сначала получите от государства по 5 ₩ за каждого своего безработного."
+    special_action:
+      type: REMOVE_UNEMPLOYED_GAIN_MONEY
+      params: { min_unemployed: 4, remove: 2, money: 10 }
+      conditions: []
+      raw_text_ru: "Если у вас 4 или больше безработных, уберите 2 из них и получите 10 ₩."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-10-02.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №25."
+
+  - card_no: 26
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, PROPOSE_BILL, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_EDUCATION, POLICY_MIGRATION]
+    bonus:
+      trigger: assign_workers_this_turn
+      effect: { type: owner_pays_per_assigned_worker, amount_per_worker: 4, max_unemployed: 4 }
+      raw_text_ru: "2Б/2В: вы можете назначить не более 4 безработных в этот ход. Получите от владельца предприятия по 4 ₩ за каждого работника, назначенного на предприятие таким образом."
+    special_action:
+      type: DRAW_SIX_RETURN_WORKER_CUBES_DISCARD_OTHERS
+      params: { draw_count: 6 }
+      conditions: []
+      raw_text_ru: "Возьмите из мешочка 6 кубиков для голосования. Верните все кубики рабочего класса обратно в мешочек, остальные сбросьте."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-10-05.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №26."
+
+  - card_no: 27
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_FOREIGN_TRADE, POLICY_FISCAL]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_pays_half_education_bought_from_opponents }
+      raw_text_ru: "1А/1Б: в этот ход государство оплачивает 1/2 стоимости образования, купленного у соперников, округляя вниз."
+    special_action:
+      type: REPLACE_NON_WORKER_VOTE_CUBES_WITH_WORKER
+      params: { cubes_to_replace: 3 }
+      conditions: []
+      raw_text_ru: "Берите из мешочка кубики для голосования, пока не возьмёте 3 кубика других классов. Замените их своими."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-10-07.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №27."
+
+  - card_no: 28
+    automa: WORKERS
+    checks: [BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PROPOSE_BILL, PLACE_STRIKES]
+    policy_tags: [POLICY_FOREIGN_TRADE, POLICY_FISCAL]
+    bonus:
+      trigger: buy_goods_and_services_this_turn
+      effect: { type: state_pays_half_education_bought_from_opponents }
+      raw_text_ru: "1А/1Б: в этот ход государство оплачивает 1/2 стоимости образования, купленного у соперников, округляя вниз."
+    special_action:
+      type: ADD_WORKER_VOTING_CUBES_EQUAL_POPULATION
+      params: {}
+      conditions: []
+      raw_text_ru: "Добавьте в мешочек кубики для голосования в количестве, равном численности своего населения."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-10-11.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №28."
+
+  - card_no: 29
+    automa: WORKERS
+    checks: [PROPOSE_BILL, ASSIGN_WORKERS, BUY_GOODS_AND_SERVICES, PLACE_STRIKES]
+    policy_tags: [POLICY_FOREIGN_TRADE, POLICY_LABOR_MARKET]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: propose_two_bills_if_possible }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, внесите 2 законопроекта, если возможно."
+    special_action:
+      type: PAY_CAPITALISTS_GAIN_VP
+      params: { cost: 20, victory_points: 5 }
+      conditions: []
+      raw_text_ru: "Если возможно, заплатите 20 ₩ капиталистам и получите 5 ПО."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-10-13.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №29."
+
+  - card_no: 30
+    automa: WORKERS
+    checks: [PROPOSE_BILL, BUY_GOODS_AND_SERVICES, ASSIGN_WORKERS, PLACE_STRIKES]
+    policy_tags: [POLICY_FOREIGN_TRADE, POLICY_MIGRATION]
+    bonus:
+      trigger: propose_bill_this_turn
+      effect: { type: add_two_voting_cubes }
+      raw_text_ru: "Если вы вносите законопроект в этот ход, сначала добавьте в мешочек 2 кубика для голосования."
+    special_action:
+      type: BUY_INFLUENCE_FROM_STATE_OR_ADD_VOTING_CUBES
+      params: { amount: 3, cost_each: 5, cubes_per_unbought: 2 }
+      conditions: []
+      raw_text_ru: "Купите у государства 3 влияния по 5 ₩ за каждый. За каждое влияние, которое вы не смогли купить, добавьте по 2 кубика для голосования в мешок."
+    source: { image_ref: "R:/d.i/раб/photo_2026-05-09_11-10-16.jpg", transcription_confidence: high }
+    raw_text_ru: "Карта простой автомы рабочего класса №30."

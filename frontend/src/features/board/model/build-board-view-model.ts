@@ -7,7 +7,7 @@ import type {
   PolicyCourseCellView,
   PolicyTrackView,
 } from "@/features/board/model/types";
-import type { BusinessDealCard, GameState, PolicyCourse, PolicyId } from "@/types/game";
+import type { BusinessDealCard, GameState, PolicyCourse, PolicyId, StateEventCard } from "@/types/game";
 
 interface BuildBoardViewModelInput {
   state: GameState;
@@ -49,7 +49,9 @@ interface EnterpriseSlotVisual {
   color: WorkerColor;
   requiredColor: WorkerColor;
   qualification: "UNSKILLED" | "SKILLED";
+  optional?: boolean;
   classType?: "WORKER" | "MIDDLE_CLASS" | "CAPITALIST" | "STATE";
+  workerId?: string;
   workerNumber?: string;
 }
 
@@ -77,12 +79,29 @@ interface WorkerMeepleVisual {
   workerNumber: string;
   classType: "WORKER" | "MIDDLE_CLASS" | "CAPITALIST" | "STATE";
   tied: boolean;
+  posture: "STANDING" | "LYING";
 }
 
 function workerColorOf(worker: GameState["workers"][number]): WorkerColor {
-  const sector = String(worker.sector ?? "").toUpperCase();
-  if (sector === "GREEN" || sector === "BLUE" || sector === "RED" || sector === "ORANGE" || sector === "PURPLE" || sector === "WHITE") {
-    return sector;
+  return normalizeWorkerColor(worker.sector);
+}
+
+function normalizeWorkerColor(raw: unknown): WorkerColor {
+  const value = String(raw ?? "").toUpperCase();
+  if (value === "GREEN" || value === "FOOD") {
+    return "GREEN";
+  }
+  if (value === "BLUE" || value === "LUXURY") {
+    return "BLUE";
+  }
+  if (value === "RED" || value === "WHITE" || value === "HEALTHCARE" || value === "MEDICAL") {
+    return "WHITE";
+  }
+  if (value === "ORANGE" || value === "EDUCATION") {
+    return "ORANGE";
+  }
+  if (value === "PURPLE" || value === "MEDIA" || value === "INFLUENCE" || value === "MEDIA_INFLUENCE") {
+    return "PURPLE";
   }
   return "GRAY";
 }
@@ -95,7 +114,7 @@ function workerColorLabel(color: WorkerColor): string {
     return "Синий";
   }
   if (color === "RED") {
-    return "Красный";
+    return "Белый";
   }
   if (color === "ORANGE") {
     return "Оранжевый";
@@ -117,7 +136,7 @@ function workerColorShort(color: WorkerColor): string {
     return "СИН";
   }
   if (color === "RED") {
-    return "КРАС";
+    return "БЕЛ";
   }
   if (color === "ORANGE") {
     return "ОРАН";
@@ -137,9 +156,6 @@ function workerTone(color: WorkerColor): BoardRenderable["tone"] {
   }
   if (color === "BLUE") {
     return "info";
-  }
-  if (color === "RED") {
-    return "danger";
   }
   if (color === "ORANGE") {
     return "warning";
@@ -324,6 +340,9 @@ function slotVisualColor(
   slot: GameState["enterprises"][number]["slots"][number],
   worker?: GameState["workers"][number],
 ): WorkerColor {
+  if (worker) {
+    return workerColorOf(worker);
+  }
   const fromSlot = String(slot.requiredColor ?? "").toUpperCase();
   if (
     fromSlot === "GRAY" ||
@@ -334,10 +353,7 @@ function slotVisualColor(
     fromSlot === "PURPLE" ||
     fromSlot === "WHITE"
   ) {
-    return fromSlot;
-  }
-  if (worker) {
-    return workerColorOf(worker);
+    return normalizeWorkerColor(fromSlot);
   }
   if (slot.requiredQualification === "UNSKILLED") {
     return "GRAY";
@@ -357,7 +373,9 @@ function buildEnterpriseSlotVisual(
     color: slotVisualColor(slot, worker),
     requiredColor: slotVisualColor(slot),
     qualification: slot.requiredQualification,
+    optional: Boolean(slot.optional),
     classType: worker?.classType,
+    workerId: worker?.id,
     workerNumber: worker ? workerNumberFromId(worker.id) : undefined,
   };
 }
@@ -479,16 +497,6 @@ function currentPlayerFromState(state: GameState) {
   return players[currentIndex];
 }
 
-function isAdjacent(from: PolicyCourse, to: PolicyCourse): boolean {
-  if (from === "A") {
-    return to === "B";
-  }
-  if (from === "B") {
-    return to === "A" || to === "C";
-  }
-  return to === "B";
-}
-
 function computePolicyTracks(state: GameState): PolicyTrackView[] {
   const currentPlayer = currentPlayerFromState(state);
   const actorCanPropose =
@@ -510,8 +518,8 @@ function computePolicyTracks(state: GameState): PolicyTrackView[] {
         course,
         active: policy.currentCourse === course,
         proposed: proposedCourse === course,
-        selectable: !blocked && isAdjacent(policy.currentCourse, course) && policy.currentCourse !== course,
-        blocked: blocked || policy.currentCourse === course || !isAdjacent(policy.currentCourse, course),
+        selectable: !blocked && policy.currentCourse !== course,
+        blocked: blocked || policy.currentCourse === course,
       }));
 
       return {
@@ -587,6 +595,20 @@ function zoneStats(zoneId: string, state: GameState): string[] {
       deck?.lastRefreshedRound ? `Раунд ${deck.lastRefreshedRound}` : "Готово",
     ];
   }
+  if (zoneId === "events") {
+    const visibleEvents = currentVisibleStateEvents(state);
+    const deck = state.stateEventDeck;
+    return visibleEvents.length > 0
+      ? [`События ${visibleEvents.length}`, `Колода ${Math.max(0, (deck?.orderedCardIds?.length ?? 0) - (deck?.nextCardIndex ?? 0))}`]
+      : ["Нет событий"];
+  }
+  if (zoneId === "capitalist_enterprise_market") {
+    const market = asArray(state.capitalistEnterpriseMarket);
+    return [`Предприятия ${market.length}/4`, `Колода ${asArray(state.capitalistEnterpriseDeck).length}`];
+  }
+  if (zoneId === "import") {
+    return [`Курс ${foreignTradeCourse(state)}`, "Еда и роскошь"];
+  }
   if (zoneId === "export") {
     const exportCard = state.activeExportCard;
     if (!exportCard?.cardId) {
@@ -609,9 +631,17 @@ function currentVisibleBusinessDeals(state: GameState): BusinessDealCard[] {
     .filter((card): card is BusinessDealCard => Boolean(card));
 }
 
+function currentVisibleStateEvents(state: GameState): StateEventCard[] {
+  const visibleIds = Array.isArray(state.stateEventDeck?.visibleCardIds) ? state.stateEventDeck.visibleCardIds : [];
+  const cards = asArray(state.stateEventCards);
+  return visibleIds
+    .map((cardId) => cards.find((card) => card.id === cardId))
+    .filter((card): card is StateEventCard => Boolean(card));
+}
+
 function dealShortResource(resourceId: string): string {
   if (resourceId === "food") {
-    return "🍞";
+    return "🌾";
   }
   if (resourceId === "luxury") {
     return "💎";
@@ -664,6 +694,32 @@ function exportOfferCompact(resourceId: string, quantity: number, revenue: numbe
   return `${quantity}${dealShortResource(resourceId)}→${revenue}$`;
 }
 
+function renderCapitalistEnterpriseMarketObjects(state: GameState): BoardRenderable[] {
+  const zone = effectiveBoardZone(state, "capitalist_enterprise_market");
+  if (!zone) {
+    return [];
+  }
+  const market = asArray(state.capitalistEnterpriseMarket).slice(0, 4);
+  const workersById = new Map(asArray(state.workers).map((worker) => [worker.id, worker] as const));
+  return market.map((enterprise, index) => {
+    const placement = layoutEntityInZone(zone, index, market.length || 4, 4);
+    return buildEnterpriseRenderable({
+      state,
+      workersById,
+      enterprise,
+      zoneId: "capitalist_enterprise_market",
+      entityId: `enterprise-market:${enterprise.id}`,
+      xPct: placement.x,
+      yPct: placement.y,
+      size: "sm",
+      tone: "positive",
+      cardState: "RESERVE",
+      sourceRef: { sourceType: "enterpriseMarket", sourceId: enterprise.id },
+      rowLabel: `Цена ${enterprise.cost || 0}`,
+    });
+  });
+}
+
 function renderBusinessDealObjects(state: GameState): BoardRenderable[] {
   const zone = BOARD_ZONE_INDEX.deals;
   if (!zone) {
@@ -672,7 +728,12 @@ function renderBusinessDealObjects(state: GameState): BoardRenderable[] {
 
   const visibleDeals = currentVisibleBusinessDeals(state);
   return visibleDeals.map((deal, index) => {
-    const placement = layoutEntityInZone(zone, index, Math.max(visibleDeals.length, 1), 1);
+    const total = Math.max(visibleDeals.length, 1);
+    const safeIndex = total === 1 ? 0.5 : (index + 0.5) / total;
+    const placement = {
+      x: zone.x + zone.width * (0.14 + safeIndex * 0.72),
+      y: zone.y + zone.height * 0.52,
+    };
     const requirementText = deal.requirements
       .map((requirement) => dealRequirementSummary(requirement.resourceId, requirement.amount))
       .join(" + ");
@@ -699,7 +760,7 @@ function renderBusinessDealObjects(state: GameState): BoardRenderable[] {
 }
 
 function renderExportCardObject(state: GameState): BoardRenderable[] {
-  const zone = BOARD_ZONE_INDEX.export;
+  const zone = effectiveBoardZone(state, "export");
   const exportCard = state.activeExportCard;
   if (!zone || !exportCard?.cardId) {
     return [];
@@ -713,18 +774,49 @@ function renderExportCardObject(state: GameState): BoardRenderable[] {
       label: exportCard.title,
       shortLabel: `${(Array.isArray(exportCard.offers) ? exportCard.offers : []).map((offer) => exportOfferCompact(offer.resourceId, offer.quantity, offer.revenue)).join(" · ")}`,
       xPct: zone.x + zone.width * 0.5,
-      yPct: zone.y + zone.height * 0.55,
+      yPct: zone.y + zone.height * 0.54,
       size: "lg",
       tone: "info",
       sourceRef: { sourceType: "exportCard", sourceId: exportCard.cardId },
-      details: `Варианты: ${(Array.isArray(exportCard.offers) ? exportCard.offers : []).slice(0, 4).map((offer) => exportOfferSummary(offer.resourceId, offer.quantity, offer.revenue)).join("; ")}. Активна с раунда ${exportCard.activatedRound}.`,
+      details: `Варианты: ${(Array.isArray(exportCard.offers) ? exportCard.offers : []).map((offer) => exportOfferSummary(offer.resourceId, offer.quantity, offer.revenue)).join("; ")}. Активна с раунда ${exportCard.activatedRound}.`,
       clickable: true,
     },
   ];
 }
 
+function renderStateEventObjects(state: GameState): BoardRenderable[] {
+  const zone = effectiveBoardZone(state, "events");
+  if (!zone) {
+    return [];
+  }
+
+  const visibleEvents = currentVisibleStateEvents(state);
+  return visibleEvents.map((event, index) => {
+    const total = Math.max(visibleEvents.length, 1);
+    const xRatio = total === 1 ? 0.5 : (index + 0.5) / total;
+    const options = (Array.isArray(event.options) ? event.options : []).map((option) => option.summary).join("; ");
+    const penalties = (Array.isArray(event.noActionPenaltyClasses) && event.noActionPenaltyClasses.length > 0)
+      ? event.noActionPenaltyClasses.join(", ")
+      : "любые 2 самые низкие";
+    return {
+      id: `state-event:${event.id}`,
+      kind: "CARD",
+      zoneId: "events",
+      label: event.title,
+      shortLabel: event.title.slice(0, 18),
+      xPct: zone.x + zone.width * xRatio,
+      yPct: zone.y + zone.height * 0.66,
+      size: "sm",
+      tone: "warning",
+      sourceRef: { sourceType: "stateEvent", sourceId: event.id },
+      details: `${event.instruction}. Варианты: ${options}. Бездействие: -1 легитимность (${penalties}).`,
+      clickable: true,
+    };
+  });
+}
+
 function renderImportPriceObjects(state: GameState): BoardRenderable[] {
-  const zone = BOARD_ZONE_INDEX.import;
+  const zone = effectiveBoardZone(state, "import");
   if (!zone) {
     return [];
   }
@@ -739,8 +831,14 @@ function renderImportPriceObjects(state: GameState): BoardRenderable[] {
   const luxuryFinal = importFinalPrice(course, "LUXURY");
   const luxuryMap = importCoursePriceMap("LUXURY");
 
-  const foodPlacement = layoutEntityInZone(zone, 0, 2, 1);
-  const luxuryPlacement = layoutEntityInZone(zone, 1, 2, 1);
+  const foodPlacement = {
+    x: zone.x + zone.width * 0.26,
+    y: zone.y + zone.height * 0.58,
+  };
+  const luxuryPlacement = {
+    x: zone.x + zone.width * 0.74,
+    y: zone.y + zone.height * 0.58,
+  };
 
   return [
     {
@@ -749,7 +847,7 @@ function renderImportPriceObjects(state: GameState): BoardRenderable[] {
       zoneId: "import",
       label: `Еда ${foodBase}+${foodTariff}=${foodFinal} (${course})`,
       shortLabel: `Еда ${foodFinal}`,
-      xPct: foodPlacement.x,
+      xPct: foodPlacement.x + zone.width * 0.03,
       yPct: foodPlacement.y,
       size: "sm",
       tone: "warning",
@@ -763,7 +861,7 @@ function renderImportPriceObjects(state: GameState): BoardRenderable[] {
       zoneId: "import",
       label: `Роскошь ${luxuryBase}+${luxuryTariff}=${luxuryFinal} (${course})`,
       shortLabel: `Роскошь ${luxuryFinal}`,
-      xPct: luxuryPlacement.x,
+      xPct: luxuryPlacement.x - zone.width * 0.03,
       yPct: luxuryPlacement.y,
       size: "sm",
       tone: "info",
@@ -787,6 +885,40 @@ function sectorZoneForOwner(ownerClass: string): string {
   return "private_middle_class";
 }
 
+function hasClassPlayer(state: GameState, classType: string): boolean {
+  return asArray(state.players).some((player) => player.classType === classType);
+}
+
+function effectiveBoardZone(state: GameState, zoneId: string): BoardZoneDefinition | undefined {
+  const zone = BOARD_ZONE_INDEX[zoneId];
+  if (!zone) {
+    return undefined;
+  }
+  let effectiveZone = zone;
+  if ((zoneId === "private_capitalist" || zoneId === "capitalist_enterprise_market") && !hasClassPlayer(state, "MIDDLE_CLASS")) {
+    effectiveZone = {
+      ...effectiveZone,
+      x: 2,
+      width: 82,
+    };
+  }
+  if (zoneId === "private_capitalist") {
+    return {
+      ...effectiveZone,
+      height: privateCapitalistZoneHeight(state, effectiveZone),
+    };
+  }
+  return effectiveZone;
+}
+
+function effectiveBoardZones(state: GameState): BoardZoneDefinition[] {
+  return BOARD_ZONES
+    .filter((zone) => zone.id !== "round_track")
+    .filter((zone) => zone.id !== "state_sector_staging")
+    .filter((zone) => zone.id !== "private_middle_class" || hasClassPlayer(state, "MIDDLE_CLASS"))
+    .map((zone) => effectiveBoardZone(state, zone.id) ?? zone);
+}
+
 function layoutEntityInZone(
   zone: BoardZoneDefinition,
   index: number,
@@ -796,19 +928,52 @@ function layoutEntityInZone(
   const titleReserve = 5.0;
   const padX = 1.5;
   const padY = 1.5;
-  const columns = preferredColumns ?? Math.max(1, Math.ceil(Math.sqrt(total)));
+  const columns = zone.id === "private_capitalist"
+    ? privateCapitalistColumnCount(zone, total)
+    : preferredColumns ?? Math.max(1, Math.ceil(Math.sqrt(total)));
   const rows = Math.max(1, Math.ceil(total / columns));
-  const safeWidth = Math.max(1, zone.width - padX * 2);
-  const safeHeight = Math.max(1, zone.height - titleReserve - padY);
+  const fullSafeWidth = Math.max(1, zone.width - padX * 2);
+  const safeWidth = fullSafeWidth;
+  const safeHeight = Math.max(1, zone.height - (zone.id === "capitalist_enterprise_market" ? 2.8 : titleReserve) - padY);
   const cellWidth = safeWidth / columns;
-  const cellHeight = safeHeight / rows;
+  const cellHeight = zone.id === "private_capitalist" ? PRIVATE_CAPITALIST_ROW_HEIGHT : safeHeight / rows;
   const col = index % columns;
   const row = Math.floor(index / columns);
+  const clusterOffsetX = 0;
   return {
-    x: zone.x + padX + cellWidth * (col + 0.5),
-    y: zone.y + titleReserve + cellHeight * (row + 0.5),
+    x: zone.x + padX + clusterOffsetX + cellWidth * (col + 0.5),
+    y: zone.y + (zone.id === "capitalist_enterprise_market" ? 2.8 : titleReserve) + cellHeight * (row + 0.5),
     compact: Math.min(cellWidth, cellHeight) < 5,
   };
+}
+
+const PRIVATE_CAPITALIST_CARD_SPAN = 11;
+const PRIVATE_CAPITALIST_ROW_HEIGHT = 11.2;
+const PRIVATE_CAPITALIST_BOTTOM_RESERVE = 2.4;
+
+function privateCapitalistEnterpriseCount(state: GameState): number {
+  return asArray(state.enterprises).filter((enterprise) => enterprise.ownerClass === "CAPITALIST").length;
+}
+
+function privateCapitalistColumnCount(zone: BoardZoneDefinition, total: number): number {
+  if (total <= 0) {
+    return 1;
+  }
+  const usableWidth = Math.max(1, zone.width - 3);
+  const columnsThatFit = Math.max(1, Math.floor(usableWidth / PRIVATE_CAPITALIST_CARD_SPAN));
+  return Math.min(total, columnsThatFit);
+}
+
+function privateCapitalistZoneHeight(state: GameState, zone: BoardZoneDefinition): number {
+  const total = privateCapitalistEnterpriseCount(state);
+  const columns = privateCapitalistColumnCount(zone, total);
+  const rows = Math.max(1, Math.ceil(total / columns));
+  return Math.max(zone.height, 5 + rows * PRIVATE_CAPITALIST_ROW_HEIGHT + PRIVATE_CAPITALIST_BOTTOM_RESERVE);
+}
+
+function boardHeightForState(state: GameState): number {
+  const privateCapitalistZone = effectiveBoardZone(state, "private_capitalist");
+  return Math.max(100, (privateCapitalistZone?.y ?? 0) + (privateCapitalistZone?.height ?? 0) + 1.5);
 }
 
 function stateResourceSummaryLabel(group: "hospital" | "university" | "media"): string {
@@ -864,7 +1029,7 @@ function renderEnterpriseObjects(state: GameState): BoardRenderable[] {
   const renderables: BoardRenderable[] = [];
 
   groupedByZone.forEach((enterprises, zoneId) => {
-    const zone = BOARD_ZONE_INDEX[zoneId];
+    const zone = effectiveBoardZone(state, zoneId);
     if (!zone) {
       return;
     }
@@ -877,12 +1042,13 @@ function renderEnterpriseObjects(state: GameState): BoardRenderable[] {
         media: enterprises.filter((enterprise) => stateEnterpriseGroup(enterprise) === "media"),
       };
       const orderedGroups: Array<"hospital" | "university" | "media"> = ["hospital", "university", "media"];
-      const titleReserve = 3.6;
-      const headerY = zone.y + titleReserve + 0.2;
-      const enterpriseStartY = zone.y + titleReserve + 5.2;
-      const bottomPad = 1.4;
-      const columnWidth = zone.width / 3;
-      const usableHeight = Math.max(9, zone.y + zone.height - bottomPad - enterpriseStartY);
+      const titleReserve = 7.2;
+      const padX = 2.2;
+      const padY = 2.0;
+      const columns = 3;
+      const rows = 3;
+      const cellWidth = Math.max(1, (zone.width - padX * 2) / columns);
+      const cellHeight = Math.max(1, (zone.height - titleReserve - padY) / rows);
 
       orderedGroups.forEach((group, columnIndex) => {
         const enterprisesInColumn = byGroup[group];
@@ -890,64 +1056,36 @@ function renderEnterpriseObjects(state: GameState): BoardRenderable[] {
         if (!templateEnterprise) {
           return;
         }
-        const centerX = zone.x + columnWidth * (columnIndex + 0.5);
-        const amount = stateResourceAmount(state, group);
-        const short = stateResourceSummaryLabel(group);
-        const resourceLabel = stateResourceLabel(group);
-        const enterpriseLabel = stateEnterpriseLabel(group);
-
-        renderables.push({
-          id: `state-service-stock:${group}`,
-          kind: "CARD",
-          zoneId,
-          label: `${resourceLabel}: ${amount}`,
-          shortLabel: `${short} ${amount}`,
-          xPct: centerX,
-          yPct: headerY,
-          size: "sm",
-          tone: group === "media" ? "info" : "warning",
-          sourceRef: { sourceType: "zone", sourceId: `state-service-stock:${group}` },
-          details: `${enterpriseLabel}: предприятий ${enterprisesInColumn.length}, доступно ${resourceLabel.toLowerCase()} ${amount}.`,
-          clickable: true,
-        });
-
+        const centerX = zone.x + padX + cellWidth * (columnIndex + 0.5);
         const sortedEnterprises = [...enterprisesInColumn].sort((left, right) => left.id.localeCompare(right.id));
         const visibleEnterprises = sortedEnterprises.slice(0, unlockedRows);
-        const rowStep = usableHeight / Math.max(visibleEnterprises.length, 1);
 
         visibleEnterprises.forEach((existingEnterprise, rowIndex) => {
-          renderables.push(
-            buildEnterpriseRenderable({
+          const enterpriseRenderable = buildEnterpriseRenderable({
               state,
               workersById,
               enterprise: existingEnterprise,
               zoneId,
               entityId: `enterprise:${existingEnterprise.id}`,
               xPct: centerX,
-              yPct: enterpriseStartY + rowStep * (rowIndex + 0.5),
-              size: "sm",
+              yPct: zone.y + titleReserve + cellHeight * (rowIndex + 0.5),
+              size: "md",
               tone: existingEnterprise.functioning ? "positive" : "danger",
               cardState: "ACTIVE",
-              rowLabel: `Ряд ${rowIndex + 1}`,
               sourceRef: { sourceType: "enterprise", sourceId: existingEnterprise.id },
-            }),
-          );
+            });
+          renderables.push(enterpriseRenderable);
         });
       });
 
       return;
     }
 
-    const preferredColumns = zoneId === "private_middle_class" ? 4 : zoneId === "private_capitalist" ? 4 : undefined;
+    const preferredColumns = zoneId === "private_middle_class" ? 3 : undefined;
 
     enterprises.forEach((enterprise, index) => {
       const placement = layoutEntityInZone(zone, index, enterprises.length, preferredColumns);
-      const crowdedPrivateSector =
-        preferredColumns !== undefined &&
-        (zoneId === "private_middle_class" || zoneId === "private_capitalist") &&
-        enterprises.length > preferredColumns;
-      renderables.push(
-        buildEnterpriseRenderable({
+      const enterpriseRenderable = buildEnterpriseRenderable({
           state,
           workersById,
           enterprise,
@@ -955,63 +1093,97 @@ function renderEnterpriseObjects(state: GameState): BoardRenderable[] {
           entityId: `enterprise:${enterprise.id}`,
           xPct: placement.x,
           yPct: placement.y,
-          size: placement.compact || crowdedPrivateSector ? "sm" : "md",
+          size: zoneId === "private_capitalist" ? "sm" : placement.compact ? "sm" : "md",
           tone: enterprise.functioning ? "positive" : "danger",
           sourceRef: { sourceType: "enterprise", sourceId: enterprise.id },
-        }),
-      );
+        });
+      renderables.push(enterpriseRenderable);
     });
   });
 
   return renderables;
 }
+
 function renderWorkerObjects(state: GameState): BoardRenderable[] {
   const renderables: BoardRenderable[] = [];
   const unemployed = asArray(state.workers).filter((worker) => worker.location === "UNEMPLOYED");
-  const zone = BOARD_ZONE_INDEX.unemployed;
+  const zone = effectiveBoardZone(state, "unemployed");
   if (!zone) {
     return renderables;
   }
 
   const maxVisible = 24;
   const visible = unemployed.slice(0, maxVisible);
-  const workerColumns = visible.length <= 6 ? 3 : visible.length <= 12 ? 4 : 5;
-  const rows = Math.max(1, Math.ceil(Math.max(visible.length, 1) / workerColumns));
+  const byClass = new Map<string, typeof visible>();
+  visible.forEach((worker) => {
+    const key = worker.classType === "MIDDLE_CLASS" ? "MIDDLE_CLASS" : "WORKER";
+    byClass.set(key, [...(byClass.get(key) ?? []), worker]);
+  });
   const padX = 1.2;
   const topReserve = 3.9;
   const bottomReserve = 1.8;
   const safeWidth = Math.max(1, zone.width - padX * 2);
   const safeHeight = Math.max(1, zone.height - topReserve - bottomReserve);
-  const cellWidth = safeWidth / workerColumns;
-  const cellHeight = safeHeight / rows;
-  visible.forEach((worker, index) => {
-    const col = index % workerColumns;
-    const row = Math.floor(index / workerColumns);
-    const x = zone.x + padX + cellWidth * (col + 0.5);
-    const y = zone.y + topReserve + cellHeight * (row + 0.5);
-    const color = workerColorOf(worker);
-    const shortColor = workerColorShort(color);
-    const workerNo = workerNumberFromId(worker.id);
+  const lanes = [
+    { classType: "WORKER", label: "Рабочий класс", workers: byClass.get("WORKER") ?? [] },
+    { classType: "MIDDLE_CLASS", label: "Средний класс", workers: byClass.get("MIDDLE_CLASS") ?? [] },
+  ].filter((lane) => lane.workers.length > 0);
+  const laneHeight = safeHeight / Math.max(1, lanes.length);
+
+  lanes.forEach((lane, laneIndex) => {
+    const laneWorkers = lane.workers;
+    const workerColumns = laneWorkers.length <= 4 ? 4 : laneWorkers.length <= 10 ? 5 : 6;
+    const rows = Math.max(1, Math.ceil(Math.max(laneWorkers.length, 1) / workerColumns));
+    const cellWidth = safeWidth / workerColumns;
+    const cellHeight = laneHeight / rows;
+    const laneTop = zone.y + topReserve + laneHeight * laneIndex;
+
     renderables.push({
-      id: `worker:${worker.id}`,
-      kind: "WORKER",
+      id: `unemployed-label:${lane.classType}`,
+      kind: "INFO_MARKER",
       zoneId: "unemployed",
-      label: `${workerColorLabel(color)} рабочий`,
-      shortLabel: shortColor,
-      xPct: x,
-      yPct: y,
+      label: lane.label,
+      shortLabel: lane.classType === "MIDDLE_CLASS" ? "СРЕД" : "РАБ",
+      xPct: zone.x + padX + 1.4,
+      yPct: laneTop + 0.45,
       size: "sm",
-      tone: workerTone(color),
-      sourceRef: { sourceType: "worker", sourceId: worker.id },
-      details: `Рабочий #${workerNo} (${workerColorLabel(color)}, ${worker.qualificationType === "SKILLED" ? "квалифицированный" : "обычный"})`,
-      visual: {
-        variant: "worker-meeple",
-        color,
-        workerNumber: workerNo,
-        classType: worker.classType,
-        tied: worker.tiedContract,
-      } satisfies WorkerMeepleVisual,
-      clickable: true,
+      tone: lane.classType === "MIDDLE_CLASS" ? "warning" : "neutral",
+      sourceRef: { sourceType: "zone", sourceId: "unemployed" },
+      details: `${lane.label}: ${laneWorkers.length}`,
+      clickable: false,
+    });
+
+    laneWorkers.forEach((worker, index) => {
+      const col = index % workerColumns;
+      const row = Math.floor(index / workerColumns);
+      const x = zone.x + padX + cellWidth * (col + 0.5);
+      const y = laneTop + cellHeight * (row + 0.5) + 0.75;
+      const color = workerColorOf(worker);
+      const shortColor = workerColorShort(color);
+      const workerNo = workerNumberFromId(worker.id);
+      const classLabel = worker.classType === "MIDDLE_CLASS" ? "Средний класс" : "Рабочий класс";
+      renderables.push({
+        id: `worker:${worker.id}`,
+        kind: "WORKER",
+        zoneId: "unemployed",
+        label: `${workerColorLabel(color)} работник (${classShort(worker.classType)})`,
+        shortLabel: `${classShort(worker.classType)}${shortColor}`,
+        xPct: x,
+        yPct: y,
+        size: "sm",
+        tone: workerTone(color),
+        sourceRef: { sourceType: "worker", sourceId: worker.id },
+        details: `${classLabel} #${workerNo} (${workerColorLabel(color)}, ${worker.qualificationType === "SKILLED" ? "квалифицированный" : "обычный"})`,
+        visual: {
+          variant: "worker-meeple",
+          color,
+          workerNumber: workerNo,
+          classType: worker.classType,
+          tied: worker.tiedContract,
+          posture: "STANDING",
+        } satisfies WorkerMeepleVisual,
+        clickable: true,
+      });
     });
   });
 
@@ -1037,26 +1209,7 @@ function renderWorkerObjects(state: GameState): BoardRenderable[] {
 
 function renderMetaObjects(state: GameState): BoardRenderable[] {
   const renderables: BoardRenderable[] = [];
-  const roundZone = BOARD_ZONE_INDEX.round_track;
-  const voteZone = BOARD_ZONE_INDEX.vote_results;
-  const treasuryZone = BOARD_ZONE_INDEX.treasury;
-
-  if (roundZone) {
-    renderables.push({
-      id: "round-marker",
-      kind: "ROUND_MARKER",
-      zoneId: "round_track",
-      label: `R${state.currentRound}`,
-      shortLabel: `R${state.currentRound}`,
-      xPct: roundZone.x + roundZone.width * 0.5,
-      yPct: roundZone.y + roundZone.height * 0.72,
-      size: "sm",
-      tone: "info",
-      sourceRef: { sourceType: "zone", sourceId: "round_track" },
-      details: `Фаза: ${state.currentPhase}`,
-      clickable: true,
-    });
-  }
+  const voteZone = effectiveBoardZone(state, "vote_results");
 
   if (voteZone) {
     const votingBag = state.votingBag ?? { worker: 0, middleClass: 0, capitalist: 0 };
@@ -1076,23 +1229,6 @@ function renderMetaObjects(state: GameState): BoardRenderable[] {
     });
   }
 
-  if (treasuryZone) {
-    renderables.push({
-      id: "treasury-money",
-      kind: "MONEY_TOKEN",
-      zoneId: "treasury",
-      label: `$ ${state.treasury}`,
-      shortLabel: `${state.treasury}`,
-      xPct: treasuryZone.x + treasuryZone.width * 0.5,
-      yPct: treasuryZone.y + treasuryZone.height * 0.72,
-      size: "sm",
-      tone: "positive",
-      sourceRef: { sourceType: "zone", sourceId: "treasury" },
-      details: "Государственная казна.",
-      clickable: true,
-    });
-  }
-
   return renderables;
 }
 
@@ -1106,14 +1242,16 @@ export function buildBoardViewModel({
   const renderables = [
     ...renderMetaObjects(state),
     ...renderImportPriceObjects(state),
+    ...renderCapitalistEnterpriseMarketObjects(state),
     ...renderBusinessDealObjects(state),
     ...renderExportCardObject(state),
+    ...renderStateEventObjects(state),
     ...renderEnterpriseObjects(state),
     ...renderWorkerObjects(state),
   ];
 
   const hasHighlights = highlightedZones.length > 0;
-  const zones: BoardZoneView[] = BOARD_ZONES.map((zone) => {
+  const zones: BoardZoneView[] = effectiveBoardZones(state).map((zone) => {
     const active =
       zone.id === selectedZoneId ||
       renderables.some((entity) => entity.id === selectedEntityId && entity.zoneId === zone.id);
@@ -1138,6 +1276,7 @@ export function buildBoardViewModel({
     renderables,
     pendingProposalPoliciesInOrder,
     policyTracks,
+    boardHeight: boardHeightForState(state),
   };
 }
 

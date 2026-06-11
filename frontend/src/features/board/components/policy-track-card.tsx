@@ -36,7 +36,7 @@ export function PolicyTrackCard({
         type="button"
         onClick={() => onSelectTrack(track.policyId)}
         className="absolute inset-x-1 top-0.5 z-10 flex items-center justify-center text-center"
-        title={`Open ${track.label}`}
+        title={`Открыть ${track.label}`}
       >
         <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-zinc-100">{track.label}</span>
       </button>
