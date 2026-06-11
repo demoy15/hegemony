@@ -23,6 +23,7 @@ import com.example.hegemony.domain.engine.GameRulesEngine;
 import com.example.hegemony.domain.model.CurrentVoteState;
 import com.example.hegemony.domain.model.ClassType;
 import com.example.hegemony.domain.model.Enterprise;
+import com.example.hegemony.domain.model.EnterpriseSlot;
 import com.example.hegemony.domain.model.GameMode;
 import com.example.hegemony.domain.model.GameState;
 import com.example.hegemony.domain.model.PolicyCourse;
@@ -36,6 +37,7 @@ import com.example.hegemony.domain.model.WorkerQualification;
 import com.example.hegemony.infrastructure.JsonBusinessDealCardCatalog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,16 +90,13 @@ public final class CoreTestSupport {
     }
 
     public static Enterprise firstEmptyEnterpriseWithAtLeastSlots(GameState state, int minSlots) {
+        List<Worker> availableWorkers = unemployedWorkers(state, ClassType.WORKER);
         return state.getEnterprises().stream()
                 .filter(Enterprise::isFullyEmpty)
                 .filter(e -> e.getSlots().size() >= minSlots)
-                .filter(e -> e.getSlots().stream().allMatch(slot -> slot.getRequiredQualification() == WorkerQualification.UNSKILLED))
+                .filter(e -> canFillRequiredSlots(e, availableWorkers, minSlots))
                 .findFirst()
-                .orElseGet(() -> state.getEnterprises().stream()
-                        .filter(Enterprise::isFullyEmpty)
-                        .filter(e -> e.getSlots().size() >= minSlots)
-                        .findFirst()
-                        .orElseThrow());
+                .orElseGet(() -> addEmptyUnskilledEnterprise(state, minSlots));
     }
 
     public static List<Worker> unemployedWorkers(GameState state, ClassType classType) {
@@ -118,6 +117,55 @@ public final class CoreTestSupport {
         state.getWorkers().add(worker);
         state.refreshLegacyPlayerSnapshots();
         return worker;
+    }
+
+    private static boolean canFillRequiredSlots(Enterprise enterprise, List<Worker> workers, int minSlots) {
+        if (enterprise.getSlots().size() < minSlots) {
+            return false;
+        }
+        List<Worker> remaining = new ArrayList<>(workers);
+        for (int i = 0; i < minSlots; i++) {
+            EnterpriseSlot slot = enterprise.getSlots().get(i);
+            Optional<Worker> match = remaining.stream()
+                    .filter(worker -> workerMatchesSlot(worker, slot))
+                    .findFirst();
+            if (match.isEmpty()) {
+                return false;
+            }
+            remaining.remove(match.get());
+        }
+        return true;
+    }
+
+    private static boolean workerMatchesSlot(Worker worker, EnterpriseSlot slot) {
+        if (slot.getRequiredQualification() == WorkerQualification.UNSKILLED) {
+            return true;
+        }
+        if (worker.getQualificationType() != WorkerQualification.SKILLED) {
+            return false;
+        }
+        return slot.getRequiredSector() == null || slot.getRequiredSector() == worker.getSector();
+    }
+
+    private static Enterprise addEmptyUnskilledEnterprise(GameState state, int minSlots) {
+        Enterprise enterprise = new Enterprise();
+        enterprise.setId("test-empty-enterprise-" + (state.getEnterprises().size() + 1));
+        enterprise.setName("Test Empty Enterprise");
+        enterprise.setCategory("test");
+        enterprise.setOwnerClass(ClassType.CAPITALIST);
+        enterprise.setProducedResources(Map.of("food", Math.max(1, minSlots)));
+        enterprise.setProductionAmount(Math.max(1, minSlots));
+        enterprise.setSlots(new ArrayList<>());
+        for (int i = 1; i <= minSlots; i++) {
+            enterprise.getSlots().add(new EnterpriseSlot(
+                    enterprise.getId() + "-slot-" + i,
+                    WorkerQualification.UNSKILLED,
+                    null,
+                    null
+            ));
+        }
+        state.getEnterprises().add(enterprise);
+        return enterprise;
     }
 
     public static GameState stateWithPendingVote(int playerCount, PolicyId policyId, PolicyCourse targetCourse) {

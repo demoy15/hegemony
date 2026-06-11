@@ -1,6 +1,10 @@
 package com.example.hegemony.web;
 
 import com.example.hegemony.application.GameStateRepository;
+import com.example.hegemony.domain.model.ClassType;
+import com.example.hegemony.domain.model.Enterprise;
+import com.example.hegemony.domain.model.EnterpriseSlot;
+import com.example.hegemony.domain.model.WorkerQualification;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +82,7 @@ class GameApiIntegrationTest {
 
     @Test
     void postAssignWorkers() {
+        String enterpriseId = seedAssignableWorkerEnterprise(2);
         JsonNode state = restTemplate.getForEntity(baseUrl, JsonNode.class).getBody().path("gameState");
         List<String> workerIds = state.path("workers").findValuesAsText("id").stream().toList();
 
@@ -100,22 +105,8 @@ class GameApiIntegrationTest {
         assertThat(worker1).isNotNull();
         assertThat(worker2).isNotNull();
 
-        String enterpriseId = null;
-        String slot1 = null;
-        String slot2 = null;
-        for (JsonNode enterprise : state.path("enterprises")) {
-            JsonNode slots = enterprise.path("slots");
-            if (slots.size() < 2) {
-                continue;
-            }
-            if (slots.get(0).path("occupiedWorkerId").isNull() && slots.get(1).path("occupiedWorkerId").isNull()) {
-                enterpriseId = enterprise.path("id").asText();
-                slot1 = slots.get(0).path("id").asText();
-                slot2 = slots.get(1).path("id").asText();
-                break;
-            }
-        }
-        assertThat(enterpriseId).isNotNull();
+        String slot1 = enterpriseId + "-slot-1";
+        String slot2 = enterpriseId + "-slot-2";
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("actionType", "ASSIGN_WORKERS");
@@ -208,7 +199,7 @@ class GameApiIntegrationTest {
         assertThat(finalCommit.getBody()).isNotNull();
         assertThat(finalCommit.getBody().path("accepted").asBoolean()).isTrue();
         assertThat(finalCommit.getBody().path("gameState").path("currentVoteState").isNull()).isTrue();
-        assertThat(finalCommit.getBody().path("gameState").path("turnOrder").path("phase").asText()).isEqualTo("PRODUCTION");
+        assertThat(finalCommit.getBody().path("gameState").path("turnOrder").path("phase").asText()).isEqualTo("SCORING");
         assertThat(finalCommit.getBody().path("gameState").path("lastProposalResolution").path("policyId").asText())
                 .isEqualTo("POLICY_3_TAXATION");
     }
@@ -329,6 +320,11 @@ class GameApiIntegrationTest {
         assertThat(propose.getBody().path("accepted").asBoolean()).isTrue();
 
         completeActionsPhase();
+        ResponseEntity<JsonNode> resolveProduction = postCommand("RESOLVE_PRODUCTION_PHASE", Map.of("actorPlayerId", "worker"));
+        assertThat(resolveProduction.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resolveProduction.getBody()).isNotNull();
+        assertThat(resolveProduction.getBody().path("accepted").asBoolean()).isTrue();
+
         ResponseEntity<JsonNode> advance = postCommand("ADVANCE_TO_VOTING", Map.of("actorPlayerId", "worker"));
         assertThat(advance.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(advance.getBody()).isNotNull();
@@ -337,20 +333,16 @@ class GameApiIntegrationTest {
 
     private void driveToScoringWithoutPendingVotes() {
         completeActionsPhase();
-        ResponseEntity<JsonNode> toVoting = postCommand("ADVANCE_TO_VOTING", Map.of("actorPlayerId", "worker"));
-        assertThat(toVoting.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(toVoting.getBody()).isNotNull();
-        assertThat(toVoting.getBody().path("accepted").asBoolean()).isTrue();
-
         ResponseEntity<JsonNode> resolveProduction = postCommand("RESOLVE_PRODUCTION_PHASE", Map.of("actorPlayerId", "worker"));
         assertThat(resolveProduction.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resolveProduction.getBody()).isNotNull();
         assertThat(resolveProduction.getBody().path("accepted").asBoolean()).isTrue();
 
-        ResponseEntity<JsonNode> toScoring = postCommand("ADVANCE_TO_SCORING", Map.of("actorPlayerId", "worker"));
-        assertThat(toScoring.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(toScoring.getBody()).isNotNull();
-        assertThat(toScoring.getBody().path("accepted").asBoolean()).isTrue();
+        ResponseEntity<JsonNode> toVoting = postCommand("ADVANCE_TO_VOTING", Map.of("actorPlayerId", "worker"));
+        assertThat(toVoting.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(toVoting.getBody()).isNotNull();
+        assertThat(toVoting.getBody().path("accepted").asBoolean()).isTrue();
+        assertThat(toVoting.getBody().path("gameState").path("currentPhase").asText()).isEqualTo("SCORING");
     }
 
     private void reachGameOverWithoutVotes() {
@@ -369,12 +361,11 @@ class GameApiIntegrationTest {
             }
             if ("ACTIONS".equals(phase)) {
                 completeActionsPhase();
-                postCommand("ADVANCE_TO_VOTING", Map.of("actorPlayerId", "worker"));
                 continue;
             }
             if ("PRODUCTION".equals(phase)) {
                 postCommand("RESOLVE_PRODUCTION_PHASE", Map.of("actorPlayerId", "worker"));
-                postCommand("ADVANCE_TO_SCORING", Map.of("actorPlayerId", "worker"));
+                postCommand("ADVANCE_TO_VOTING", Map.of("actorPlayerId", "worker"));
                 continue;
             }
             if ("SCORING".equals(phase)) {
@@ -424,5 +415,28 @@ class GameApiIntegrationTest {
         worker.setGoodsAmount(resourceId, 1);
         worker.setMoney(Math.max(worker.getMoney(), 100));
         gameStateRepository.save(state);
+    }
+
+    private String seedAssignableWorkerEnterprise(int slotCount) {
+        var state = gameStateRepository.get().copy();
+        String enterpriseId = "api-test-empty-enterprise";
+        Enterprise enterprise = new Enterprise();
+        enterprise.setId(enterpriseId);
+        enterprise.setName("API Test Empty Enterprise");
+        enterprise.setCategory("test");
+        enterprise.setOwnerClass(ClassType.CAPITALIST);
+        enterprise.setProductionAmount(slotCount);
+        enterprise.setProducedResources(Map.of("food", slotCount));
+        for (int i = 1; i <= slotCount; i++) {
+            enterprise.getSlots().add(new EnterpriseSlot(
+                    enterpriseId + "-slot-" + i,
+                    WorkerQualification.UNSKILLED,
+                    null,
+                    null
+            ));
+        }
+        state.getEnterprises().add(enterprise);
+        gameStateRepository.save(state);
+        return enterpriseId;
     }
 }

@@ -146,6 +146,7 @@ class AutomaSimpleModeTurnServiceTest {
         GameState state = prepareCapitalistSimpleTurnState();
         var capitalist = state.findPlayerById("capitalist").orElseThrow();
         capitalist.setMoney(0);
+        blockCapitalistSellTargets(state);
         int workerBefore = state.getVotingBag().getWorker();
 
         CapitalistAutomaActionCard card = card(
@@ -177,6 +178,7 @@ class AutomaSimpleModeTurnServiceTest {
         GameState state = prepareCapitalistSimpleTurnState();
         var capitalist = state.findPlayerById("capitalist").orElseThrow();
         capitalist.setMoney(0);
+        blockCapitalistSellTargets(state);
         int capitalistBefore = state.getVotingBag().getCapitalist();
 
         CapitalistAutomaActionCard card = card(
@@ -247,6 +249,7 @@ class AutomaSimpleModeTurnServiceTest {
         GameState state = prepareCapitalistSimpleTurnState();
         var capitalist = state.findPlayerById("capitalist").orElseThrow();
         capitalist.setMoney(0);
+        blockCapitalistSellTargets(state);
         int capitalistIndex = state.getTurnOrder().getActiveClasses().indexOf(ClassType.CAPITALIST);
         int beforeTurns = state.getTurnOrder().getActionsTakenByPlayer().get(capitalistIndex);
 
@@ -270,7 +273,7 @@ class AutomaSimpleModeTurnServiceTest {
     }
 
     @Test
-    void build_enterprise_selects_target_by_instruction_priority() {
+    void build_enterprise_selects_target_by_current_priority() {
         GameState state = prepareCapitalistSimpleTurnState();
         state.findPlayerById("capitalist").orElseThrow().setMoney(30);
         ensureUnemployedWorkers(state, 4);
@@ -287,7 +290,7 @@ class AutomaSimpleModeTurnServiceTest {
         var result = service.resolveAndApply(state, state.currentPlayer()).orElseThrow();
         @SuppressWarnings("unchecked")
         Map<String, Object> resolvedTarget = (Map<String, Object>) result.summary().getAutomaTrace().get("resolvedTarget");
-        assertThat(resolvedTarget.get("enterpriseId")).isEqualTo("vegetable_farm");
+        assertThat(resolvedTarget.get("enterpriseId")).isEqualTo("radio_station");
     }
 
     @Test
@@ -550,6 +553,11 @@ class AutomaSimpleModeTurnServiceTest {
                     WorkerQualification.UNSKILLED
             );
         }
+    }
+
+    private void blockCapitalistSellTargets(GameState state) {
+        state.getEnterprises().removeIf(enterprise -> enterprise.getOwnerClass() == ClassType.CAPITALIST
+                && enterprise.getSlots().stream().noneMatch(EnterpriseSlot::isOccupied));
     }
 
     private static final class TestRegistry implements CapitalistAutomaCardRegistry {

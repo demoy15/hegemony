@@ -67,7 +67,7 @@ class ConsumerEconomyScenarioTest {
         int stateServicesBefore = totalStateServices(state);
         state = apply(engine, state, new ResolveProductionPhaseCommand("worker"));
 
-        assertThat(totalStateServices(state) - stateServicesBefore).isEqualTo(6);
+        assertThat(totalStateServices(state) - stateServicesBefore).isEqualTo(8);
         assertThat(state.findPlayerById("capitalist").orElseThrow().getProducedResourceAmount("food")).isEqualTo(8);
     }
 

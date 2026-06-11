@@ -321,7 +321,12 @@ public class AutomaSimpleModeTurnService {
     }
 
     private List<Map<String, Object>> runStartOfTurnAutoFreeActions(GameState state, PlayerState actor) {
-        return List.of();
+        List<Map<String, Object>> actions = new ArrayList<>();
+        actions.add(runChangePrices(actor));
+        actions.add(runGetBenefits(actor));
+        actions.add(runRepayLoan(actor));
+        actions.add(runBuyStorageIfOverflow(actor));
+        return actions;
     }
 
     private Map<String, Object> runChangePrices(PlayerState actor) {
@@ -519,9 +524,15 @@ public class AutomaSimpleModeTurnService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        Optional<ProposeBillCommand> matchingPreferred = preferred.isEmpty()
-                ? Optional.empty()
-                : candidates.stream().filter(command -> preferred.contains(command.policyId())).findFirst();
+        Optional<ProposeBillCommand> matchingPreferred = Optional.empty();
+        for (PolicyId preferredPolicy : preferred) {
+            matchingPreferred = candidates.stream()
+                    .filter(command -> command.policyId() == preferredPolicy)
+                    .findFirst();
+            if (matchingPreferred.isPresent()) {
+                break;
+            }
+        }
 
         if (matchingPreferred.isPresent()) {
             ProposeBillCommand command = matchingPreferred.get();

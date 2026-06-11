@@ -1196,6 +1196,12 @@ public class GameRulesEngine {
         if (command.targetCourse() == null) {
             addError(errors, codes, ValidationReasonCode.INVALID_TARGET_COURSE, "Target course is required.");
         }
+        if (policy != null
+                && command.targetCourse() != null
+                && !adjacentCourses(policy.getCurrentCourse()).contains(command.targetCourse())) {
+            addError(errors, codes, ValidationReasonCode.TARGET_COURSE_NOT_ADJACENT,
+                    "Target course must be adjacent to current policy course.");
+        }
         if (policy != null && policy.getOccupyingProposalToken() != null) {
             addError(errors, codes, ValidationReasonCode.POLICY_ALREADY_HAS_PROPOSAL, "Policy already has pending proposal token.");
         }
@@ -1650,6 +1656,10 @@ public class GameRulesEngine {
             addError(errors, codes, ValidationReasonCode.INVALID_TARGET, "Assignments list cannot be empty.");
             return ValidationResult.invalid(errors, codes);
         }
+        if (command.assignments().size() > 3) {
+            addError(errors, codes, ValidationReasonCode.TOO_MANY_WORKERS_IN_ONE_ASSIGN_ACTION,
+                    "ASSIGN_WORKERS can move at most 3 workers in one action.");
+        }
 
         Set<String> seenWorkers = new HashSet<>();
         Set<String> seenSlots = new HashSet<>();
@@ -1709,6 +1719,10 @@ public class GameRulesEngine {
             if (!slotMatchesWorker(slot, worker)) {
                 addError(errors, codes, ValidationReasonCode.SLOT_QUALIFICATION_MISMATCH, "Worker " + worker.getId() + " does not match slot " + slot.getId());
             }
+        }
+        if (!enterprisesRemainBinaryAfterSimulation(state, command.assignments())) {
+            addError(errors, codes, ValidationReasonCode.ENTERPRISE_CANNOT_BE_PARTIALLY_FILLED,
+                    "Worker assignments must leave enterprises either fully empty or functioning.");
         }
 
         return errors.isEmpty() ? ValidationResult.valid() : ValidationResult.invalid(errors, codes);
@@ -2012,6 +2026,7 @@ public class GameRulesEngine {
             case ResolveScoringPhaseCommand resolve -> applyResolveScoringPhase(state, resolve);
             case AdvanceToNextRoundCommand advance -> applyAdvanceToNextRound(state, advance);
             case ResolvePreparationPhaseCommand resolve -> applyResolvePreparationPhase(state, resolve);
+            case EndTurnCommand end -> applyEndTurn(state);
             case DeclareVoteStanceCommand stance -> applyDeclareVoteStance(state, stance);
             case DrawVotingCubesCommand draw -> applyDrawVotingCubes(state, draw);
             case CommitVoteInfluenceCommand commit -> applyCommitVoteInfluence(state, commit);
